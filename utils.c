@@ -3,7 +3,7 @@
 char *appname = NULL;
 
 void
-mpiPi_abort (char *fmt, ...)
+mcpt_abort (char *fmt, ...)
 {
   va_list args;
   va_start (args, fmt);
@@ -25,10 +25,11 @@ getProcExeLink ()
   inbuf = malloc (insize);
   if (inbuf == NULL)
     {
-      mpiPi_abort ("unable to allocate space for full executable path.\n");
+      mcpt_abort ("unable to allocate space for full executable path.\n");
     }
 
   exelen = readlink (file, inbuf, 256);
+  /* printf("EXELEN %d\n",exelen); */
   if (exelen == -1)
     {
       if (errno != ENOENT)

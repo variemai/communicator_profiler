@@ -13,7 +13,7 @@
 extern char *appname;
 
 void
-mpiPi_abort (char *fmt, ...);
+mcpt_abort (char *fmt, ...);
 
 char *
 getProcExeLink ();
