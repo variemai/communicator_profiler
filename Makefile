@@ -12,20 +12,29 @@ SRCS = commprof.c utils.c
 
 OBJS=$(SRCS:.c=.o)
 LIBF=./lib
+DSTRUCTF=datastructlib
+LIBPATH=$(abspath $(DSTRUCTF))
 
 CC=mpicc
 CFLAGS=-O3 -Wall -pedantic -fPIC
 SHARED=-shared
 
-all:default
+#all:
+#	@echo PATH IS  $(LIBPATH)
 
-default: $(SRCS)
-	$(CC) $(CFLAGS) $(SHARED) $^ -o $(LIBF)/libmcpt.so
+all: default $(DSTRUCTF)
+	@echo MCPT compiled
+
+default: libciface
+	$(CC) $(CFLAGS) $(SHARED) $(SRCS) -L$(LIBPATH) -lciface -o $(LIBF)/libmcpt.so
+
+libciface: $(DSTRUCTF)
+	$(MAKE) -C $<
 
 #$(OBJS): $(SRCS)
 #	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf *.o *.out $(LIBF)/*
+	rm -rf *.o *.out $(LIBF)/* $(DSTRUCTF)/*.o $(DSTRUCTF)/*.so
 
 # end
