@@ -91,6 +91,7 @@ void* Table_get(T table, const void* key){
             break;
         }
     }
+    return p ? p->value : NULL;
 }
 
 void Table_map(T table, void apply(const void *key, void **value, void *cl),
@@ -118,12 +119,11 @@ void Table_map(T table, void apply(const void *key, void **value, void *cl),
 /* pairs in the array is arbitrary.                                         */
 /****************************************************************************/
 void** Table_toArray(T table, void* end){
-    int i,j,k;
+    int i,j;
     void **array;
     struct binding *p;
     assert(table);
     j = 0;
-    k = 0;
     array = ALLOC((2*table->length + 1)*sizeof(*array));
     if ( array == NULL ){
         fprintf(stderr,"ALLOC %d\n",__LINE__);
