@@ -14,6 +14,7 @@ typedef struct profiler_attributes{
     unsigned long long bytes;
     char *prim;
     MPI_Comm comm;
+    int index;
 }prof_attrs;
 
 /* Globals */

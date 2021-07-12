@@ -104,6 +104,7 @@ int MPI_Init(int *argc, char ***argv){
     strcpy(prim, "INIT");
     communicator->prim = prim;
     communicator->comm = MPI_COMM_WORLD;
+    communicator->index = num_of_comms;
     PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     communicators[num_of_comms] = MPI_COMM_WORLD;
 
