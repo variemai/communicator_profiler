@@ -1,9 +1,10 @@
 #include "utils.h"
 
+
 char *appname = NULL;
 int num_of_comms =0;
 Table_T table;
-commtor **comm_table = NULL;
+prof_attrs **comm_table = NULL;
 
 void mcpt_abort (char *fmt, ...){
   va_list args;

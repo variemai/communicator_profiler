@@ -9,18 +9,18 @@
 #include <stdarg.h>
 #include "table.h"
 
-typedef struct _communicator{
+typedef struct profiler_attributes{
     char *name;
-    int64_t *bytes;
-    MPI_Comm comm;
+    unsigned long long bytes;
     char *prim;
-}commtor;
+    MPI_Comm comm;
+}prof_attrs;
 
 /* Globals */
 extern char *appname;
 extern int num_of_comms;
 extern Table_T table;
-extern commtor **comm_table;
+extern prof_attrs **comm_table;
 
 void mcpt_abort (char *fmt, ...);
 
