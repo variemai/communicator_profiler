@@ -16,7 +16,7 @@ DSTRUCTF=datastructlib
 LIBPATH=$(abspath $(DSTRUCTF))
 
 CC=mpicc
-CFLAGS=-O3 -Wall -pedantic -fPIC -I$(LIBPATH)
+CFLAGS=-O3 -Wall -g -pedantic -fPIC -I$(LIBPATH)
 SHARED=-shared
 
 #all:

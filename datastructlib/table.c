@@ -124,13 +124,13 @@ void** Table_toArray(T table, void* end){
     struct binding *p;
     assert(table);
     j = 0;
-    array = ALLOC((2*table->length + 1)*sizeof(*array));
+    /* array = ALLOC((2*table->length + 1)*sizeof(*array)); */
+    array = ALLOC((table->length + 1)*sizeof(*array));
     if ( array == NULL ){
         fprintf(stderr,"ALLOC %d\n",__LINE__);
     }
     for (i = 0; i < table->size; i++) {
         for (p = table->buckets[i]; p; p=p->link) {
-            array[j++] = (void*)p->key;
             array[j++] = p->value;
         }
     }

@@ -5,6 +5,7 @@
 #include <mem.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 
@@ -19,6 +20,7 @@
 
 const char *comm_name = "comm";
 MPI_Comm *communicators = NULL;
+int num_of_comms;
 
 /* void newNode(const char *n){ */
 /*     node *ptr; */
@@ -70,7 +72,13 @@ void apply_print(const void *key,void **value,void *cl){
 }
 
 int compare(const void *x, const void *y) {
-    return strcmp(*(char **)x, *(char **)y);
+    prof_attrs *a = (prof_attrs*) x;
+    prof_attrs *b = (prof_attrs*) y;
+    char bufa[32], bufb[32];
+    strcpy(bufa,a->name);
+    strcpy(bufb,b->name);
+    printf("Compare %s with %s\n",bufa,bufb);
+    return strcmp(a->name, b->name);
 }
 
 /* void print_entry(commtor* communicator){ */
@@ -79,7 +87,7 @@ int compare(const void *x, const void *y) {
 /* } */
 
 int MPI_Init(int *argc, char ***argv){
-    int ret,rank;
+    int ret,rank,size;
     char *buf, *prim;
     prof_attrs *communicator;
     /* unsigned long long bytes; */
@@ -87,9 +95,9 @@ int MPI_Init(int *argc, char ***argv){
     ret = PMPI_Init(argc,argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     /* comm_table = ALLOC(sizeof(prof_attrs)*64); */
-    communicators = ALLOC(sizeof(MPI_Comm)*64);
-    /* MPI_Comm_size(MPI_COMM_WORLD, &size); */
-    table = Table_new(128, NULL, NULL);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    communicators = ALLOC(sizeof(MPI_Comm)*size);
+    /* table = Table_new(128, NULL, NULL); */
     if ( rank == 0 ){
         appname = (malloc(sizeof(char)*256));
         appname = get_appname();
@@ -103,19 +111,19 @@ int MPI_Init(int *argc, char ***argv){
     prim = ALLOC(32);
     strcpy(prim, "INIT");
     communicator->prim = prim;
-    communicator->comm = MPI_COMM_WORLD;
-    communicator->index = num_of_comms;
+    /* communicator->index = num_of_comms; */
+    communicator->size = size;
     PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     communicators[num_of_comms] = MPI_COMM_WORLD;
 
     /* comm_table[num_of_comms]=communicator; */
-    Table_put(table, MPI_COMM_WORLD, communicator);
+    /* Table_put(table, MPI_COMM_WORLD, communicator); */
     num_of_comms++;
     return ret;
 }
 
 int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
-    int ret;
+    int ret,size;
     char *buf,*prim;
     prof_attrs *communicator;
     unsigned long long bytes;
@@ -130,13 +138,14 @@ int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
     communicator->bytes = bytes;
     communicator->name = buf;
     communicator->prim = prim;
+    MPI_Comm_size(*newcomm, &size);
+    communicator->size = size;
     /* MPI_Comm_set_name(*newcomm, buf); */
-    communicator->comm = *newcomm;
     printf("New Comm Entry %s\n",communicator->name);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     communicators[num_of_comms] = *newcomm;
     /* comm_table[num_of_comms]=communicator; */
-    Table_put(table, *newcomm, communicator);
+    /* Table_put(table, *newcomm, communicator); */
     /* MPI_Comm_get_name(*newcomm, buffer, &len); */
     /* if ( len && buffer){ */
     /*     printf ( "Name = %.*s\n",len,buffer ); */
@@ -178,22 +187,91 @@ int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
 extern int MPI_Finalize(){
     /* FILE *fp; */
     /* fp = fopen("profiler_stats.txt","w"); */
-    void **array;
-    int rank,i,flag;
+    prof_attrs *array;
+    int rank,i,size,flag;
     prof_attrs *com_info;
+    prof_attrs *recv_buffer;
+    prof_attrs dummy;
+    char *names, **names_buf;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    names = (char*) malloc ( sizeof (char) *num_of_comms );
+    for (i = 0; i < num_of_comms; i++) {
+        names[i] = (char*) malloc(32);
+    }
+    *names_buf = malloc (sizeof(char)*num_of_comms*32);
+    recv_buffer = malloc (sizeof(prof_attrs)*num_of_comms*size);
+    /* MPI_Datatype types[4] = { MPI_CHAR, MPI_CHAR, MPI_UNSIGNED_LONG_LONG, MPI_INT }; */
+    /* int blocklen[4] = {32,32,1,1}; */
+    /* MPI_Aint displacements[4]; */
+    /* MPI_Aint base_address; */
+    /* MPI_Datatype profiler_data; */
+    /* MPI_Get_address(&dummy, &base_address); */
+    /* MPI_Get_address(&dummy.name[0], &displacements[0]); */
+    /* MPI_Get_address(&dummy.prim[0], &displacements[1]); */
+    /* MPI_Get_address(&dummy.bytes, &displacements[2]); */
+    /* MPI_Get_address(&dummy.size, &displacements[3]); */
+    /* displacements[0] = MPI_Aint_diff(displacements[0], base_address); */
+    /* displacements[1] = MPI_Aint_diff(displacements[1], base_address); */
+    /* displacements[2] = MPI_Aint_diff(displacements[2], base_address); */
+    /* displacements[3] = MPI_Aint_diff(displacements[3], base_address); */
+
+    /* int len = Table_length(table); */
     /* for ( i = 0; i < num_of_comms; i++ ){ */
-    /*     PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag); */
-    /*     if ( flag ){ */
-    /*         printf("Rank %d Communicator %s Bytes %llu\n",rank,com_info->name,com_info->bytes); */
     /*     } */
     /* } */
-    array = Table_toArray(table, NULL);
-    for (i = 0; array[i]; i+=2) {
-        com_info = (prof_attrs*)array[i+1];
-        printf("Rank :%d Communicator %s ",rank,(char*)com_info->name);
-        printf("Bytes %llu\n",(unsigned long long)com_info->bytes);
+    /* array = (prof_attrs**)Table_toArray(table, NULL); */
+    /* qsort(array, len, sizeof(*array), compare); */
+    /* bytes = ALLOC(sizeof(unsigned long long)*len); */
+    /* recv_buf_bytes = ALLOC(sizeof(unsigned long long)*len); */
+    /* sizes = ALLOC(sizeof(int)*len); */
+    /* recv_buf_sizes = ALLOC(sizeof(int)*len*size); */
+
+    /* Table_map(table, apply_print, NULL); */
+    /* printf("Num of communicators = %d\n",num_of_comms); */
+    /* MPI_Type_create_struct(4, blocklen, displacements, types, &profiler_data); */
+    /* MPI_Type_commit(&profiler_data); */
+    for ( i = 0; i < num_of_comms; i++ ){
+        /* array = Table_get(table, communicators[i]); */
+        PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
+        if ( flag ){
+            /* printf("Rank %d Communicator %s created by %s Bytes %llu\n", */
+            /*        rank,com_info->name,com_info->prim,com_info->bytes); */
+            strcpy(names[i], com_info->name);
+            /* array[i].name = malloc(32); */
+            /* strcpy(array[i].name, com_info->name); */
+            /* array[i].prim = malloc(32); */
+            /* strcpy(array[i].prim, com_info->prim); */
+            /* array[i].bytes = com_info->bytes; */
+            /* array[i].size = com_info->size; */
+            /* printf("Rank %d Communicator %s created by %s Bytes %llu\n", */
+            /*        rank,array[i].name,array[i].prim,array[i].bytes); */
+        }
     }
+    PMPI_Gather(names, num_of_comms*32, MPI_CHAR, names_buf, num_of_comms*32, MPI_CHAR, 0, MPI_COMM_WORLD);
+    /* PMPI_Gather(array, num_of_comms, profiler_data, recv_buffer, */
+    /*             num_of_comms, profiler_data, 0, MPI_COMM_WORLD); */
+    /* if ( rank == 0 ){ */
+    /*     for ( i = 0; i<num_of_comms*size; i++ ){ */
+    /*         printf("Communicator %s bytes %llu\n",recv_buffer[i].name,recv_buffer[i].bytes); */
+    /*     } */
+    /* } */
+    /* for (i = 0; array[i]; i+=1) { */
+    /*     com_info = (prof_attrs*)array[i]; */
+        /* printf("Rank :%d Communicator %s ",rank,(char*)com_info->name); */
+        /* printf("Bytes %llu\n",(unsigned long long)com_info->bytes); */
+        /* bytes[i] = (unsigned long long)com_info->bytes; */
+        /* sizes[i] = (int)(com_info)->size; */
+        /* printf("Rank %d: Communicator %s: Bytes = %llu Size = %d, i = %d\n",rank,com_info->name,bytes[i],sizes[i],i); */
+    /* } */
+    /* PMPI_Reduce(bytes, recv_buf_bytes, len, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD); */
+    /* PMPI_Gather(sizes, 1, MPI_INT, recv_buf_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD); */
+    /* if ( rank == 0 ){ */
+    /*     for ( i =0; array[i]; i+=1 ){ */
+    /*         com_info = (prof_attrs*)array[i]; */
+    /*         printf("Communicator %s: Bytes = %llu Size = %d\n",com_info->name,recv_buf_bytes[i],recv_buf_sizes[i]); */
+    /*     } */
+    /* } */
     /* for ( i=0; i<num_of_comms; i++ ){ */
     /*     printf("Communicator %s: %ld Bytes\n",comm_table[i]->name,comm_table[i]->bytes); */
     /* } */

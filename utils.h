@@ -11,15 +11,13 @@
 
 typedef struct profiler_attributes{
     char *name;
-    unsigned long long bytes;
     char *prim;
-    MPI_Comm comm;
-    int index;
+    unsigned long long bytes;
+    int size;
 }prof_attrs;
 
 /* Globals */
 extern char *appname;
-extern int num_of_comms;
 extern Table_T table;
 extern prof_attrs **comm_table;
 

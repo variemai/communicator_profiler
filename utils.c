@@ -2,7 +2,6 @@
 
 
 char *appname = NULL;
-int num_of_comms =0;
 Table_T table;
 prof_attrs **comm_table = NULL;
 
