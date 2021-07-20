@@ -178,7 +178,7 @@ extern int MPI_Finalize(){
     /* FILE *fp; */
     /* fp = fopen("profiler_stats.txt","w"); */
     prof_attrs *array;
-    int rank,i,size,flag;
+    int rank,i,j,index,size,flag;
     prof_attrs *com_info;
     prof_attrs *recv_buffer;
     prof_attrs dummy;
@@ -249,7 +249,14 @@ extern int MPI_Finalize(){
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
     if ( rank == 0 ){
-        printf("%s\n",recv_buffer[3].name);
+        for ( i =0; i<size; i++ ){
+            for ( j = 0; j < num_of_comms; j++ ){
+                index = i*num_of_comms + j;
+                printf("Communicator: %s create from %s bytes = %llu, size = %d\n",
+                   recv_buffer[index].name,recv_buffer[index].prim,recv_buffer[index].bytes,
+                   recv_buffer[index].size);
+            }
+        }
     }
     /* for (i = 0; array[i]; i+=1) { */
     /*     com_info = (prof_attrs*)array[i]; */
