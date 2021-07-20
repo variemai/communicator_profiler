@@ -10,8 +10,8 @@
 #include "table.h"
 
 typedef struct profiler_attributes{
-    char *name;
-    char *prim;
+    char name[32];
+    char prim[32];
     unsigned long long bytes;
     int size;
 }prof_attrs;

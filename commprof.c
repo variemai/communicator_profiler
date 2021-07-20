@@ -40,10 +40,10 @@ static int namedel(MPI_Comm comm, int keyval, void *attr, void *s) {
   /* if(com->prim) */
   /*   free(com->prim); */
   /* free(com); */
-  if ( com->name )
-      FREE(com->name);
-  if (com->prim)
-      FREE(com->prim);
+  /* if ( com->name ) */
+  /*     FREE(com->name); */
+  /* if (com->prim) */
+  /*     FREE(com->prim); */
 
   FREE(com);
   return 0;
@@ -88,7 +88,6 @@ int compare(const void *x, const void *y) {
 
 int MPI_Init(int *argc, char ***argv){
     int ret,rank,size;
-    char *buf, *prim;
     prof_attrs *communicator;
     /* unsigned long long bytes; */
     /* Call Init before profiler initializations */
@@ -103,14 +102,10 @@ int MPI_Init(int *argc, char ***argv){
         appname = get_appname();
         printf("MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
     }
-    buf = ALLOC(32);
-    strcpy(buf, "WORLD");
     NEW(communicator);
+    strcpy(communicator->name,"WORLD");
     communicator->bytes = 0;
-    communicator->name = buf;
-    prim = ALLOC(32);
-    strcpy(prim, "INIT");
-    communicator->prim = prim;
+    strcpy(communicator->prim , "INIT");
     /* communicator->index = num_of_comms; */
     communicator->size = size;
     PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
@@ -124,20 +119,15 @@ int MPI_Init(int *argc, char ***argv){
 
 int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
     int ret,size;
-    char *buf,*prim;
     prof_attrs *communicator;
-    unsigned long long bytes;
     ret = PMPI_Comm_create(comm, group, newcomm);
-    buf = ALLOC(32);
-    sprintf(buf,"%s%d",comm_name,num_of_comms);
-    /* strcpy(buf, comm_name); */
     NEW(communicator);
-    bytes = 0;
-    prim = ALLOC(32);
-    strcpy(prim, "COMM_CREATE");
-    communicator->bytes = bytes;
-    communicator->name = buf;
-    communicator->prim = prim;
+    sprintf(communicator->name,"%s%d",comm_name,num_of_comms);
+    /* strcpy(buf, comm_name); */
+    communicator->bytes = 0;
+    strcpy(communicator->prim,"COMM_CREATE");
+    /* communicator->name = buf; */
+    /* communicator->prim = prim; */
     MPI_Comm_size(*newcomm, &size);
     communicator->size = size;
     /* MPI_Comm_set_name(*newcomm, buf); */
@@ -190,25 +180,25 @@ extern int MPI_Finalize(){
     prof_attrs *array;
     int rank,i,size,flag;
     prof_attrs *com_info;
-    prof_attrs **recv_buffer;
+    prof_attrs *recv_buffer;
     prof_attrs dummy;
-    char **names, **names_buf;
+    /* char **names, **names_buf; */
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    names = (char**) malloc ( sizeof (char*) *num_of_comms );
-    for (i = 0; i < num_of_comms; i++) {
-        names[i] = (char*) malloc(32);
-    }
-    names_buf = (char**) malloc (sizeof(char*)*num_of_comms*size);
+    /* names = (char**) malloc ( sizeof (char*) *num_of_comms ); */
+    /* for (i = 0; i < num_of_comms; i++) { */
+    /*     names[i] = (char*) malloc(32); */
+    /* } */
+    /* names_buf = (char**) malloc (sizeof(char*)*num_of_comms*size); */
 
-    for (i = 0; i < num_of_comms*size; i++) {
-        names_buf[i] = (char*) malloc(32);
-    }
+    /* for (i = 0; i < num_of_comms*size; i++) { */
+    /*     names_buf[i] = (char*) malloc(32); */
+    /* } */
     array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
-    recv_buffer = (prof_attrs**) malloc (sizeof(prof_attrs*)*num_of_comms*size);
-    for ( i =0; i<num_of_comms*size; i++ ){
-        recv_buffer[i]=(prof_attrs*) malloc ( sizeof(prof_attrs) );
-    }
+    recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
+    /* for ( i =0; i<num_of_comms*size; i++ ){ */
+    /*     recv_buffer[i]=(prof_attrs*) malloc ( sizeof(prof_attrs) ); */
+    /* } */
     MPI_Datatype types[4] = { MPI_CHAR, MPI_CHAR, MPI_UNSIGNED_LONG_LONG, MPI_INT };
     int blocklen[4] = {32,32,1,1};
     MPI_Aint displacements[4];
@@ -246,9 +236,7 @@ extern int MPI_Finalize(){
             /* printf("Rank %d Communicator %s created by %s Bytes %llu\n", */
             /*        rank,com_info->name,com_info->prim,com_info->bytes); */
             /* strcpy(names[i], com_info->name); */
-            array[i].name = (char*) malloc(32);
             strcpy(array[i].name, com_info->name);
-            array[i].prim = (char*) malloc(32);
             strcpy(array[i].prim, com_info->prim);
             array[i].bytes = com_info->bytes;
             array[i].size = com_info->size;
@@ -258,13 +246,10 @@ extern int MPI_Finalize(){
         }
     }
     /* PMPI_Gather(names, num_of_comms*32, MPI_CHAR, names_buf, num_of_comms*32, MPI_CHAR, 0, MPI_COMM_WORLD); */
-
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
     if ( rank == 0 ){
-        char tmp[8];
-        strncpy(tmp, recv_buffer[0]->name, 8);
-        printf("%s\n",tmp);
+        printf("%s\n",recv_buffer[3].name);
     }
     /* for (i = 0; array[i]; i+=1) { */
     /*     com_info = (prof_attrs*)array[i]; */
