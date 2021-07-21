@@ -8,6 +8,6 @@ LIBF=../lib
 LIBPATH=$(abspath $(LIBF))
 
 all:
-	mpicc -L$(LIBPATH) hello_mpi.c -lmcpt
+	mpicc -g -L$(LIBPATH) hello_mpi.c -lmcpt
 
 # end

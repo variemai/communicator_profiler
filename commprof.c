@@ -1,4 +1,5 @@
 #include "atom.h"
+#include "except.h"
 #include "table.h"
 #include "utils.h"
 #include <mpi.h>
@@ -8,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <ctype.h>
 
 
 /* typedef struct _node{ */
@@ -178,10 +180,12 @@ extern int MPI_Finalize(){
     /* FILE *fp; */
     /* fp = fopen("profiler_stats.txt","w"); */
     prof_attrs *array;
-    int rank,i,j,index,size,flag;
+    int rank,i,j,k,index,size,flag;
     prof_attrs *com_info;
     prof_attrs *recv_buffer;
     prof_attrs dummy;
+    char **names, **snames;
+    int found;
     /* char **names, **names_buf; */
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -249,14 +253,56 @@ extern int MPI_Finalize(){
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
     if ( rank == 0 ){
-        for ( i =0; i<size; i++ ){
-            for ( j = 0; j < num_of_comms; j++ ){
-                index = i*num_of_comms + j;
-                printf("Communicator: %s create from %s bytes = %llu, size = %d\n",
-                   recv_buffer[index].name,recv_buffer[index].prim,recv_buffer[index].bytes,
-                   recv_buffer[index].size);
-            }
+        names = ALLOC(sizeof(char*)*num_of_comms*size);
+        snames = ALLOC(sizeof(char*)*num_of_comms*size);
+        for ( i =0; i<num_of_comms*size; i++ ){
+            names[i] = ALLOC(32);
         }
+        for ( i =0; i<num_of_comms*size; i++ ){
+            snames[i] = ALLOC(32);
+        }
+        j = 0;
+        for ( i =0; i<size*num_of_comms; i++ ){
+            strncpy(names[j], recv_buffer[i].name,32);
+            /* printf("Copy %s",names[j]); */
+            j++;
+        }
+        /* Clear duplicates */
+        j = 0;
+        k = 0;
+        for ( i=0; i<size*num_of_comms; i++ ){
+            found = 0;
+            for ( j=0; j<num_of_comms*size; j++ ){
+                if ( i == 0  ){
+                    strncpy(snames[j], names[i],32);
+                    k++;
+                    found = 1;
+                    break;
+                }
+                else{
+                    if ( strncmp(snames[j], names[i], 32) == 0 ){
+                        found = 1;
+                        break;
+                    }
+                }
+            }
+            if ( !found ){
+                strncpy(snames[k], names[i],32);
+                k++;
+            }
+
+        }
+        printf("Rank 0 Communicators found:\n");
+        for ( i = 0; i < k; i++ ){
+            printf("%s\n",snames[i]);
+        }
+        for ( i =0; i<num_of_comms*size; i++ ){
+            FREE(names[i]);
+            FREE(snames[i]);
+        }
+        FREE(names);
+        FREE(snames);
+
     }
     /* for (i = 0; array[i]; i+=1) { */
     /*     com_info = (prof_attrs*)array[i]; */
