@@ -38,6 +38,6 @@ tests: test
 #	$(CC) $(CFLAGS) -c -o $@ $<
 
 clean:
-	rm -rf *.o *.out $(LIBF)/* $(DSTRUCTF)/*.o $(DSTRUCTF)/*.so test/a.out
+	rm -rf *.o *.out $(LIBF)/* $(DSTRUCTF)/*.o $(DSTRUCTF)/*.so test/*.out
 
 # end

@@ -9,5 +9,6 @@ LIBPATH=$(abspath $(LIBF))
 
 all:
 	mpicc -g -L$(LIBPATH) hello_mpi.c -lmcpt
+	mpicc -g -L$(LIBPATH) comm_group.c -o comm_group.out -lmcpt
 
 # end

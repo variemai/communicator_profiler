@@ -71,9 +71,9 @@ int main (int argc, char *argv[]){
     char *comm_name;
     cpi *com_info;
     int len;
-    MPI_Comm newcomm;
+    MPI_Comm newcomm,splitcomm;
     MPI_Group group;
-    int flag;
+    int flag,key;
     int rank,world_rank;
     char *buffer;
     MPI_Init(NULL, NULL);
@@ -96,13 +96,15 @@ int main (int argc, char *argv[]){
     /* bullshit(&newcomm) ; */
     /* sprintf(comm_name, "TRIBOURDELO"); */
     /* MPI_Comm_set_attr(newcomm, 0, comm_name); */
+    MPI_Comm_split(MPI_COMM_WORLD, rank % 2, rank / 2, &splitcomm);
     buffer = malloc(64);
     if ( rank == 0  ){
         /* MPI_Comm_rank(MPI_COMM_WORLD, &world_rank); */
         /* printf("Rank = %d, World = %d\n",rank,world_rank); */
         MPI_Send(&size,1,MPI_INT,1,0,newcomm);
         MPI_Recv(buffer, 64, MPI_CHAR, 1, 1, newcomm, MPI_STATUS_IGNORE);
-        printf("I received %s from rank %d\n",buffer,rank);
+        MPI_Send(&size,1,MPI_INT,1,0,splitcomm);
+        /* printf("I received %s from rank %d\n",buffer,rank); */
         /* MPI_Send(&size,1,MPI_INT,1,2,MPI_COMM_WORLD); */
         /* send_wrapper(&size, 1, MPI_INT, 1, 0, newcomm); */
         /* MPI_Comm_get_attr(newcomm, namekey(), &com_info, &flag); */
@@ -112,17 +114,19 @@ int main (int argc, char *argv[]){
     }
     if ( rank == 1 ){
         MPI_Recv(&size, 1, MPI_INT, 0, 0, newcomm, MPI_STATUS_IGNORE);
-        strcpy(buffer, "This is a shitty application");
+        /* strcpy(buffer, "This is a shitty application"); */
         MPI_Send(buffer,64,MPI_CHAR,0,1,newcomm);
         /* MPI_Recv(&size, 1, MPI_INT, 0, 2, MPI_COMM_WORLD, MPI_STATUS_IGNORE); */
     }
     if ( rank == 2 ){
-        strcpy(buffer, "This is a shitty application");
+        /* strcpy(buffer, "This is a shitty application"); */
         MPI_Send(buffer,64,MPI_CHAR,3,3,MPI_COMM_WORLD);
+        MPI_Recv(&size, 1, MPI_INT, 0, 0, splitcomm, MPI_STATUS_IGNORE);
+        printf("I received size = %d from rank 0\n",size);
     }
     if ( rank == 3 ){
         MPI_Recv(buffer, 64, MPI_CHAR, 2, 3, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        printf("I received %s from rank 2\n",buffer);
+        /* printf("I received %s from rank 2\n",buffer); */
     }
     /* if ( rank ==0  ){ */
     /*     MPI_Comm_get_name(*newcomm, buffer, &len); */
