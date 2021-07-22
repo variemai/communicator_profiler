@@ -6,21 +6,20 @@
 int main (int argc, char *argv[]){
     int size;
     MPI_Comm newcomm,splitcomm,subcomm;
-    MPI_Group group;
-    int rank;
+    MPI_Comm comm;
+    MPI_Group group, newgroup, world_group;
+    int rank, world_rank, world_size;
     char *buffer;
+    int i;
+    const int ranks[2] = {0,1};
     MPI_Init(NULL, NULL);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     /* printf("Hello from all %d ranks\n",size); */
     /* MPI_Comm_get_name(MPI_COMM_WORLD, comm_name, &len); */
-    MPI_Comm_group(MPI_COMM_WORLD, &group);
     /* wrapper_shit(MPI_COMM_WORLD, group, &newcomm); */
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    /* MPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *newcomm) */
     /* if ( rank == 0 || rank == 1 ){ */
-    MPI_Comm_create(MPI_COMM_WORLD, group,&newcomm);
-    MPI_Comm_rank(newcomm, &rank);
     /* } */
     /* MPI_Comm_set_name(newcomm, "BOURDELO"); */
     /* MPI_Comm_get_name(newcomm, comm_name, &len); */
@@ -42,7 +41,7 @@ int main (int argc, char *argv[]){
             MPI_Send(&size,1,MPI_INT,rank+1,0,subcomm);
         }
         else{
-            MPI_Recv(&size, 1, MPI_INT, rank-1, 0, subcomm, MPI_STATUSES_IGNORE);
+            MPI_Recv(&size, 1, MPI_INT, rank-1, 0, subcomm, MPI_STATUS_IGNORE);
         }
         /* MPI_Recv(buffer, 64, MPI_CHAR, 1, 1, newcomm, MPI_STATUS_IGNORE); */
         /* MPI_Send(&size,1,MPI_INT,1,0,splitcomm); */
@@ -55,7 +54,74 @@ int main (int argc, char *argv[]){
         /* } */
     }
     else{
-
+        MPI_Comm_group(splitcomm, &group);
+        MPI_Comm_create(splitcomm, group, &subcomm);
+        MPI_Comm_rank(subcomm, &rank);
+        /* MPI_Comm_rank(MPI_COMM_WORLD, &world_rank); */
+        /* printf("Rank = %d, World = %d\n",rank,world_rank); */
+        if ( rank % 2 == 0 ){
+            MPI_Send(buffer,64,MPI_BYTE,rank+1,0,subcomm);
+        }
+        else{
+            MPI_Recv(buffer, 64, MPI_BYTE, rank-1, 0, subcomm, MPI_STATUS_IGNORE);
+        }
+    }
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    if ( MPI_Group_excl(world_group, 2, ranks, &newgroup) != MPI_SUCCESS ){
+        fprintf(stderr,"group_include_failed");
+        exit(EXIT_FAILURE);
+    }
+    if ( MPI_Group_incl(world_group, 2, ranks, &group) != MPI_SUCCESS ){
+        fprintf(stderr,"group_include_failed");
+        exit(EXIT_FAILURE);
+    }
+    if ( newgroup == MPI_GROUP_NULL ){
+            fprintf(stderr,"NULL NEWGROUP\n");
+            MPI_Finalize();
+            exit(EXIT_FAILURE);
+    }
+    if ( group == MPI_GROUP_NULL ){
+            fprintf(stderr,"NULL GROUP\n");
+            MPI_Finalize();
+            exit(EXIT_FAILURE);
+    }
+    if ( MPI_Comm_create(MPI_COMM_WORLD, newgroup, &newcomm) != MPI_SUCCESS ){
+        fprintf(stderr,"create_group_failed");
+        exit(EXIT_FAILURE);
+    }
+    if ( MPI_Comm_create(MPI_COMM_WORLD, group, &comm) != MPI_SUCCESS ){
+        fprintf(stderr,"create_group_failed");
+        exit(EXIT_FAILURE);
+    }
+    if ( newcomm != MPI_COMM_NULL && newcomm != NULL){
+            /* fprintf(stderr,"NULL COMMUNICATOR\n"); */
+            /* MPI_Finalize(); */
+            /* exit(EXIT_FAILURE); */
+        MPI_Comm_rank(newcomm,&rank);
+        if ( rank == 0 ){
+            MPI_Send(&size,1,MPI_INT,rank+1,0,newcomm);
+        }
+        if ( rank == 1 ){
+            MPI_Recv(&size, 1, MPI_INT, rank-1, 0, newcomm, MPI_STATUS_IGNORE);
+        }
+        printf("Communicator X: World rank = %d, newcomm rank = %d\n",world_rank,rank);
+        MPI_Comm_split(newcomm, rank % 2, rank / 2, &splitcomm);
+    }
+    if ( comm != MPI_COMM_NULL && comm != NULL){
+            /* fprintf(stderr,"NULL COMMUNICATOR\n"); */
+            /* MPI_Finalize(); */
+            /* exit(EXIT_FAILURE); */
+            MPI_Comm_rank(comm,&rank);
+            printf("Communicator Y: World rank = %d, comm rank = %d\n",world_rank,rank);
+            if ( rank == 0 ){
+                MPI_Send(buffer,64,MPI_BYTE,rank+1,0,comm);
+            }
+            if ( rank == 1 ){
+                MPI_Recv(buffer, 64, MPI_BYTE, rank-1, 0, comm, MPI_STATUS_IGNORE);
+            }
+            MPI_Comm_split(comm, rank % 2, rank / 2, &splitcomm);
     }
     /* if ( rank == 1 ){ */
     /*     MPI_Recv(&size, 1, MPI_INT, 0, 0, newcomm, MPI_STATUS_IGNORE); */

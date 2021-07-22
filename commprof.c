@@ -123,6 +123,11 @@ extern int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
     int ret,size;
     prof_attrs *communicator;
     ret = PMPI_Comm_create(comm, group, newcomm);
+    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
+        communicators[num_of_comms] = NULL;
+        num_of_comms++;
+        return ret;
+    }
     NEW(communicator);
     sprintf(communicator->name,"%s%d",comm_name,num_of_comms);
     /* strcpy(buf, comm_name); */
@@ -212,11 +217,26 @@ extern int MPI_Finalize(){
     prof_attrs *recv_buffer;
     prof_attrs dummy;
     char **names, **snames;
-    int found, comm_num;
+    int found, comm_num,mycom;
+    int *total_comms;
     unsigned long long *bytes;
     /* char **names, **names_buf; */
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+    /* Before we do anything we should first learn the number of communicators */
+    total_comms = ALLOC(sizeof(int)*size);
+    mycom = num_of_comms;
+    PMPI_Gather(&num_of_comms, 1, MPI_INT, total_comms, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if ( rank == 0 ){
+    for ( i = 0; i< size; i++ ){
+        if ( total_comms[i] > num_of_comms ){
+            num_of_comms = total_comms[i];
+        }
+    }
+    printf( "Num of comms = %d\n",num_of_comms);
+    }
+    /* PMPI_Reduce(&mycom, &num_of_comms, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD); */
     /* names = (char**) malloc ( sizeof (char*) *num_of_comms ); */
     /* for (i = 0; i < num_of_comms; i++) { */
     /*     names[i] = (char*) malloc(32); */
@@ -261,20 +281,28 @@ extern int MPI_Finalize(){
     /* printf("Num of communicators = %d\n",num_of_comms); */
     MPI_Type_create_struct(4, blocklen, displacements, types, &profiler_data);
     MPI_Type_commit(&profiler_data);
-    for ( i = 0; i < num_of_comms; i++ ){
+    for ( i = 0; i < mycom; i++ ){
         /* array = Table_get(table, communicators[i]); */
-        PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
-        if ( flag ){
+        if ( communicators[i] != NULL ){
+            PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
+            if ( flag ){
             /* printf("Rank %d Communicator %s created by %s Bytes %llu\n", */
             /*        rank,com_info->name,com_info->prim,com_info->bytes); */
             /* strcpy(names[i], com_info->name); */
-            strcpy(array[i].name, com_info->name);
-            strcpy(array[i].prim, com_info->prim);
-            array[i].bytes = com_info->bytes;
-            array[i].size = com_info->size;
+                strcpy(array[i].name, com_info->name);
+                strcpy(array[i].prim, com_info->prim);
+                array[i].bytes = com_info->bytes;
+                array[i].size = com_info->size;
             /* printf("Rank %d Communicator %s created by %s Bytes %llu\n", */
             /*        rank,array[i].name,array[i].prim,array[i].bytes); */
             /* printf("Rank %d Comm Name = %s\n",rank,names[i]); */
+            }
+        }
+        else{
+            strcpy(array[i].name, "NULL");
+            strcpy(array[i].prim, "NULL");
+            array[i].bytes = 0;
+            array[i].size = 0;
         }
     }
     /* PMPI_Gather(names, num_of_comms*32, MPI_CHAR, names_buf, num_of_comms*32, MPI_CHAR, 0, MPI_COMM_WORLD); */
@@ -288,11 +316,12 @@ extern int MPI_Finalize(){
             snames[i] = ALLOC(32);
         }
         j = 0;
-        for ( i =0; i<size*num_of_comms; i++ ){
-            strncpy(names[j], recv_buffer[i].name,32);
-            /* bytes[i] = recv_buffer[i].bytes; */
-            /* printf("Copy %s",names[j]); */
-            j++;
+        for ( i =0; i<size; i++ ){
+            for ( j = 0; j<num_of_comms; j++ ){
+                strncpy(names[i*size+j], recv_buffer[i*size+j].name,32);
+                /* bytes[i] = recv_buffer[i].bytes; */
+                /* printf("Copy %s",names[j]); */
+            }
         }
         /* Clear duplicates */
         j = 0;
@@ -320,6 +349,7 @@ extern int MPI_Finalize(){
 
         }
         comm_num = k;
+        printf ( "Actual communicators = %d\n",k );
         bytes = ALLOC(sizeof(unsigned long long)*comm_num);
         for ( i = 0; i < comm_num; i++ ){
             bytes[i] = 0;
@@ -343,7 +373,7 @@ extern int MPI_Finalize(){
         FREE(names);
         FREE(snames);
         FREE(bytes);
-
+        FREE(total_comms);
     }
     /* for (i = 0; array[i]; i+=1) { */
     /*     com_info = (prof_attrs*)array[i]; */
