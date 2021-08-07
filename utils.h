@@ -7,7 +7,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdarg.h>
-#include "table.h"
 
 typedef struct profiler_attributes{
     char name[32];
@@ -18,7 +17,6 @@ typedef struct profiler_attributes{
 
 /* Globals */
 extern char *appname;
-extern Table_T table;
 extern prof_attrs **comm_table;
 
 void mcpt_abort (char *fmt, ...);

@@ -10,7 +10,6 @@ int main (int argc, char *argv[]){
     MPI_Group group, newgroup, world_group;
     int rank, world_rank, world_size;
     char *buffer;
-    int i;
     const int ranks[2] = {0,1};
     MPI_Init(NULL, NULL);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -87,12 +86,15 @@ int main (int argc, char *argv[]){
             MPI_Finalize();
             exit(EXIT_FAILURE);
     }
+    // id = 0
     if ( MPI_Comm_create(MPI_COMM_WORLD, newgroup, &newcomm) != MPI_SUCCESS ){
-        fprintf(stderr,"create_group_failed");
+        fprintf(stderr,"comm_create_failed");
         exit(EXIT_FAILURE);
     }
+    // id = 1
     if ( MPI_Comm_create(MPI_COMM_WORLD, group, &comm) != MPI_SUCCESS ){
-        fprintf(stderr,"create_group_failed");
+
+        fprintf(stderr,"comm_create_failed");
         exit(EXIT_FAILURE);
     }
     if ( newcomm != MPI_COMM_NULL && newcomm != NULL){
@@ -107,21 +109,29 @@ int main (int argc, char *argv[]){
             MPI_Recv(&size, 1, MPI_INT, rank-1, 0, newcomm, MPI_STATUS_IGNORE);
         }
         printf("Communicator X: World rank = %d, newcomm rank = %d\n",world_rank,rank);
+        // id = 0_0.0
+        // id = 0_0.1
         MPI_Comm_split(newcomm, rank % 2, rank / 2, &splitcomm);
+        // id = 0_1
+        /* MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) */
     }
     if ( comm != MPI_COMM_NULL && comm != NULL){
-            /* fprintf(stderr,"NULL COMMUNICATOR\n"); */
-            /* MPI_Finalize(); */
-            /* exit(EXIT_FAILURE); */
-            MPI_Comm_rank(comm,&rank);
-            printf("Communicator Y: World rank = %d, comm rank = %d\n",world_rank,rank);
-            if ( rank == 0 ){
-                MPI_Send(buffer,64,MPI_BYTE,rank+1,0,comm);
-            }
-            if ( rank == 1 ){
-                MPI_Recv(buffer, 64, MPI_BYTE, rank-1, 0, comm, MPI_STATUS_IGNORE);
-            }
-            MPI_Comm_split(comm, rank % 2, rank / 2, &splitcomm);
+        /* fprintf(stderr,"NULL COMMUNICATOR\n"); */
+        /* MPI_Finalize(); */
+        /* exit(EXIT_FAILURE); */
+        MPI_Comm_rank(comm,&rank);
+        printf("Communicator Y: World rank = %d, comm rank = %d\n",world_rank,rank);
+        if ( rank == 0 ){
+            MPI_Send(buffer,64,MPI_BYTE,rank+1,0,comm);
+        }
+        if ( rank == 1 ){
+            MPI_Recv(buffer, 64, MPI_BYTE, rank-1, 0, comm, MPI_STATUS_IGNORE);
+        }
+        // id = 1_0.0
+        // id = 1_0.0
+        MPI_Comm_split(comm, rank % 2, rank / 2, &splitcomm);
+        // id = 1_1
+        /* MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) */
     }
     /* if ( rank == 1 ){ */
     /*     MPI_Recv(&size, 1, MPI_INT, 0, 0, newcomm, MPI_STATUS_IGNORE); */

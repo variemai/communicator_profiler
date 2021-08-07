@@ -2,7 +2,6 @@
 
 
 char *appname = NULL;
-Table_T table;
 prof_attrs **comm_table = NULL;
 
 void mcpt_abort (char *fmt, ...){
