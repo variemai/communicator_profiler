@@ -27,6 +27,12 @@ int main (int argc, char *argv[]){
         else{
             MPI_Recv(&size, 1, MPI_INT, rank-1, 0, subcomm, MPI_STATUS_IGNORE);
         }
+        if ( rank % 2 == 0 ){
+            MPI_Send(buffer,64,MPI_BYTE,rank+1,0,subcomm);
+        }
+        else{
+            MPI_Recv(buffer, 64, MPI_BYTE, rank-1, 0, subcomm, MPI_STATUS_IGNORE);
+        }
     }
     else{
         MPI_Comm_group(splitcomm, &group);
