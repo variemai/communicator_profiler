@@ -31,11 +31,12 @@ int main (int argc, char *argv[]){
     MPI_Comm_split(MPI_COMM_WORLD, rank % 2, rank / 2, &splitcomm);
     buffer = malloc(64);
     if ( rank  % 2 == 0  ){
+        /* MPI_Comm_rank(MPI_COMM_WORLD, &world_rank); */
+        /* MPI_Comm_rank(splitcomm, &rank); */
+        /* printf("Rank = %d, World = %d\n",rank,world_rank); */
         MPI_Comm_group(splitcomm, &group);
         MPI_Comm_create(splitcomm, group, &subcomm);
         MPI_Comm_rank(subcomm, &rank);
-        /* MPI_Comm_rank(MPI_COMM_WORLD, &world_rank); */
-        /* printf("Rank = %d, World = %d\n",rank,world_rank); */
         if ( rank % 2 == 0 ){
             MPI_Send(&size,1,MPI_INT,rank+1,0,subcomm);
         }
@@ -102,16 +103,17 @@ int main (int argc, char *argv[]){
             /* MPI_Finalize(); */
             /* exit(EXIT_FAILURE); */
         MPI_Comm_rank(newcomm,&rank);
+        MPI_Comm_size(newcomm,&size);
         if ( rank == 0 ){
             MPI_Send(&size,1,MPI_INT,rank+1,0,newcomm);
         }
         if ( rank == 1 ){
             MPI_Recv(&size, 1, MPI_INT, rank-1, 0, newcomm, MPI_STATUS_IGNORE);
         }
-        printf("Communicator X: World rank = %d, newcomm rank = %d\n",world_rank,rank);
+        printf("Communicator X: World rank = %d, newcomm rank = %d, newcomm size = %d\n",world_rank,rank,size);
         // id = 0_0.0
         // id = 0_0.1
-        MPI_Comm_split(newcomm, rank % 2, rank / 2, &splitcomm);
+        /* MPI_Comm_split(newcomm, rank % 2, rank / 2, &splitcomm); */
         // id = 0_1
         /* MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) */
     }
@@ -120,7 +122,8 @@ int main (int argc, char *argv[]){
         /* MPI_Finalize(); */
         /* exit(EXIT_FAILURE); */
         MPI_Comm_rank(comm,&rank);
-        printf("Communicator Y: World rank = %d, comm rank = %d\n",world_rank,rank);
+        MPI_Comm_size(comm,&size);
+        printf("Communicator Y: World rank = %d, comm rank = %d, comm size = %d\n",world_rank,rank,size);
         if ( rank == 0 ){
             MPI_Send(buffer,64,MPI_BYTE,rank+1,0,comm);
         }
@@ -129,7 +132,7 @@ int main (int argc, char *argv[]){
         }
         // id = 1_0.0
         // id = 1_0.0
-        MPI_Comm_split(comm, rank % 2, rank / 2, &splitcomm);
+        /* MPI_Comm_split(comm, rank % 2, rank / 2, &splitcomm); */
         // id = 1_1
         /* MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm) */
     }

@@ -176,7 +176,7 @@ extern int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
 }
 
 extern int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
-    int ret,size;
+    int ret,size,rank;
     prof_attrs *communicator;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
     /* communicator = (prof_attrs*) malloc (sizeof(prof_attrs)); */
@@ -198,7 +198,9 @@ extern int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
     /* if ( len && buffer){ */
     /*     printf ( "Name = %.*s\n",len,buffer ); */
     /* } */
-    num_of_comms++;
+    num_of_comms+=color+1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    printf("RANK %d: Num of Comms After split = %d\n",rank,num_of_comms);
     return ret;
 }
 
@@ -233,35 +235,34 @@ extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
 }
 
 extern int MPI_Finalize(){
-    return PMPI_Finalize();
     /* FILE *fp; */
     /* fp = fopen("profiler_stats.txt","w"); */
     /* prof_attrs *array; */
-    /* int rank,i,j,k,size,flag; */
+    int rank,i,j,k,size,flag;
     /* prof_attrs *com_info; */
     /* prof_attrs *recv_buffer; */
     /* prof_attrs dummy; */
     /* char **names, **snames; */
-    /* int found, comm_num,mycom; */
-    /* int *total_comms; */
+    int found, comm_num,mycom;
+    int *total_comms;
     /* unsigned long long *bytes; */
     /* /\* char **names, **names_buf; *\/ */
-    /* MPI_Comm_rank(MPI_COMM_WORLD, &rank); */
-    /* MPI_Comm_size(MPI_COMM_WORLD, &size); */
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
     /* free(communicators); */
 
     /* Before we do anything we should first learn the number of communicators */
-   /*  total_comms = (int*)malloc(sizeof(int)*size); */
-   /*  mycom = num_of_comms; */
-   /*  PMPI_Gather(&num_of_comms, 1, MPI_INT, total_comms, 1, MPI_INT, 0, MPI_COMM_WORLD); */
-   /*  if ( rank == 0 ){ */
-   /*  for ( i = 0; i< size; i++ ){ */
-   /*      if ( total_comms[i] > num_of_comms ){ */
-   /*          num_of_comms = total_comms[i]; */
-   /*      } */
-   /*  } */
-   /*  printf( "Num of comms = %d\n",num_of_comms); */
-   /*  } */
+    total_comms = (int*)malloc(sizeof(int)*size);
+    mycom = num_of_comms;
+    PMPI_Gather(&num_of_comms, 1, MPI_INT, total_comms, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    if ( rank == 0 ){
+    for ( i = 0; i< size; i++ ){
+        if ( total_comms[i] > num_of_comms ){
+            num_of_comms = total_comms[i];
+        }
+    }
+    printf( "Num of comms = %d\n",num_of_comms);
+    }
 
    /* names = (char**)malloc(sizeof(char*)*num_of_comms*size); */
    /* snames = (char**)malloc(sizeof(char*)*num_of_comms*size); */
@@ -414,4 +415,5 @@ extern int MPI_Finalize(){
     /* fclose(fp); */
     /* if (communicators) */
     /*     FREE(communicators); */
+    return PMPI_Finalize();
 }
