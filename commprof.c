@@ -121,7 +121,7 @@ extern int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
     ret = PMPI_Comm_create(comm, group, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         /* communicators[num_of_comms] = NULL; */
-        /* num_of_comms++; */
+        num_of_comms++;
         return ret;
     }
     /* name = (char*) malloc (32); */
