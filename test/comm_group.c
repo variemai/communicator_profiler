@@ -54,32 +54,43 @@ int main (int argc, char *argv[]){
         }
 
     }
-    /* MPI_Comm_group(MPI_COMM_WORLD, &world_group); */
-    /* MPI_Comm_size(MPI_COMM_WORLD, &world_size); */
-    /* MPI_Comm_rank(MPI_COMM_WORLD, &world_rank); */
-    /* if ( MPI_Group_excl(world_group, 2, ranks, &newgroup) != MPI_SUCCESS ){ */
-    /*     fprintf(stderr,"group_include_failed"); */
-    /*     exit(EXIT_FAILURE); */
-    /* } */
+    MPI_Comm_group(MPI_COMM_WORLD, &world_group);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    if ( MPI_Group_excl(world_group, 2, ranks, &newgroup) != MPI_SUCCESS ){
+        fprintf(stderr,"group_include_failed");
+        exit(EXIT_FAILURE);
+    }
     /* if ( MPI_Group_incl(world_group, 2, ranks, &group) != MPI_SUCCESS ){ */
     /*     fprintf(stderr,"group_include_failed"); */
     /*     exit(EXIT_FAILURE); */
     /* } */
-    /* if ( newgroup == MPI_GROUP_NULL ){ */
-    /*         fprintf(stderr,"NULL NEWGROUP\n"); */
-    /*         MPI_Finalize(); */
-    /*         exit(EXIT_FAILURE); */
-    /* } */
+    if ( newgroup == MPI_GROUP_NULL ){
+            fprintf(stderr,"NULL NEWGROUP\n");
+            MPI_Finalize();
+            exit(EXIT_FAILURE);
+    }
     /* if ( group == MPI_GROUP_NULL ){ */
     /*         fprintf(stderr,"NULL GROUP\n"); */
     /*         MPI_Finalize(); */
     /*         exit(EXIT_FAILURE); */
     /* } */
     /* // id = 0 */
-    /* if ( MPI_Comm_create(MPI_COMM_WORLD, newgroup, &newcomm) != MPI_SUCCESS ){ */
-    /*     fprintf(stderr,"comm_create_failed"); */
-    /*     exit(EXIT_FAILURE); */
-    /* } */
+    if ( world_rank != 0 && world_rank != 1 ){
+        if ( MPI_Comm_create_group(MPI_COMM_WORLD, newgroup, 0, &comm) != MPI_SUCCESS ){
+            fprintf(stderr,"comm_create_failed");
+            exit(EXIT_FAILURE);
+        }
+        MPI_Comm_size(comm,&size);
+        MPI_Comm_rank(comm,&rank);
+        printf("Communicator Y: World rank = %d, comm rank = %d, comm size = %d\n",world_rank,rank,size);
+        if ( rank == 0 ){
+            MPI_Send(buffer,64,MPI_BYTE,rank+1,0,comm);
+        }
+        if ( rank == 1 ){
+            MPI_Recv(buffer, 64, MPI_BYTE, rank-1, 0, comm, MPI_STATUS_IGNORE);
+        }
+    }
     /* // id = 1 */
     /* if ( MPI_Comm_create(MPI_COMM_WORLD, group, &comm) != MPI_SUCCESS ){ */
 
