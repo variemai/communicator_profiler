@@ -9,7 +9,7 @@
 #include <stdarg.h>
 
 typedef struct profiler_attributes{
-    char name[32];
+    char name[64];
     char prim[32];
     unsigned long long bytes;
     int size;
