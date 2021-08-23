@@ -2,7 +2,6 @@
 #include "mpi.h"
 #include <stdlib.h>
 #include <string.h>
-#include "prof_headers.h"
 
 int main (int argc, char *argv[]){
     int size;
