@@ -31,10 +31,10 @@ int main (int argc, char *argv[]){
         MPI_Cart_shift(cartcomm, 0, 1, &nbrs[UP], &nbrs[DOWN]);
         MPI_Cart_shift(cartcomm, 1, 1, &nbrs[LEFT], &nbrs[RIGHT]);
 
-    printf("P[%d]: coords= %d %d \n",
-           rank,coords[0],coords[1]);
-    printf("P[%d]: neighbors(u,d,l,r)=%d %d %d %d\n",
-       rank,nbrs[UP],nbrs[DOWN],nbrs[LEFT], nbrs[RIGHT]);
+    /* printf("P[%d]: coords= %d %d \n", */
+    /*        rank,coords[0],coords[1]); */
+    /* printf("P[%d]: neighbors(u,d,l,r)=%d %d %d %d\n", */
+       /* rank,nbrs[UP],nbrs[DOWN],nbrs[LEFT], nbrs[RIGHT]); */
     outbuf = rank;
     for (i=0; i<4; i++) {
         dest = nbrs[i];

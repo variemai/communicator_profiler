@@ -7,10 +7,13 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdarg.h>
+#define NAMELEN 64
+#define PRIMLEN 16
 
 typedef struct profiler_attributes{
-    char name[64];
-    char prim[32];
+    char name[NAMELEN];
+    char parent[NAMELEN];
+    char prim[PRIMLEN];
     unsigned long long bytes;
     int size;
 }prof_attrs;
