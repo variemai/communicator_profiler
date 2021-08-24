@@ -99,6 +99,7 @@ extern int MPI_Init(int *argc, char ***argv){
     strcpy(communicator->name,"WORLD");
     communicator->bytes = 0;
     strcpy(communicator->prim , "INIT");
+    strcpy(communicator->parent, "NULL");
     /* communicator->index = num_of_comms; */
     /* communicator->size = size; */
     PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
@@ -123,31 +124,31 @@ extern int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
     }
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
     //append mother's name if mother != WORLD
-    if ( comm != MPI_COMM_WORLD ){
-        //find the mother
-        for ( i = 0; i<num_of_comms; i++ ){
-            if ( comm  == communicators[i] )
-                break;
-        }
-        if ( i == num_of_comms ){
-            // Should have found the mother
-            fprintf(stderr, "Error: could not find the mother of communicator.\nAborting\n");
+    /* if ( comm != MPI_COMM_WORLD ){ */
+    /*     //find the mother */
+    /*     for ( i = 0; i<num_of_comms; i++ ){ */
+    /*         if ( comm  == communicators[i] ) */
+    /*             break; */
+    /*     } */
+    /*     if ( i == num_of_comms ){ */
+    /*         // Should have found the mother */
+    /*         fprintf(stderr, "Error: could not find the mother of communicator.\nAborting\n"); */
 
-        }
-        else{
-            PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
-            if ( flag ){
-                sprintf(communicator->name, "%s_c%d",com_info->name,my_coms);
-                printf("New comm with name %s\n",communicator->name);
-            }
-            else{
-                mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",__FILE__,__LINE__);
-            }
-        }
+    /*     } */
+    /*     else{ */
+    /*         PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag); */
+    /*         if ( flag ){ */
+    /*             sprintf(communicator->name, "%s_c%d",com_info->name,my_coms); */
+    /*             printf("New comm with name %s\n",communicator->name); */
+    /*         } */
+    /*         else{ */
+    /*             mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",__FILE__,__LINE__); */
+    /*         } */
+    /*     } */
 
-    }
-    else
-        sprintf(communicator->name,"c%d",my_coms);
+    /* } */
+    /* else */
+    sprintf(communicator->name,"c%d",my_coms);
     communicator->bytes = 0;
     strcpy(communicator->prim,"COMM_CREATE");
     /* /\* communicator->name = buf; *\/ */
@@ -204,7 +205,7 @@ int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
     else{
         strcpy(communicator->parent, "WORLD");
     }
-    printf("New comm with name %s and parent %s\n",communicator->name,communicator->parent);
+    /* printf("New comm with name %s and parent %s\n",communicator->name,communicator->parent); */
     communicator->bytes = 0;
     strcpy(communicator->prim,"COMM_SPLIT");
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
@@ -266,14 +267,13 @@ extern int MPI_Finalize(){
     /* fp = fopen("profiler_stats.txt","w"); */
     prof_attrs *array;
     int rank,size;
-    int i,j,flag;
+    int i,j,k,flag,found;
     prof_attrs *com_info;
     prof_attrs *recv_buffer;
     prof_attrs dummy;
-    char **names;
-    char **snames;
+    char **names, **parents, **unames, **uparents;
     /* int found, comm_num; */
-    int *total_comms;
+    int *total_comms,total;
     /* unsigned long long *bytes; */
     /* char **names, **names_buf; */
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -290,11 +290,9 @@ extern int MPI_Finalize(){
                 num_of_comms = total_comms[i];
             }
         }
-        printf( "Rank %d Num of comms = %d\n",rank,num_of_comms);
     }
     PMPI_Bcast(&num_of_comms, 1, MPI_INT, 0, MPI_COMM_WORLD);
     /* names = (char**)malloc(sizeof(char*)*num_of_comms); */
-    snames = ( char**)malloc(sizeof(char*)*num_of_comms*size);
     /* for ( i =0; i<num_of_comms*size; i++ ){ */
     /*     snames[i] = (char*)malloc(64); */
     /* } */
@@ -378,98 +376,52 @@ extern int MPI_Finalize(){
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
 
     if ( rank == 0 ){
+        names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
+        parents = ( char**)malloc(sizeof(char*)*num_of_comms*size);
+        unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
+        uparents =(char **) malloc (sizeof(char*)*num_of_comms*size);
         j = 0;
         for ( i =0; i<size*num_of_comms; i++ ){
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
-                snames[j]=strdup(recv_buffer[i].name);
+                names[j]=strdup(recv_buffer[i].name);
+                parents[j]=strdup(recv_buffer[i].parent);
+                unames[j] = strdup("NULL");
+                uparents[j] = strdup("NULL");
                 j++;
             }
         }
-        for ( i=0; i<j; i++ ){
-            printf("%s\n",snames[i]);
+        total = j;
+        num_of_comms = 1;
+        j = 0;
+        printf("TOTAL %d\n",total);
+        for ( i=0; i<total; i++ ){
+                if ( strcmp(names[i], "WORLD") != 0 ){
+                    found = 0;
+                    for ( k =0; k<total; k++ ){
+                        if ( strcmp(names[i], unames[k] ) == 0 &&
+                             strcmp(parents[i], uparents[k] ) == 0 ){
+                            found = 1;
+                        }
+                    }
+                    if ( !found ){
+                        strcpy(unames[j], names[i]);
+                        strcpy(uparents[j], parents[i]);
+                        j++;
+                        num_of_comms++;
+                    }
+                }
+        }
+        printf( "Num of comms = %d\n",num_of_comms);
+        for ( i =0; i<num_of_comms-1; i++ )
+            printf("Comm: %s Parent: %s\n",unames[i],uparents[i]);
+        for ( i =0; i<total; i++ ){
+            free(names[i]);
+            free(unames[i]);
+            free(parents[i]);
+            free(uparents[i]);
         }
     }
 
-        /* /\* Clear duplicates *\/ */
-        /* j = 0; */
-        /* k = 0; */
-        /* for ( i=0; i<size*num_of_comms; i++ ){ */
-        /*     found = 0; */
-        /*     for ( j=0; j<num_of_comms*size; j++ ){ */
-        /*         if ( i == 0  ){ */
-        /*             strncpy(snames[j], names[i],32); */
-        /*             k++; */
-        /*             found = 1; */
-        /*             break; */
-        /*         } */
-        /*         else{ */
-        /*             if ( strncmp(snames[j], names[i], 32) == 0 ){ */
-        /*                 found = 1; */
-        /*                 break; */
-        /*             } */
-        /*         } */
-        /*     } */
-        /*     if ( !found ){ */
-        /*         strncpy(snames[k], names[i],32); */
-        /*         k++; */
-        /*     } */
-
-        /* } */
-        /* comm_num = k; */
-        /* printf ( "Actual communicators = %d\n",k ); */
-        /* bytes = (unsigned long long*)malloc(sizeof(unsigned long long)*comm_num); */
-        /* for ( i = 0; i < comm_num; i++ ){ */
-        /*     bytes[i] = 0; */
-        /* } */
-        /* printf("Rank 0 Communicators found:\n"); */
-        /* for ( i = 0; i < comm_num; i++ ){ */
-        /*     for ( j =0; j < num_of_comms*size; j++ ){ */
-        /*         if ( strcmp(snames[i], names[j]) == 0 ){ */
-        /*             bytes[i] = bytes[i] + recv_buffer[j].bytes; */
-        /*         } */
-        /*     } */
-        /* } */
-
-        /* for ( i = 0; i < comm_num; i++ ){ */
-        /*     printf("Communicator %s Bytes = %llu\n",snames[i],bytes[i]); */
-        /* } */
-        /* free(bytes); */
-    /* } */
-
-
-
-
-    /* for (i = 0; array[i]; i+=1) { */
-    /*     com_info = (prof_attrs*)array[i]; */
-        /* printf("Rank :%d Communicator %s ",rank,(char*)com_info->name); */
-        /* printf("Bytes %llu\n",(unsigned long long)com_info->bytes); */
-        /* bytes[i] = (unsigned long long)com_info->bytes; */
-        /* sizes[i] = (int)(com_info)->size; */
-        /* printf("Rank %d: Communicator %s: Bytes = %llu Size = %d, i = %d\n",rank,com_info->name,bytes[i],sizes[i],i); */
-    /* } */
-    /* PMPI_Reduce(bytes, recv_buf_bytes, len, MPI_UNSIGNED_LONG_LONG, MPI_SUM, 0, MPI_COMM_WORLD); */
-    /* PMPI_Gather(sizes, 1, MPI_INT, recv_buf_sizes, 1, MPI_INT, 0, MPI_COMM_WORLD); */
-    /* if ( rank == 0 ){ */
-    /*     for ( i =0; array[i]; i+=1 ){ */
-    /*         com_info = (prof_attrs*)array[i]; */
-    /*         printf("Communicator %s: Bytes = %llu Size = %d\n",com_info->name,recv_buf_bytes[i],recv_buf_sizes[i]); */
-    /*     } */
-    /* } */
-    /* for ( i=0; i<num_of_comms; i++ ){ */
-    /*     printf("Communicator %s: %ld Bytes\n",comm_table[i]->name,comm_table[i]->bytes); */
-    /* } */
-    /* commtor *com; */
-    /* if ( rank == 0 ){ */
-        /* array = Table_toArray(table, NULL); */
-        /* for (i = 0; array[i]; i+=2) { */
-        /*     com = (commtor*)array[i+1]; */
-        /*     printf("%ld %s ",*(int64_t*)array[i],(char*)com->name); */
-        /*     printf("%ld\n",*(int64_t*)com->bytes); */
-        /* } */
-        /* for ( i=0; i<num_of_comms; i++ ){ */
-        /*     printf("Communicator %s: %ld Bytes\n",comm_table[i]->name,comm_table[i]->bytes); */
-        /* } */
-    /* } */
     /* fclose(fp); */
     /* if (communicators) */
     /*     FREE(communicators); */
