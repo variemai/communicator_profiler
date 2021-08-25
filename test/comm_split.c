@@ -24,8 +24,15 @@ int main (int argc, char *argv[]){
         MPI_Send(buffer, 32, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD);
         MPI_Comm_rank(splitcomm, &rank);
         color = rank %2;
+        if ( rank ==  0 ){
+            MPI_Send(buffer,8,MPI_BYTE,rank+1,0,splitcomm);
+        }
+        if ( rank == 1 ){
+            MPI_Recv(buffer, 8, MPI_BYTE, rank-1, 0, splitcomm, MPI_STATUS_IGNORE);
+        }
         MPI_Comm_split(splitcomm, color, rank / 2, &subcomm);
         MPI_Comm_rank(subcomm, &rank);
+        MPI_Comm_free(&splitcomm);
         if ( rank < 1 ){
             MPI_Send(buffer,64,MPI_BYTE,rank+1,0,subcomm);
         }
@@ -44,6 +51,7 @@ int main (int argc, char *argv[]){
         MPI_Comm_rank(subcomm, &rank);
         if ( rank % 2 == 0 ){
             MPI_Send(buffer,16,MPI_BYTE,rank+1,0,subcomm);
+            MPI_Comm_free(&subcomm);
         }
         else{
             MPI_Recv(buffer, 16, MPI_BYTE, rank-1, 0,subcomm, MPI_STATUS_IGNORE);

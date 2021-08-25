@@ -25,8 +25,10 @@
 
 
 MPI_Comm *communicators = NULL;
+prof_attrs **local_data = NULL;
 int num_of_comms = 1;
 int my_coms = 1;
+int num_of_local = 0;
 /* int line_called; */
 /* char file_called[32]; */
 
@@ -86,8 +88,10 @@ extern int MPI_Init(int *argc, char ***argv){
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
+    local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = NULL;
+        local_data[i] = NULL;
     }
     /* table = Table_new(128, NULL, NULL); */
     if ( rank == 0 ){
@@ -113,9 +117,9 @@ extern int MPI_Init(int *argc, char ***argv){
 
 extern int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
     int ret;
-    int size,i,flag,rank;
+    /* int size,i,flag,rank; */
     prof_attrs *communicator, *com_info;
-    char *name;
+    /* char *name; */
     ret = PMPI_Comm_create(comm, group, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         /* communicators[num_of_comms] = NULL; */
@@ -262,6 +266,28 @@ extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
     return ret;
 }
 
+extern int MPI_Comm_free(MPI_Comm *comm){
+    int ret,flag,i;
+    prof_attrs *com_info;
+    PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
+    if ( flag ){
+        local_data[num_of_local] = (prof_attrs*) malloc (sizeof(prof_attrs));
+        local_data[num_of_local]->bytes = com_info->bytes;
+        local_data[num_of_local]->size = com_info->size;
+        strcpy(local_data[num_of_local]->name,com_info->name);
+        strcpy(local_data[num_of_local]->parent,com_info->parent);
+        strcpy(local_data[num_of_local]->prim,com_info->prim);
+        num_of_local++;
+    }
+    for ( i = 0; i<num_of_comms; i++ ){
+        if ( *comm  == communicators[i])
+            break;
+    }
+    communicators[i]=NULL;
+    ret = PMPI_Comm_free(comm);
+    return ret;
+}
+
 extern int MPI_Finalize(){
     /* FILE *fp; */
     /* fp = fopen("profiler_stats.txt","w"); */
@@ -355,6 +381,7 @@ extern int MPI_Finalize(){
 
     MPI_Type_create_struct(5, blocklen, displacements, types, &profiler_data);
     MPI_Type_commit(&profiler_data);
+    k = 0;
     for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != NULL ){
             PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
@@ -367,11 +394,21 @@ extern int MPI_Finalize(){
             }
         }
         else{
-            strcpy(array[i].name, "NULL");
-            strcpy(array[i].parent, "NULL");
-            strcpy(array[i].prim, "NULL");
-            array[i].bytes = 0;
-            array[i].size = 0;
+            if ( num_of_local > 0 && k < num_of_local){
+                strcpy(array[i].name, local_data[k]->name);
+                strcpy(array[i].parent, local_data[k]->parent);
+                strcpy(array[i].prim, local_data[k]->prim);
+                array[i].bytes = local_data[k]->bytes;
+                array[i].size = local_data[k]->size;
+                k++;
+            }
+            else{
+                strcpy(array[i].name, "NULL");
+                strcpy(array[i].parent, "NULL");
+                strcpy(array[i].prim, "NULL");
+                array[i].bytes = 0;
+                array[i].size = 0;
+            }
         }
     }
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
