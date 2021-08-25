@@ -173,7 +173,7 @@ extern int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
     return ret;
 }
 
-int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
+extern int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
     int ret,i,flag;
     prof_attrs *communicator,*com_info;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
@@ -273,25 +273,27 @@ extern int MPI_Finalize(){
     prof_attrs dummy;
     char **names, **parents, **unames, **uparents;
     /* int found, comm_num; */
-    int *total_comms,total;
-    /* unsigned long long *bytes; */
+    int total_comms,total;
+    unsigned long long *bytes, *ubytes;
     /* char **names, **names_buf; */
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     /* free(communicators); */
 
     /* Before we do anything we should first learn the number of communicators */
-    total_comms = (int*)malloc(sizeof(int)*size*num_of_comms);
-    PMPI_Gather(&num_of_comms, 1, MPI_INT, total_comms, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    /* total_comms = (int*)malloc(sizeof(int)*size*num_of_comms); */
+    /* PMPI_Allgather(&num_of_comms, 1, MPI_INT, total_comms, 1, MPI_INT , MPI_COMM_WORLD); */
+    /* PMPI_Gather(&num_of_comms, 1, MPI_INT, total_comms, 1, MPI_INT, 0, MPI_COMM_WORLD); */
+    PMPI_Allreduce(&num_of_comms, &total_comms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     /* PMPI_Reduce(&num_of_comms, total_comms, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD); */
-    if ( rank == 0 ){
-        for ( i = 0; i< size; i++ ){
-            if ( total_comms[i] > num_of_comms ){
-                num_of_comms = total_comms[i];
-            }
-        }
-    }
-    PMPI_Bcast(&num_of_comms, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    /* for ( i = 0; i< size; i++ ){ */
+    /*     if ( total_comms[i] > num_of_comms ){ */
+    /*         num_of_comms = total_comms[i]; */
+    /*     } */
+    /* } */
+    /* printf( "Num of comms = %d\n",total_comms); */
+    num_of_comms = total_comms;
+    /* PMPI_Bcast(&num_of_comms, 1, MPI_INT, 0, MPI_COMM_WORLD); */
     /* names = (char**)malloc(sizeof(char*)*num_of_comms); */
     /* for ( i =0; i<num_of_comms*size; i++ ){ */
     /*     snames[i] = (char*)malloc(64); */
@@ -380,6 +382,8 @@ extern int MPI_Finalize(){
         parents = ( char**)malloc(sizeof(char*)*num_of_comms*size);
         unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
         uparents =(char **) malloc (sizeof(char*)*num_of_comms*size);
+        bytes = (unsigned long long *) malloc (sizeof(unsigned long long )
+                                               *num_of_comms*size);
         j = 0;
         for ( i =0; i<size*num_of_comms; i++ ){
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
@@ -387,10 +391,14 @@ extern int MPI_Finalize(){
                 parents[j]=strdup(recv_buffer[i].parent);
                 unames[j] = strdup("NULL");
                 uparents[j] = strdup("NULL");
+                bytes[j] = recv_buffer[i].bytes;
                 j++;
             }
         }
         total = j;
+        ubytes = (unsigned long long *) malloc (sizeof(unsigned long long )
+                                                *total);
+        memset(ubytes, 0, sizeof(unsigned long long )*total);
         num_of_comms = 1;
         j = 0;
         printf("TOTAL %d\n",total);
@@ -411,15 +419,41 @@ extern int MPI_Finalize(){
                     }
                 }
         }
-        printf( "Num of comms = %d\n",num_of_comms);
-        for ( i =0; i<num_of_comms-1; i++ )
-            printf("Comm: %s Parent: %s\n",unames[i],uparents[i]);
+        strcpy(unames[j], "WORLD");
+        strcpy(uparents[j],"NULL");
+        for ( i = 0; i<num_of_comms; i++){
+            /* printf("Searching for %s parent %s\n",unames[i],uparents[i]); */
+            for ( j=0; j<total; j++ ){
+                /* printf("Found Comm: %s parent: %s Bytes= %llu\n",names[j], */
+                /*        parents[j],bytes[j]); */
+                if ( strcmp(unames[i], names[j]) == 0 &&
+                     strcmp(uparents[i], parents[j]) == 0){
+                    ubytes[i]+= bytes[j];
+                    /* printf("Match!\n"); */
+                }
+            }
+        }
+
         for ( i =0; i<total; i++ ){
             free(names[i]);
-            free(unames[i]);
             free(parents[i]);
+        }
+        free(names);
+        free(parents);
+        free(bytes);
+
+        printf( "Num of REAL comms = %d\n",num_of_comms);
+        for ( i =0; i<num_of_comms; i++ )
+            printf("Comm: %s Parent: %s Bytes = %llu\n",unames[i],uparents[i],
+                   ubytes[i]);
+
+        for ( i =0; i<total; i++ ){
+            free(unames[i]);
             free(uparents[i]);
         }
+        free(unames);
+        free(uparents);
+        free(ubytes);
     }
 
     /* fclose(fp); */
