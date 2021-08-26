@@ -12,5 +12,6 @@ all:
 	mpicc -g -L$(LIBPATH) comm_group.c -o comm_group.out -lmcpt
 	mpicc -g -L$(LIBPATH) comm_topo.c -o comm_top.out -lmcpt
 	mpicc -g -L$(LIBPATH) comm_split.c -o comm_split.out -lmcpt
+	mpicc -g -L$(LIBPATH) comm_split_v2.c -o comm_split_v2.out -lmcpt
 
 # end

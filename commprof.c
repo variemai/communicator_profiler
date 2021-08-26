@@ -102,8 +102,10 @@ extern int MPI_Init(int *argc, char ***argv){
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
     strcpy(communicator->name,"WORLD");
     communicator->bytes = 0;
-    strcpy(communicator->prim , "INIT");
+    /* strcpy(communicator->prim , "INIT"); */
     strcpy(communicator->parent, "NULL");
+    communicator->size = size;
+    communicator->msgs = 0;
     /* communicator->index = num_of_comms; */
     /* communicator->size = size; */
     PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
@@ -154,7 +156,7 @@ extern int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
     /* else */
     sprintf(communicator->name,"c%d",my_coms);
     communicator->bytes = 0;
-    strcpy(communicator->prim,"COMM_CREATE");
+    /* strcpy(communicator->prim,"COMM_CREATE"); */
     /* /\* communicator->name = buf; *\/ */
     /* /\* communicator->prim = prim; *\/ */
     /* MPI_Comm_size(*newcomm, &size); */
@@ -192,7 +194,8 @@ extern int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
         }
         if ( i == num_of_comms ){
             // Should have found the mother
-            fprintf(stderr, "Error: could not find the mother of communicator.\nAborting\n");
+            fprintf(stderr, "Error: could not find the mother of communicator.\n");
+            mcpt_abort("File:%s line:%d Aborting\n",__FILE__,__LINE__);
 
         }
         else{
@@ -211,7 +214,8 @@ extern int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
     }
     /* printf("New comm with name %s and parent %s\n",communicator->name,communicator->parent); */
     communicator->bytes = 0;
-    strcpy(communicator->prim,"COMM_SPLIT");
+    communicator->msgs = 0;
+    /* strcpy(communicator->prim,"COMM_SPLIT"); */
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     communicators[my_coms] = *newcomm;
     num_of_comms+=color+1;
@@ -242,6 +246,7 @@ extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
         sum = communicator->bytes;
         sum = sum + count * size;
         communicator->bytes = sum;
+        communicator->msgs = communicator->msgs + 1;
     /*     /\* Table_put(table, comm, communicator); *\/ */
     }
     /* communicator = Table_get(table,comm); */
@@ -273,10 +278,11 @@ extern int MPI_Comm_free(MPI_Comm *comm){
     if ( flag ){
         local_data[num_of_local] = (prof_attrs*) malloc (sizeof(prof_attrs));
         local_data[num_of_local]->bytes = com_info->bytes;
+        local_data[num_of_local]->msgs = com_info->msgs;
         local_data[num_of_local]->size = com_info->size;
         strcpy(local_data[num_of_local]->name,com_info->name);
         strcpy(local_data[num_of_local]->parent,com_info->parent);
-        strcpy(local_data[num_of_local]->prim,com_info->prim);
+        /* strcpy(local_data[num_of_local]->prim,com_info->prim); */
         num_of_local++;
     }
     for ( i = 0; i<num_of_comms; i++ ){
@@ -300,7 +306,8 @@ extern int MPI_Finalize(){
     char **names, **parents, **unames, **uparents;
     /* int found, comm_num; */
     int total_comms,total;
-    unsigned long long *bytes, *ubytes;
+    uint64_t *bytes, *ubytes;
+    uint32_t *msgs, *umsgs;
     /* char **names, **names_buf; */
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -362,16 +369,17 @@ extern int MPI_Finalize(){
 
     array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
     recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
-    MPI_Datatype types[5] = { MPI_CHAR, MPI_CHAR, MPI_CHAR,MPI_UNSIGNED_LONG_LONG, MPI_INT };
-    int blocklen[5] = {NAMELEN,NAMELEN,PRIMLEN,1,1};
+    MPI_Datatype types[5] = { MPI_CHAR, MPI_CHAR,MPI_UINT64_T, MPI_UINT32_T, MPI_INT };
+    int blocklen[5] = {NAMELEN,NAMELEN,1,1,1};
     MPI_Aint displacements[5];
     MPI_Aint base_address;
     MPI_Datatype profiler_data;
     MPI_Get_address(&dummy, &base_address);
     MPI_Get_address(&dummy.name[0], &displacements[0]);
     MPI_Get_address(&dummy.parent[0], &displacements[1]);
-    MPI_Get_address(&dummy.prim[0], &displacements[2]);
-    MPI_Get_address(&dummy.bytes, &displacements[3]);
+    /* MPI_Get_address(&dummy.prim[0], &displacements[2]); */
+    MPI_Get_address(&dummy.bytes, &displacements[2]);
+    MPI_Get_address(&dummy.msgs, &displacements[3]);
     MPI_Get_address(&dummy.size, &displacements[4]);
     displacements[0] = MPI_Aint_diff(displacements[0], base_address);
     displacements[1] = MPI_Aint_diff(displacements[1], base_address);
@@ -388,8 +396,9 @@ extern int MPI_Finalize(){
             if ( flag ){
                 strcpy(array[i].name, com_info->name);
                 strcpy(array[i].parent, com_info->parent);
-                strcpy(array[i].prim, com_info->prim);
+                /* strcpy(array[i].prim, com_info->prim); */
                 array[i].bytes = com_info->bytes;
+                array[i].msgs= com_info->msgs;
                 array[i].size = com_info->size;
             }
         }
@@ -397,15 +406,17 @@ extern int MPI_Finalize(){
             if ( num_of_local > 0 && k < num_of_local){
                 strcpy(array[i].name, local_data[k]->name);
                 strcpy(array[i].parent, local_data[k]->parent);
-                strcpy(array[i].prim, local_data[k]->prim);
+                /* strcpy(array[i].prim, local_data[k]->prim); */
                 array[i].bytes = local_data[k]->bytes;
                 array[i].size = local_data[k]->size;
+                array[i].msgs = local_data[k]->msgs;
                 k++;
             }
             else{
                 strcpy(array[i].name, "NULL");
                 strcpy(array[i].parent, "NULL");
-                strcpy(array[i].prim, "NULL");
+                /* strcpy(array[i].prim, "NULL"); */
+                array[i].msgs = 0;
                 array[i].bytes = 0;
                 array[i].size = 0;
             }
@@ -419,7 +430,9 @@ extern int MPI_Finalize(){
         parents = ( char**)malloc(sizeof(char*)*num_of_comms*size);
         unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
         uparents =(char **) malloc (sizeof(char*)*num_of_comms*size);
-        bytes = (unsigned long long *) malloc (sizeof(unsigned long long )
+        bytes = (uint64_t *) malloc (sizeof(uint64_t )
+                                               *num_of_comms*size);
+        msgs = (uint32_t *) malloc (sizeof(uint32_t )
                                                *num_of_comms*size);
         j = 0;
         for ( i =0; i<size*num_of_comms; i++ ){
@@ -429,13 +442,18 @@ extern int MPI_Finalize(){
                 unames[j] = strdup("NULL");
                 uparents[j] = strdup("NULL");
                 bytes[j] = recv_buffer[i].bytes;
+                msgs[j] = recv_buffer[i].msgs;
                 j++;
             }
         }
         total = j;
-        ubytes = (unsigned long long *) malloc (sizeof(unsigned long long )
+        ubytes = (uint64_t *) malloc (sizeof(uint64_t )
+                                      *total);
+
+        umsgs = (uint32_t *) malloc (sizeof(uint32_t )
                                                 *total);
-        memset(ubytes, 0, sizeof(unsigned long long )*total);
+        memset(ubytes, 0, sizeof(uint64_t )*total);
+        memset(umsgs, 0, sizeof(uint32_t )*total);
         num_of_comms = 1;
         j = 0;
         printf("TOTAL %d\n",total);
@@ -466,6 +484,8 @@ extern int MPI_Finalize(){
                 if ( strcmp(unames[i], names[j]) == 0 &&
                      strcmp(uparents[i], parents[j]) == 0){
                     ubytes[i]+= bytes[j];
+                    umsgs[i]+= msgs[j];
+
                     /* printf("Match!\n"); */
                 }
             }
@@ -478,11 +498,12 @@ extern int MPI_Finalize(){
         free(names);
         free(parents);
         free(bytes);
+        free(msgs);
 
         printf( "Num of REAL comms = %d\n",num_of_comms);
         for ( i =0; i<num_of_comms; i++ )
-            printf("Comm: %s Parent: %s Bytes = %llu\n",unames[i],uparents[i],
-                   ubytes[i]);
+            printf("Comm: %s Parent: %s Bytes = %lu Msgs = %u\n",unames[i],
+                   uparents[i],ubytes[i],umsgs[i]);
 
         for ( i =0; i<total; i++ ){
             free(unames[i]);
@@ -491,6 +512,7 @@ extern int MPI_Finalize(){
         free(unames);
         free(uparents);
         free(ubytes);
+        free(umsgs);
     }
 
     /* fclose(fp); */

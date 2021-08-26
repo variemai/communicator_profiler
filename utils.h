@@ -2,6 +2,7 @@
 #define UTILS_H_
 
 #include <mpi.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -14,7 +15,8 @@ typedef struct profiler_attributes{
     char name[NAMELEN];
     char parent[NAMELEN];
     char prim[PRIMLEN];
-    unsigned long long bytes;
+    uint64_t bytes;
+    uint32_t msgs;
     int size;
 }prof_attrs;
 
