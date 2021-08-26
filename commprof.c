@@ -458,21 +458,22 @@ extern int MPI_Finalize(){
         j = 0;
         printf("TOTAL %d\n",total);
         for ( i=0; i<total; i++ ){
-                if ( strcmp(names[i], "WORLD") != 0 ){
-                    found = 0;
-                    for ( k =0; k<total; k++ ){
-                        if ( strcmp(names[i], unames[k] ) == 0 &&
-                             strcmp(parents[i], uparents[k] ) == 0 ){
-                            found = 1;
-                        }
-                    }
-                    if ( !found ){
-                        strcpy(unames[j], names[i]);
-                        strcpy(uparents[j], parents[i]);
-                        j++;
-                        num_of_comms++;
+            /* Build the global communicator tree */
+            if ( strcmp(names[i], "WORLD") != 0 ){
+                found = 0;
+                for ( k =0; k<total; k++ ){
+                    if ( strcmp(names[i], unames[k] ) == 0 &&
+                         strcmp(parents[i], uparents[k] ) == 0 ){
+                        found = 1;
                     }
                 }
+                if ( !found ){
+                    strcpy(unames[j], names[i]);
+                    strcpy(uparents[j], parents[i]);
+                    j++;
+                    num_of_comms++;
+                }
+            }
         }
         strcpy(unames[j], "WORLD");
         strcpy(uparents[j],"NULL");
