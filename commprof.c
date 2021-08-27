@@ -458,6 +458,18 @@ extern int MPI_Finalize(){
         j = 0;
         printf("TOTAL %d\n",total);
         for ( i=0; i<total; i++ ){
+            printf("\"%s\",",parents[i]);
+        }
+        printf("\n");
+        for ( i=0; i<total; i++ ){
+            printf("%lu,",bytes[i]);
+        }
+        printf("\n");
+        for ( i=0; i<total; i++ ){
+            printf("%u,",msgs[i]);
+        }
+        printf("\n");
+        for ( i=0; i<total; i++ ){
             /* Build the global communicator tree */
             if ( strcmp(names[i], "WORLD") != 0 ){
                 found = 0;
@@ -501,10 +513,10 @@ extern int MPI_Finalize(){
         free(bytes);
         free(msgs);
 
-        printf( "Num of REAL comms = %d\n",num_of_comms);
-        for ( i =0; i<num_of_comms; i++ )
-            printf("Comm: %s Parent: %s Bytes = %lu Msgs = %u\n",unames[i],
-                   uparents[i],ubytes[i],umsgs[i]);
+        /* printf( "Num of REAL comms = %d\n",num_of_comms); */
+        /* for ( i =0; i<num_of_comms; i++ ) */
+        /*     printf("Comm: %s Parent: %s Bytes = %lu Msgs = %u\n",unames[i], */
+        /*            uparents[i],ubytes[i],umsgs[i]); */
 
         for ( i =0; i<total; i++ ){
             free(unames[i]);
