@@ -20,7 +20,7 @@ int main (int argc, char *argv[]){
 
     MPI_Comm_split(MPI_COMM_WORLD, rank % 2, rank / 2, &splitcomm); //s0
     buffer = malloc(64);
-    if ( rank  % 2 == 0  ){ //s0_0
+    if ( rank  % 2 == 0  ){ //s1_0
         MPI_Send(buffer, 32, MPI_BYTE, rank+1, 0, MPI_COMM_WORLD);
         MPI_Comm_rank(splitcomm, &rank);
         color = rank %2;
@@ -55,7 +55,7 @@ int main (int argc, char *argv[]){
         }
 
     }
-    else{ //s0_1
+    else{ //s1_1
         MPI_Recv(buffer, 32, MPI_BYTE, rank-1, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
         MPI_Comm_rank(splitcomm, &rank);
         if  ( rank % 2 == 0  ){

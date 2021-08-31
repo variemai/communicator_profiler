@@ -22,7 +22,6 @@ typedef struct profiler_attributes{
 
 /* Globals */
 extern char *appname;
-extern prof_attrs **comm_table;
 
 void mcpt_abort (char *fmt, ...);
 

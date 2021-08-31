@@ -182,9 +182,11 @@ extern int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
 extern int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
     int ret,i,flag;
     prof_attrs *communicator,*com_info;
+    char *buf;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
-    sprintf(communicator->name,"s_%d.%d",my_coms,color);
+    /* sprintf(communicator->name,"s_%d.%d",my_coms,color); */
+    /* printf("Len: %lu\n",strlen(communicator->name)); */
     //append mother's name if mother != WORLD
     if ( comm != MPI_COMM_WORLD ){
     /*     //find the mother */
@@ -202,6 +204,7 @@ extern int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
             PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
             if ( flag ){
                 strcpy(communicator->parent, com_info->name);
+                strcpy(communicator->name, com_info->name);
             }
             else{
                 /* fprintf(stderr, "Flag invalid\nAborting\n"); */
@@ -211,8 +214,15 @@ extern int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
     }
     else{
         strcpy(communicator->parent, "WORLD");
+        strcpy(communicator->name, "WORLD");
     }
-    /* printf("New comm with name %s and parent %s\n",communicator->name,communicator->parent); */
+    buf = (char*) malloc ( sizeof(char)*8);
+    sprintf(buf,"_s%d.%d",my_coms,color);
+    flag = strlen(communicator->name);
+    for ( i =0; i<strlen(buf); i++ ){
+        communicator->name[flag+i] = buf[i];
+    }
+    printf("New comm with name %s and parent %s\n",communicator->name,communicator->parent);
     communicator->bytes = 0;
     communicator->msgs = 0;
     /* strcpy(communicator->prim,"COMM_SPLIT"); */
@@ -456,19 +466,23 @@ extern int MPI_Finalize(){
         memset(umsgs, 0, sizeof(uint32_t )*total);
         num_of_comms = 1;
         j = 0;
-        printf("TOTAL %d\n",total);
-        for ( i=0; i<total; i++ ){
-            printf("\"%s\",",parents[i]);
-        }
-        printf("\n");
-        for ( i=0; i<total; i++ ){
-            printf("%lu,",bytes[i]);
-        }
-        printf("\n");
-        for ( i=0; i<total; i++ ){
-            printf("%u,",msgs[i]);
-        }
-        printf("\n");
+        /* printf("TOTAL %d\n",total); */
+        /* for ( i=0; i<total; i++ ){ */
+        /*     printf("\"%s\",",names[i]); */
+        /* } */
+        /* printf("\n"); */
+        /* for ( i=0; i<total; i++ ){ */
+        /*     printf("\"%s\",",parents[i]); */
+        /* } */
+        /* printf("\n"); */
+        /* for ( i=0; i<total; i++ ){ */
+        /*     printf("%lu,",bytes[i]); */
+        /* } */
+        /* printf("\n"); */
+        /* for ( i=0; i<total; i++ ){ */
+        /*     printf("%u,",msgs[i]); */
+        /* } */
+        /* printf("\n"); */
         for ( i=0; i<total; i++ ){
             /* Build the global communicator tree */
             if ( strcmp(names[i], "WORLD") != 0 ){
@@ -513,10 +527,10 @@ extern int MPI_Finalize(){
         free(bytes);
         free(msgs);
 
-        /* printf( "Num of REAL comms = %d\n",num_of_comms); */
-        /* for ( i =0; i<num_of_comms; i++ ) */
-        /*     printf("Comm: %s Parent: %s Bytes = %lu Msgs = %u\n",unames[i], */
-        /*            uparents[i],ubytes[i],umsgs[i]); */
+        printf( "Num of REAL comms = %d\n",num_of_comms);
+        for ( i =0; i<num_of_comms; i++ )
+            printf("Comm: %s Parent: %s Bytes = %lu Msgs = %u\n",unames[i],
+                   uparents[i],ubytes[i],umsgs[i]);
 
         for ( i =0; i<total; i++ ){
             free(unames[i]);

@@ -9,6 +9,8 @@ typedef struct _tnode{
     struct _tnode *child;
     struct _tnode *lsib;
     struct _tnode *rsib;
+    struct _tnode **children;
+    int nchildren;
     int bytes;
     int msgs;
 }node;
@@ -36,7 +38,13 @@ int main(void){
         }
     }
     k = 0;
-    node *ptr;
+    head->nchildren = 0;
+    head->children = (node**) malloc ( sizeof(node*) *8 );
+    for ( i =0; i<8; i++ ){
+        head->children[i] = NULL;
+    }
+    node *ptr, *tmp;
+    int found = 0;
     for ( i =1; i<N; i++ ){
         if ( strcmp(names[i],  "WORLD") != 0){
             new = (node*) malloc (sizeof(node));
@@ -44,6 +52,21 @@ int main(void){
             new->parent = NULL;
             ptr=head;
             /* find parent IT MUST ALREADY EXIST */
+            found = 0;
+            while ( ptr != NULL ){
+                if ( strcmp(ptr->name, parents[i]) == 0 ){
+                    found = 1;
+                    break;
+                }
+                for ( i =0; i<ptr->nchildren; i++ ){
+                    if ( strcmp(ptr->name, parents[i]) == 0 ){
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found)
+
+            }
             while ( ptr != NULL ){
                 if ( strcmp(ptr->name, parents[i]) == 0 )
                     break;
@@ -55,15 +78,17 @@ int main(void){
             else{
                 new->parent = ptr;
                 printf("Parent of %s is %s\n",new->name,new->parent->name);
+                ptr->children[ptr->nchildren] = new;
+                ptr->nchildren = ptr->nchildren + 1;
                 if ( ptr->child == NULL )
                     ptr->child = new;
-                else{
-                    ptr=ptr->child;
-                    while( ptr->rsib != NULL )
-                        ptr = ptr->rsib;
-                    ptr->rsib = new;
-                    new->lsib = ptr->rsib;
-                }
+                /* else{ */
+                /*     ptr=ptr->child; */
+                /*     while( ptr->rsib != NULL ) */
+                /*         ptr = ptr->rsib; */
+                /*     ptr->rsib = new; */
+                /*     new->lsib = ptr->rsib; */
+                /* } */
             }
             new->bytes = 0;
             new->msgs = 0;
