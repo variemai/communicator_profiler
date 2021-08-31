@@ -8,13 +8,13 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdarg.h>
-#define NAMELEN 64
+#define NAMELEN 128
 #define PRIMLEN 16
 
 typedef struct profiler_attributes{
     char name[NAMELEN];
-    char parent[NAMELEN];
-    char prim[PRIMLEN];
+    /* char parent[NAMELEN]; */
+    /* char prim[PRIMLEN]; */
     uint64_t bytes;
     uint32_t msgs;
     int size;
