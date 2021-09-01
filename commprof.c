@@ -78,6 +78,38 @@ static int namekey() {
 /*            communicator->bytes,communicator->prim); */
 /* } */
 
+prof_attrs *get_comm_parent(MPI_Comm comm){
+    int i,flag;
+    prof_attrs *communicator, *com_info;
+    communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
+    if ( comm != MPI_COMM_WORLD ){
+        //find the mother
+        for ( i = 0; i<num_of_comms; i++ ){
+            if ( comm  == communicators[i] )
+                break;
+        }
+        if ( i == num_of_comms ){
+            // Should have found the mother
+            fprintf(stderr, "Error: could not find the mother of communicator.\n");
+            mcpt_abort("File:%s line:%d Aborting\n",__FILE__,__LINE__);
+
+        }
+        else{
+            PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
+            if ( flag ){
+                strcpy(communicator->name, com_info->name);
+            }
+            else{
+                mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",__FILE__,__LINE__);
+            }
+        }
+    }
+    else{
+        strcpy(communicator->name, "W");
+    }
+    return communicator;
+}
+
 extern int MPI_Init(int *argc, char ***argv){
     int ret,rank,size;
     int i;
@@ -117,51 +149,23 @@ extern int MPI_Init(int *argc, char ***argv){
 
 extern int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
     int ret;
-    int i,flag;
+    int i,length;
     char *buf;
-    prof_attrs *communicator, *com_info;
-    /* char *name; */
+    prof_attrs *communicator;
     ret = PMPI_Comm_create(comm, group, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         communicators[num_of_comms] = NULL;
         num_of_comms++;
         return ret;
     }
-    communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
-    if ( comm != MPI_COMM_WORLD ){
-        //find the mother
-        for ( i = 0; i<num_of_comms; i++ ){
-            if ( comm  == communicators[i] )
-                break;
-        }
-        if ( i == num_of_comms ){
-            // Should have found the mother
-            fprintf(stderr, "Error: could not find the mother of communicator.\n");
-            mcpt_abort("File:%s line:%d Aborting\n",__FILE__,__LINE__);
-
-        }
-        else{
-            PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
-            if ( flag ){
-                /* strcpy(communicator->parent, com_info->name); */
-                strcpy(communicator->name, com_info->name);
-            }
-            else{
-                /* fprintf(stderr, "Flag invalid\nAborting\n"); */
-                mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",__FILE__,__LINE__);
-            }
-        }
-    }
-    else{
-        /* strcpy(communicator->parent, "WORLD"); */
-        strcpy(communicator->name, "W");
-    }
+    communicator = get_comm_parent(comm);
     buf = (char*) malloc ( sizeof(char)*8);
     sprintf(buf,"_c%d",my_coms);
-    flag = strlen(communicator->name);
+    length = strlen(communicator->name);
     for ( i =0; i<strlen(buf); i++ ){
-        communicator->name[flag+i] = buf[i];
+        communicator->name[length+i] = buf[i];
     }
+    communicator->name[i]='\0';
     communicator->bytes = 0;
     communicator->msgs = 0;
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
@@ -172,61 +176,97 @@ extern int MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm){
 }
 
 extern int MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm){
-    int ret,i,flag;
-    prof_attrs *communicator,*com_info;
+    int ret,i,length;
+    prof_attrs *communicator;
     char *buf;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
-    communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
-    /* sprintf(communicator->name,"s_%d.%d",my_coms,color); */
-    /* printf("Len: %lu\n",strlen(communicator->name)); */
-    //append mother's name if mother != WORLD
-    if ( comm != MPI_COMM_WORLD ){
-    /*     //find the mother */
-        for ( i = 0; i<num_of_comms; i++ ){
-            if ( comm  == communicators[i] )
-                break;
-        }
-        if ( i == num_of_comms ){
-            // Should have found the mother
-            fprintf(stderr, "Error: could not find the mother of communicator.\n");
-            mcpt_abort("File:%s line:%d Aborting\n",__FILE__,__LINE__);
-
-        }
-        else{
-            PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
-            if ( flag ){
-                /* strcpy(communicator->parent, com_info->name); */
-                strcpy(communicator->name, com_info->name);
-            }
-            else{
-                /* fprintf(stderr, "Flag invalid\nAborting\n"); */
-                mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",__FILE__,__LINE__);
-            }
-        }
-    }
-    else{
-        /* strcpy(communicator->parent, "WORLD"); */
-        strcpy(communicator->name, "W");
-    }
+    communicator = get_comm_parent(comm);
     buf = (char*) malloc ( sizeof(char)*8);
     sprintf(buf,"_s%d.%d",my_coms,color);
-    flag = strlen(communicator->name);
+    length = strlen(communicator->name);
     for ( i =0; i<strlen(buf); i++ ){
-        communicator->name[flag+i] = buf[i];
+        communicator->name[length+i] = buf[i];
     }
-    /* printf("New comm with name %s\n",communicator->name); */
+    communicator->name[i]='\0';
     communicator->bytes = 0;
     communicator->msgs = 0;
-    /* strcpy(communicator->prim,"COMM_SPLIT"); */
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     communicators[my_coms] = *newcomm;
     num_of_comms+=color+1;
     my_coms++;
-    /* MPI_Comm_rank(MPI_COMM_WORLD, &rank); */
-    /* printf("RANK %d: Num of Comms After split = %d\n",rank,num_of_comms); */
     return ret;
 }
 
+extern int MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm){
+    int ret,length,i;
+    prof_attrs *communicator;
+    char *buf;
+    ret = PMPI_Comm_dup(comm, newcomm);
+    communicator = get_comm_parent(comm);
+    buf = (char*) malloc ( sizeof(char)*8);
+    sprintf(buf,"_d%d",my_coms);
+    length = strlen(communicator->name);
+    for ( i =0; i<strlen(buf); i++ ){
+        communicator->name[length+i] = buf[i];
+    }
+    communicator->name[i]='\0';
+    communicator->bytes = 0;
+    communicator->msgs = 0;
+    PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
+    communicators[my_coms] = *newcomm;
+    num_of_comms+=1;
+    my_coms++;
+    return ret;
+}
+
+extern int MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
+                           const int *periods, int reorder, MPI_Comm *comm_cart){
+
+    int ret,length,i;
+    prof_attrs *communicator;
+    char *buf;
+    ret = PMPI_Cart_create(old_comm, ndims, dims, periods, reorder, comm_cart);
+    communicator = get_comm_parent(old_comm);
+    buf = (char*) malloc ( sizeof(char)*8);
+    sprintf(buf,"_a%d",my_coms);
+    length = strlen(communicator->name);
+    for ( i =0; i<strlen(buf); i++ ){
+        communicator->name[length+i] = buf[i];
+    }
+    communicator->name[i]='\0';
+    communicator->bytes = 0;
+    communicator->msgs = 0;
+    PMPI_Comm_set_attr(*comm_cart, namekey(), communicator);
+    printf("MPI Cart comm with name %s\n",communicator->name);
+    communicators[my_coms] = *comm_cart;
+    num_of_comms+=1;
+    my_coms++;
+    return ret;
+}
+
+extern int MPI_Isend(const void *buf, int count, MPI_Datatype datatype,
+                     int dest, int tag, MPI_Comm comm, MPI_Request *request){
+    int ret;
+    int size,flag,i;
+    prof_attrs  *communicator;
+    unsigned long long  sum = 0;
+    ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
+    flag = 0;
+    for ( i=0; i< my_coms; i++){
+        if ( comm == communicators[i] )
+            break;
+    }
+
+    PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    PMPI_Type_size(datatype, &size);
+    if ( flag ){
+        sum = communicator->bytes;
+        sum = sum + count * size;
+        communicator->bytes = sum;
+        communicator->msgs = communicator->msgs + 1;
+    }
+    return ret;
+}
 
 extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
                     int tag, MPI_Comm comm){
@@ -244,34 +284,21 @@ extern int MPI_Send(const void *buf, int count, MPI_Datatype datatype, int dest,
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
     PMPI_Type_size(datatype, &size);
     if ( flag ){
-        /* printf("MPI_Send to communicator %s\n",communicator->name); */
         sum = communicator->bytes;
         sum = sum + count * size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + 1;
-    /*     /\* Table_put(table, comm, communicator); *\/ */
     }
-    /* communicator = Table_get(table,comm); */
-    /* PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag); */
-    /* if ( flag ){ */
-    /*     /\* printf("MPI_Send to communicator %s\n",communicator->name); *\/ */
-    /*     sum = communicator->bytes; */
-    /*     sum = sum + count * size; */
-    /*     communicator->bytes = sum; */
-    /*     /\* Table_put(table, comm, communicator); *\/ */
-    /* } */
-    /* We need to check in case this is invalid */
-
-    /* Table_put(table, comm, void *value) */
-    /* for ( i=0; i<num_of_comms; i++ ){ */
-    /*     if ( comm == (comm_table[i]->comm)){ */
-    /*         comm_table[i]->bytes += count* sizeof(datatype); */
-    /*         printf("MPI_Send to communicator %s\n",comm_table[i]->name); */
-    /*         break; */
-    /*     } */
-    /* } */
     return ret;
 }
+
+/* MPI_Sendrecv */
+/* MPI_Allreduce */
+/* MPI_Bcast */
+/* MPI_Allgather */
+/* MPI_Allgatherv */
+/* MPI_Alltoallv */
+/* MPI_Alltoall */
 
 extern int MPI_Comm_free(MPI_Comm *comm){
     int ret,flag,i;
@@ -283,8 +310,6 @@ extern int MPI_Comm_free(MPI_Comm *comm){
         local_data[num_of_local]->msgs = com_info->msgs;
         local_data[num_of_local]->size = com_info->size;
         strcpy(local_data[num_of_local]->name,com_info->name);
-        /* strcpy(local_data[num_of_local]->parent,com_info->parent); */
-        /* strcpy(local_data[num_of_local]->prim,com_info->prim); */
         num_of_local++;
     }
     for ( i = 0; i<num_of_comms; i++ ){
@@ -297,8 +322,8 @@ extern int MPI_Comm_free(MPI_Comm *comm){
 }
 
 extern int MPI_Finalize(){
-    /* FILE *fp; */
-    /* fp = fopen("profiler_stats.txt","w"); */
+    FILE *fp;
+    fp = fopen("profiler_stats.txt","w");
     prof_attrs *array;
     int rank,size;
     int i,j,k,flag,found;
@@ -311,6 +336,10 @@ extern int MPI_Finalize(){
     uint64_t *bytes, *ubytes;
     uint32_t *msgs, *umsgs;
     /* char **names, **names_buf; */
+    if (fp == NULL){
+        fprintf(stderr, "Failed to open output file: profiler_stats.txt\n");
+        mcpt_abort("Aborting\n");
+    }
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     /* free(communicators); */

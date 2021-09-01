@@ -44,17 +44,17 @@ int main (int argc, char *argv[]){
         else{
             MPI_Recv(buffer, 64, MPI_BYTE, rank-1, 0, subcomm, MPI_STATUS_IGNORE);
         }
-        /* MPI_Comm_split(subcomm, rank % 2, rank / 2, &newcomm); */
-        /* MPI_Comm_rank(newcomm, &rank); */
-        /* if ( rank % 2 == 0 ){ */
-        /*     MPI_Send(buffer,16,MPI_BYTE,rank+1,0,newcomm); */
-        /* } */
-        /* else{ */
-        /*     MPI_Recv(buffer, 16, MPI_BYTE, rank-1, 0, newcomm, MPI_STATUS_IGNORE); */
-        /* } */
+        MPI_Comm_split(subcomm, rank % 2, rank / 2, &newcomm);
+        MPI_Comm_rank(newcomm, &rank);
+        if ( rank % 2 == 0 ){
+            MPI_Send(buffer,16,MPI_BYTE,rank+1,0,newcomm);
+        }
+        else{
+            MPI_Recv(buffer, 16, MPI_BYTE, rank-1, 0, newcomm, MPI_STATUS_IGNORE);
+        }
 
     }
-    /* MPI_Comm_group(MPI_COMM_WORLD, &world_group); */
+    /* MPI_Comm_group(MPI_COMM_WORLD, &group); */
     /* MPI_Comm_size(MPI_COMM_WORLD, &world_size); */
     /* MPI_Comm_rank(MPI_COMM_WORLD, &world_rank); */
     /* if ( MPI_Group_excl(world_group, 2, ranks, &newgroup) != MPI_SUCCESS ){ */

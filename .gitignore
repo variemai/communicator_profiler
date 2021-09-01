@@ -50,6 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+*profiler_stats.txt
 
 # Makefile metadata
 compile_commands.json
