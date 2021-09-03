@@ -7,7 +7,8 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <unistd.h>
-
+#define MAX_ARG_STRING_SIZE 256
+#define MAX_ARGS 32
 /* static void __attribute__((no_instrument_function)) */
 /* log_func(const void* funcAddr, const char* action, const void* callSite){ */
 /*     fprintf(stdout,"%p %d \n",callSite,__LINE__); */
@@ -29,6 +30,8 @@ prof_attrs **local_data = NULL;
 int num_of_comms = 1;
 int my_coms = 1;
 int num_of_local = 0;
+int ac;
+char *av[MAX_ARGS];
 /* int line_called; */
 /* char file_called[32]; */
 
@@ -56,31 +59,6 @@ namekey()
   return namekeyval;
 }
 
-/* void apply_print(const void *key,void **value,void *cl){ */
-/*     prof_attrs *val; */
-/*     unsigned long long bytes; */
-/*     char name[32], prim[32]; */
-/*     val = (prof_attrs*)value; */
-/*     strcpy(name, val->name); */
-/*     bytes = val->bytes; */
-/*     strcpy(prim, val->prim); */
-/*     printf("Name: %s created by %s bytes transferred %llu\n",name,prim,bytes); */
-/* } */
-
-/* int compare(const void *x, const void *y) { */
-/*     prof_attrs *a = (prof_attrs*) x; */
-/*     prof_attrs *b = (prof_attrs*) y; */
-/*     char bufa[32], bufb[32]; */
-/*     strcpy(bufa,a->name); */
-/*     strcpy(bufb,b->name); */
-/*     printf("Compare %s with %s\n",bufa,bufb); */
-/*     return strcmp(a->name, b->name); */
-/* } */
-
-/* void print_entry(commtor* communicator){ */
-/*     printf("Name: %s, Bytes  %ld, Prim created %s\n",communicator->name, */
-/*            communicator->bytes,communicator->prim); */
-/* } */
 
 prof_attrs*
 get_comm_parent(MPI_Comm comm)
@@ -117,8 +95,48 @@ get_comm_parent(MPI_Comm comm)
     return communicator;
 }
 
-extern int
-MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
+void
+getProcCmdLine (int *ac, char **av)
+{
+  int i = 0, pid;
+  char *inbuf, file[256];
+  FILE *infile;
+  char *arg_ptr;
+
+  *ac = 0;
+  *av = NULL;
+
+  pid = getpid ();
+  snprintf (file, 256, "/proc/%d/cmdline", pid);
+  infile = fopen (file, "r");
+
+  if (infile != NULL)
+    {
+      while (!feof (infile))
+        {
+          inbuf = malloc (MAX_ARG_STRING_SIZE);
+          if (fread (inbuf, 1, MAX_ARG_STRING_SIZE, infile) > 0)
+            {
+              arg_ptr = inbuf;
+              while (*arg_ptr != '\0')
+                {
+                  av[i] = strdup (arg_ptr);
+                  arg_ptr += strlen (av[i]) + 1;
+                  i++;
+                }
+            }
+        }
+      *ac = i;
+      if(inbuf)
+          free (inbuf);
+      fclose (infile);
+    }
+  else{
+      mcpt_abort("Error opening file %s FILE:LINE = %d",file,__FILE__,__LINE__);
+  }
+}
+static int
+_MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     int ret,rank,size;
     int i;
     prof_attrs *communicator;
@@ -147,6 +165,18 @@ MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     return ret;
 }
 
+extern int
+MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
+    return _MPI_Init_thread(argc, argv, required, provided);
+}
+
+extern void
+F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr){
+    char **tmp;
+    getProcCmdLine (&ac, av);
+    tmp = av;
+    _MPI_Init_thread(&ac, (char***)&tmp , *required, provided);
+}
 extern int
 MPI_Init(int *argc, char ***argv)
 {
@@ -864,3 +894,29 @@ extern int MPI_Finalize(){
     /*     FREE(communicators); */
     return PMPI_Finalize();
 }
+
+/* void apply_print(const void *key,void **value,void *cl){ */
+/*     prof_attrs *val; */
+/*     unsigned long long bytes; */
+/*     char name[32], prim[32]; */
+/*     val = (prof_attrs*)value; */
+/*     strcpy(name, val->name); */
+/*     bytes = val->bytes; */
+/*     strcpy(prim, val->prim); */
+/*     printf("Name: %s created by %s bytes transferred %llu\n",name,prim,bytes); */
+/* } */
+
+/* int compare(const void *x, const void *y) { */
+/*     prof_attrs *a = (prof_attrs*) x; */
+/*     prof_attrs *b = (prof_attrs*) y; */
+/*     char bufa[32], bufb[32]; */
+/*     strcpy(bufa,a->name); */
+/*     strcpy(bufb,b->name); */
+/*     printf("Compare %s with %s\n",bufa,bufb); */
+/*     return strcmp(a->name, b->name); */
+/* } */
+
+/* void print_entry(commtor* communicator){ */
+/*     printf("Name: %s, Bytes  %ld, Prim created %s\n",communicator->name, */
+/*            communicator->bytes,communicator->prim); */
+/* } */
