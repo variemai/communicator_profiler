@@ -118,6 +118,36 @@ get_comm_parent(MPI_Comm comm)
 }
 
 extern int
+MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
+    int ret,rank,size;
+    int i;
+    prof_attrs *communicator;
+    ret = PMPI_Init_thread(argc, argv, required, provided);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
+    local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    for ( i =0 ; i<size*4; i++ ){
+        communicators[i] = NULL;
+        local_data[i] = NULL;
+    }
+    /* table = Table_new(128, NULL, NULL); */
+    if ( rank == 0 ){
+        appname = (char*)malloc(sizeof(char)*256);
+        appname = get_appname();
+        printf("MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
+    }
+    communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
+    strcpy(communicator->name,"W");
+    communicator->bytes = 0;
+    communicator->size = size;
+    communicator->msgs = 0;
+    PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    communicators[0] = MPI_COMM_WORLD;
+    return ret;
+}
+
+extern int
 MPI_Init(int *argc, char ***argv)
 {
     int ret,rank,size;
@@ -834,4 +864,3 @@ extern int MPI_Finalize(){
     /*     FREE(communicators); */
     return PMPI_Finalize();
 }
-
