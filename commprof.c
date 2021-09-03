@@ -135,6 +135,8 @@ getProcCmdLine (int *ac, char **av)
       mcpt_abort("Error opening file %s FILE:LINE = %d",file,__FILE__,__LINE__);
   }
 }
+
+
 static int
 _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     int ret,rank,size;
@@ -173,10 +175,14 @@ MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
 extern void
 F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr){
     char **tmp;
+    int ret;
     getProcCmdLine (&ac, av);
     tmp = av;
-    _MPI_Init_thread(&ac, (char***)&tmp , *required, provided);
+    ret = _MPI_Init_thread(&ac, (char***)&tmp , *required, provided);
+    *ierr = ret;
 }
+
+
 extern int
 MPI_Init(int *argc, char ***argv)
 {
@@ -649,7 +655,8 @@ extern int MPI_Comm_free(MPI_Comm *comm){
     return ret;
 }
 
-extern int MPI_Finalize(){
+static int
+_Finalize(){
     FILE *fp;
     prof_attrs *array;
     int rank,size;
@@ -658,67 +665,13 @@ extern int MPI_Finalize(){
     prof_attrs *recv_buffer;
     prof_attrs dummy;
     char **names, **unames;
-    /* int found, comm_num; */
     int total_comms,total;
     uint64_t *bytes, *ubytes;
     uint32_t *msgs, *umsgs;
-    /* char **names, **names_buf; */
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    /* free(communicators); */
-
-    /* Before we do anything we should first learn the number of communicators */
-    /* total_comms = (int*)malloc(sizeof(int)*size*num_of_comms); */
-    /* PMPI_Allgather(&num_of_comms, 1, MPI_INT, total_comms, 1, MPI_INT , MPI_COMM_WORLD); */
-    /* PMPI_Gather(&num_of_comms, 1, MPI_INT, total_comms, 1, MPI_INT, 0, MPI_COMM_WORLD); */
     PMPI_Allreduce(&num_of_comms, &total_comms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    /* PMPI_Reduce(&num_of_comms, total_comms, 1, MPI_INT, MPI_MAX, 0, MPI_COMM_WORLD); */
-    /* for ( i = 0; i< size; i++ ){ */
-    /*     if ( total_comms[i] > num_of_comms ){ */
-    /*         num_of_comms = total_comms[i]; */
-    /*     } */
-    /* } */
-    /* printf( "Num of comms = %d\n",total_comms); */
     num_of_comms = total_comms;
-    /* PMPI_Bcast(&num_of_comms, 1, MPI_INT, 0, MPI_COMM_WORLD); */
-    /* names = (char**)malloc(sizeof(char*)*num_of_comms); */
-    /* for ( i =0; i<num_of_comms*size; i++ ){ */
-    /*     snames[i] = (char*)malloc(64); */
-    /* } */
-    /* j = 0; */
-    /* for ( i =0; i<num_of_comms; i++ ){ */
-    /*     if ( communicators[i] != NULL ){ */
-    /*         PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag); */
-    /*         if ( flag ){ */
-    /*             names[j]=strndup(com_info->name,64); */
-    /*             j++; */
-    /*         } */
-    /*     } */
-    /*     else{ */
-    /*         names[i]=strdup(names[j-1]); */
-    /*     } */
-    /* } */
-    /* names[i]="\0"; */
-    /* for ( i =0; i<num_of_comms; i++ ){ */
-    /*     printf("Rank %d %s\n",rank,names[i]); */
-    /* } */
-    /* PMPI_Gather(names, num_of_comms*64, MPI_CHAR, snames, num_of_comms*64, MPI_CHAR, 0, MPI_COMM_WORLD); */
-
-    /* if ( rank == 0 ){ */
-    /*     for ( i =0; i<num_of_comms*size; i++ ){ */
-    /*         printf("%s\n",snames[i]); */
-    /*     } */
-    /* } */
-   /* for ( i =0; i<num_of_comms; i++ ){ */
-   /*     free(names[i]); */
-   /* } */
-   /* free(names); */
-   /* free(total_comms); */
-   /* free(communicators); */
-   /* names_buf = (char**)malloc(sizeof(char*)*num_of_comms*size); */
-   /* for ( i =0; i<num_of_comms*size; i++ ){ */
-   /*     names_buf[i] = (char*)malloc(32); */
-   /* } */
 
 
     array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
@@ -810,23 +763,6 @@ extern int MPI_Finalize(){
         memset(umsgs, 0, sizeof(uint32_t )*total);
         num_of_comms = 1;
         j = 0;
-        /* printf("TOTAL %d\n",total); */
-        /* for ( i=0; i<total; i++ ){ */
-        /*     printf("\"%s\",",names[i]); */
-        /* } */
-        /* printf("\n"); */
-        /* for ( i=0; i<total; i++ ){ */
-        /*     printf("\"%s\",",parents[i]); */
-        /* } */
-        /* printf("\n"); */
-        /* for ( i=0; i<total; i++ ){ */
-        /*     printf("%lu,",bytes[i]); */
-        /* } */
-        /* printf("\n"); */
-        /* for ( i=0; i<total; i++ ){ */
-        /*     printf("%u,",msgs[i]); */
-        /* } */
-        /* printf("\n"); */
         for ( i=0; i<total; i++ ){
             /* Build the global communicator tree */
             if ( strcmp(names[i], "W") != 0 ){
@@ -893,6 +829,28 @@ extern int MPI_Finalize(){
     /* if (communicators) */
     /*     FREE(communicators); */
     return PMPI_Finalize();
+}
+
+
+extern int
+MPI_Finalize (void)
+{
+  int rc = 0;
+
+  rc = _Finalize ();
+
+  return rc;
+}
+
+extern void
+F77_MPI_FINALIZE (int *ierr)
+{
+  int rc = 0;
+
+  rc = _Finalize ();
+  *ierr = rc;
+
+  return;
 }
 
 /* void apply_print(const void *key,void **value,void *cl){ */
