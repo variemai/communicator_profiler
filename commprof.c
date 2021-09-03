@@ -167,6 +167,36 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     return ret;
 }
 
+static int
+_MPI_Init(int *argc, char ***argv){
+    int ret,rank,size;
+    int i;
+    prof_attrs *communicator;
+    ret = PMPI_Init(argc, argv);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
+    local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    for ( i =0 ; i<size*4; i++ ){
+        communicators[i] = NULL;
+        local_data[i] = NULL;
+    }
+    /* table = Table_new(128, NULL, NULL); */
+    if ( rank == 0 ){
+        appname = (char*)malloc(sizeof(char)*256);
+        appname = get_appname();
+        printf("MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
+    }
+    communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
+    strcpy(communicator->name,"W");
+    communicator->bytes = 0;
+    communicator->size = size;
+    communicator->msgs = 0;
+    PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    communicators[0] = MPI_COMM_WORLD;
+    return ret;
+}
+
 extern int
 MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     return _MPI_Init_thread(argc, argv, required, provided);
@@ -182,6 +212,19 @@ F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr){
     *ierr = ret;
 }
 
+extern void
+F77_MPI_INIT (int *ierr)
+{
+  int ret = 0;
+  char **tmp;
+
+  getProcCmdLine (&ac, av);
+  tmp = av;
+  ret = _MPI_Init (&ac, (char ***) &tmp);
+  *ierr = ret;
+
+  return;
+}
 
 extern int
 MPI_Init(int *argc, char ***argv)
@@ -634,7 +677,8 @@ MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
     return ret;
 }
 
-extern int MPI_Comm_free(MPI_Comm *comm){
+extern int
+MPI_Comm_free(MPI_Comm *comm){
     int ret,flag,i;
     prof_attrs *com_info;
     PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
