@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <unistd.h>
+#include "symbols.h"
 #define MAX_ARGS 32
 /* static void __attribute__((no_instrument_function)) */
 /* log_func(const void* funcAddr, const char* action, const void* callSite){ */
@@ -760,6 +761,7 @@ F77_MPI_ALLREDUCE(mpip_const_void_t  *sendbuf, void  *recvbuf, int  * count,
     c_comm = MPI_Comm_f2c(*comm);
 
     ret = PMPI_Allreduce(sendbuf, recvbuf, *count, c_datatype, c_op, c_comm);
+    *ierr =ret;
     flag = 0;
     for ( i=0; i< my_coms; i++){
         if ( c_comm == communicators[i] )
