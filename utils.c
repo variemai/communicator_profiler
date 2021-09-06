@@ -1,5 +1,5 @@
 #include "utils.h"
-
+#include "symbols.h"
 #define MAX_ARG_STRING_SIZE 4096
 
 char *appname = NULL;
