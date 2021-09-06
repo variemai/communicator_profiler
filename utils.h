@@ -12,6 +12,17 @@
 #define NAMELEN 128
 #define PRIMLEN 16
 
+#ifdef USE_MPI3_CONSTS
+typedef const void mpip_const_void_t;
+typedef const int mpip_const_int_t;
+typedef const char mpip_const_char_t;
+typedef const MPI_Datatype mpip_const_datatype_t;
+#else
+typedef void mpip_const_void_t;
+typedef int mpip_const_int_t;
+typedef char mpip_const_char_t;
+#endif
+
 typedef struct profiler_attributes{
     char name[NAMELEN];
     /* char parent[NAMELEN]; */
