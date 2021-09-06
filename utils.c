@@ -1,5 +1,6 @@
 #include "utils.h"
 
+#define MAX_ARG_STRING_SIZE 4096
 
 char *appname = NULL;
 prof_attrs **comm_table = NULL;
@@ -45,4 +46,45 @@ char *get_appname (){
       return inbuf;
   }
   return NULL;
+}
+
+void
+getProcCmdLine (int *ac, char **av)
+{
+  int i = 0, pid;
+  char *inbuf, file[256];
+  FILE *infile;
+  char *arg_ptr;
+
+  *ac = 0;
+  *av = NULL;
+
+  pid = getpid ();
+  snprintf (file, 256, "/proc/%d/cmdline", pid);
+  infile = fopen (file, "r");
+
+  if (infile != NULL)
+    {
+      while (!feof (infile))
+        {
+          inbuf = malloc (MAX_ARG_STRING_SIZE);
+          if (fread (inbuf, 1, MAX_ARG_STRING_SIZE, infile) > 0)
+            {
+              arg_ptr = inbuf;
+              while (*arg_ptr != '\0')
+                {
+                  av[i] = strdup (arg_ptr);
+                  arg_ptr += strlen (av[i]) + 1;
+                  i++;
+                }
+            }
+        }
+      *ac = i;
+      if(inbuf)
+          free (inbuf);
+      fclose (infile);
+    }
+  else{
+      mcpt_abort("Error opening file %s FILE:LINE = %d",file,__FILE__,__LINE__);
+  }
 }

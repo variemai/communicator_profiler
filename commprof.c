@@ -7,7 +7,6 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <unistd.h>
-#define MAX_ARG_STRING_SIZE 256
 #define MAX_ARGS 32
 /* static void __attribute__((no_instrument_function)) */
 /* log_func(const void* funcAddr, const char* action, const void* callSite){ */
@@ -95,46 +94,6 @@ get_comm_parent(MPI_Comm comm)
     return communicator;
 }
 
-void
-getProcCmdLine (int *ac, char **av)
-{
-  int i = 0, pid;
-  char *inbuf, file[256];
-  FILE *infile;
-  char *arg_ptr;
-
-  *ac = 0;
-  *av = NULL;
-
-  pid = getpid ();
-  snprintf (file, 256, "/proc/%d/cmdline", pid);
-  infile = fopen (file, "r");
-
-  if (infile != NULL)
-    {
-      while (!feof (infile))
-        {
-          inbuf = malloc (MAX_ARG_STRING_SIZE);
-          if (fread (inbuf, 1, MAX_ARG_STRING_SIZE, infile) > 0)
-            {
-              arg_ptr = inbuf;
-              while (*arg_ptr != '\0')
-                {
-                  av[i] = strdup (arg_ptr);
-                  arg_ptr += strlen (av[i]) + 1;
-                  i++;
-                }
-            }
-        }
-      *ac = i;
-      if(inbuf)
-          free (inbuf);
-      fclose (infile);
-    }
-  else{
-      mcpt_abort("Error opening file %s FILE:LINE = %d",file,__FILE__,__LINE__);
-  }
-}
 
 
 static int
@@ -208,6 +167,7 @@ F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr){
     int ret;
     getProcCmdLine (&ac, av);
     tmp = av;
+    printf("F77_INIT_THREAD\n");
     ret = _MPI_Init_thread(&ac, (char***)&tmp , *required, provided);
     *ierr = ret;
 }
@@ -217,7 +177,6 @@ F77_MPI_INIT (int *ierr)
 {
   int ret = 0;
   char **tmp;
-
   getProcCmdLine (&ac, av);
   tmp = av;
   ret = _MPI_Init (&ac, (char ***) &tmp);

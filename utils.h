@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <stdarg.h>
+#include <string.h>
 #define NAMELEN 128
 #define PRIMLEN 16
 
@@ -25,6 +26,7 @@ extern char *appname;
 
 void mcpt_abort (char *fmt, ...);
 
+void getProcCmdLine (int *ac, char **av);
 char * get_appname(void);
 
 #endif // UTILS_H_
