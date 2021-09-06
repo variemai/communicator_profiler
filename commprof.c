@@ -168,7 +168,6 @@ F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr){
     int ret;
     getProcCmdLine (&ac, av);
     tmp = av;
-    printf("F77_INIT_THREAD\n");
     ret = _MPI_Init_thread(&ac, (char***)&tmp , *required, provided);
     *ierr = ret;
 }
@@ -489,6 +488,33 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
     num_of_comms+=1;
     my_coms++;
     free(buffer);
+    return ret;
+}
+
+extern int
+MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm){
+    int ret,length,i,comms;
+    prof_attrs *communicator;
+    char *buf, *buffer;
+    ret = PMPI_Cart_sub(comm, remain_dims, new_comm);
+    MPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
+    my_coms = comms;
+    communicator = get_comm_parent(comm);
+    buffer = strdup(communicator->name);
+    buf = (char*) malloc ( sizeof(char)*16);
+    sprintf(buf,"_b%d.%d",my_coms,color);
+    length = strlen(communicator->name);
+    for ( i =0; i<strlen(buf); i++ ){
+        communicator->name[length+i] = buf[i];
+    }
+    /* communicator->name[i+1]='\0'; */
+    communicator->bytes = 0;
+    communicator->msgs = 0;
+    /* printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]); */
+    PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
+    communicators[my_coms] = *newcomm;
+    num_of_comms+=color+1;
+    my_coms++;
     return ret;
 }
 
