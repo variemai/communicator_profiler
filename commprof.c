@@ -8,7 +8,8 @@
 #include <ctype.h>
 #include <unistd.h>
 #include "symbols.h"
-#define MAX_ARGS 32
+#define MAX_ARGS 1024
+#define MAX_DIMS 8
 /* static void __attribute__((no_instrument_function)) */
 /* log_func(const void* funcAddr, const char* action, const void* callSite){ */
 /*     fprintf(stdout,"%p %d \n",callSite,__LINE__); */
@@ -53,7 +54,7 @@ namekey()
   static int namekeyval = MPI_KEYVAL_INVALID;
 
   if (namekeyval == MPI_KEYVAL_INVALID) {
-    MPI_Comm_create_keyval(MPI_COMM_NULL_COPY_FN,namedel,&namekeyval,NULL);
+    PMPI_Comm_create_keyval(MPI_COMM_NULL_COPY_FN,namedel,&namekeyval,NULL);
   }
 
   return namekeyval;
@@ -103,8 +104,8 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     int i;
     prof_attrs *communicator;
     ret = PMPI_Init_thread(argc, argv, required, provided);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
@@ -133,8 +134,8 @@ _MPI_Init(int *argc, char ***argv){
     int i;
     prof_attrs *communicator;
     ret = PMPI_Init(argc, argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
@@ -194,8 +195,8 @@ MPI_Init(int *argc, char ***argv)
     /* unsigned long long bytes; */
     /* Call Init before profiler initializations */
     ret = PMPI_Init(argc,argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
@@ -219,8 +220,8 @@ MPI_Init(int *argc, char ***argv)
     communicators[0] = MPI_COMM_WORLD;
 
     /* Table_put(table, MPI_COMM_WORLD, communicator); */
-    /* num_of_comms++; */
-    /* my_coms++; */
+    num_of_comms++;
+    my_coms++;
     return ret;
 }
 
@@ -244,7 +245,7 @@ F77_MPI_COMM_CREATE(MPI_Fint  * comm, MPI_Fint  * group, MPI_Fint  *comm_out ,
         num_of_comms++;
         return;
     }
-    MPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, c_comm);
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, c_comm);
     my_coms = comms;
     communicator = get_comm_parent(c_comm);
     buf = (char*) malloc ( sizeof(char)*8);
@@ -278,7 +279,7 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
         num_of_comms++;
         return ret;
     }
-    MPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     communicator = get_comm_parent(comm);
     buf = (char*) malloc ( sizeof(char)*8);
@@ -308,7 +309,7 @@ F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
     c_comm = MPI_Comm_f2c(*comm);
     ret = PMPI_Comm_split(c_comm, *color, *key, &c_comm_out);
     *ierr = ret;
-    MPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, c_comm);
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, c_comm);
     my_coms = comms;
     communicator = get_comm_parent(c_comm);
     buf = (char*) malloc ( sizeof(char)*16);
@@ -337,7 +338,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     prof_attrs *communicator;
     char *buf;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
-    MPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     communicator = get_comm_parent(comm);
     buf = (char*) malloc ( sizeof(char)*16);
@@ -369,7 +370,7 @@ F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
     *ierr = ret;
     /* if ( comm == MPI_COMM_WORLD ){ */
         /* Synchronize */
-    MPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, c_comm);
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, c_comm);
     my_coms = comms;
     /* } */
     communicator = get_comm_parent(c_comm);
@@ -400,7 +401,7 @@ MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
     ret = PMPI_Comm_dup(comm, newcomm);
     /* if ( comm == MPI_COMM_WORLD ){ */
         /* Synchronize */
-    MPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     /* } */
     communicator = get_comm_parent(comm);
@@ -433,7 +434,7 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, mpip_const_int_t  *dims,
     c_comm_old = MPI_Comm_f2c(*comm_old);
     ret = PMPI_Cart_create(c_comm_old, *ndims, dims, periods, *reorder, &c_comm_cart);
     *ierr = ret;
-    MPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, c_comm_old);
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, c_comm_old);
     my_coms = comms;
     communicator = get_comm_parent(c_comm_old);
     buffer = strdup(communicator->name);
@@ -467,7 +468,7 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
     prof_attrs *communicator;
     char *buf, *buffer;
     ret = PMPI_Cart_create(old_comm, ndims, dims, periods, reorder, comm_cart);
-    MPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, old_comm);
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, old_comm);
     my_coms = comms;
     communicator = get_comm_parent(old_comm);
     buffer = strdup(communicator->name);
@@ -493,27 +494,37 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
 
 extern int
 MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm){
-    int ret,length,i,comms;
+    int ret,length,i, my_rank, newcoms,size;
     prof_attrs *communicator;
-    char *buf, *buffer;
+    char *buf;
+    int dims[MAX_DIMS],*recvbuf;
     ret = PMPI_Cart_sub(comm, remain_dims, new_comm);
-    MPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
-    my_coms = comms;
+    PMPI_Comm_rank(comm, &my_rank);
+    PMPI_Comm_size(*new_comm, &size);
+    memset(dims, 0, sizeof(int)*MAX_DIMS);
+    PMPI_Cartdim_get(*new_comm, dims);
+    newcoms = 1;
+    for ( i =0; i<MAX_DIMS; i++ ){
+        if ( dims[i] != 0 ){
+            newcoms = newcoms*dims[i];
+        }
+    }
+    recvbuf = (int*) malloc ( size*sizeof(int) );
+    PMPI_Allgather(&my_rank, 1, MPI_INT, recvbuf, 1, MPI_INT, *new_comm);
+    /* my_coms = newcoms; */
     communicator = get_comm_parent(comm);
-    buffer = strdup(communicator->name);
+    /* buffer = strdup(communicator->name); */
     buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_b%d.%d",my_coms,color);
+    sprintf(buf,"_b%d.%d",my_coms,recvbuf[0]);
     length = strlen(communicator->name);
     for ( i =0; i<strlen(buf); i++ ){
         communicator->name[length+i] = buf[i];
     }
-    /* communicator->name[i+1]='\0'; */
     communicator->bytes = 0;
     communicator->msgs = 0;
-    /* printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]); */
-    PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
-    communicators[my_coms] = *newcomm;
-    num_of_comms+=color+1;
+    PMPI_Comm_set_attr(*new_comm, namekey(), communicator);
+    communicators[my_coms] = *new_comm;
+    num_of_comms+=newcoms;
     my_coms++;
     return ret;
 }
@@ -798,7 +809,7 @@ F77_MPI_ALLREDUCE(mpip_const_void_t  *sendbuf, void  *recvbuf, int  * count,
     PMPI_Comm_size(c_comm, &comm_size);
     if ( flag ){
         sum = communicator->bytes;
-        sum = sum + ((*count) * size)*comm_size + ((*count) * size);
+        sum = sum + ((*count) * size)*comm_size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + comm_size;
     }
@@ -825,7 +836,7 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
     PMPI_Comm_size(comm, &comm_size);
     if ( flag ){
         sum = communicator->bytes;
-        sum = sum + (count * size)*comm_size + (count * size);
+        sum = sum + (count * size)*comm_size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + comm_size;
     }
@@ -852,9 +863,10 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     PMPI_Comm_size(comm, &comm_size);
     if ( flag ){
         sum = communicator->bytes;
-        sum = sum + (sendcount * size)*comm_size + (recvcount*size);
+        sum = sum + (sendcount * size)*comm_size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + comm_size;
+        /* printf("Send bytes %d to %s\n",(sendcount * size)*comm_size,communicator->name); */
     }
     return ret;
 }
@@ -879,7 +891,7 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     PMPI_Comm_size(comm, &comm_size);
     if ( flag ){
         sum = communicator->bytes;
-        sum = sum + sendcount*size;
+        sum = sum + sendcount*size*comm_size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + comm_size;
     }
@@ -913,11 +925,11 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
     }
     j = sent;
     sent = sent*size;
-    recvd = 0;
-    for ( i = 0; i<comm_size; i++ ){
-        recvd += recvcounts[i];
-    }
-    recvd = recvd*size;
+    /* recvd = 0; */
+    /* for ( i = 0; i<comm_size; i++ ){ */
+    /*     recvd += recvcounts[i]; */
+    /* } */
+    /* recvd = recvd*size; */
     if ( flag ){
         sum = communicator->bytes;
         sum = sum + sent;
@@ -967,7 +979,7 @@ extern int
 MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
            MPI_Op op, int root, MPI_Comm comm)
 {
-    int ret,i,flag,size,comm_size;
+    int ret,i,flag,size;
     prof_attrs  *communicator;
     unsigned long long  sum = 0;
 
@@ -979,14 +991,38 @@ MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
     }
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
     PMPI_Type_size(datatype, &size);
-    PMPI_Comm_size(comm, &comm_size);
     if ( flag ){
         sum = communicator->bytes;
         sum = sum + count*size;
         communicator->bytes = sum;
-        communicator->msgs = communicator->msgs + comm_size;
+        communicator->msgs = communicator->msgs + 1;
     }
     return ret;
+}
+
+extern int
+MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
+           int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
+{
+    int ret,i,flag,size;
+    prof_attrs  *communicator;
+    unsigned long long  sum = 0;
+    ret = PMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
+    flag = 0;
+    for ( i=0; i< my_coms; i++){
+        if ( comm == communicators[i] )
+            break;
+    }
+    PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    PMPI_Type_size(sendtype, &size);
+    if ( flag ){
+        sum = communicator->bytes;
+        sum = sum + sendcount*size;
+        communicator->bytes = sum;
+        communicator->msgs = communicator->msgs + 1;
+    }
+    return ret;
+
 }
 
 extern int
@@ -1024,8 +1060,8 @@ _Finalize(){
     int total_comms,total;
     uint64_t *bytes, *ubytes;
     uint32_t *msgs, *umsgs;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    PMPI_Comm_size(MPI_COMM_WORLD, &size);
     PMPI_Allreduce(&num_of_comms, &total_comms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     num_of_comms = total_comms;
 
@@ -1037,21 +1073,21 @@ _Finalize(){
     MPI_Aint displacements[4];
     MPI_Aint base_address;
     MPI_Datatype profiler_data;
-    MPI_Get_address(&dummy, &base_address);
-    MPI_Get_address(&dummy.name[0], &displacements[0]);
+    PMPI_Get_address(&dummy, &base_address);
+    PMPI_Get_address(&dummy.name[0], &displacements[0]);
     /* MPI_Get_address(&dummy.parent[0], &displacements[1]); */
     /* MPI_Get_address(&dummy.prim[0], &displacements[2]); */
-    MPI_Get_address(&dummy.bytes, &displacements[1]);
-    MPI_Get_address(&dummy.msgs, &displacements[2]);
-    MPI_Get_address(&dummy.size, &displacements[3]);
+    PMPI_Get_address(&dummy.bytes, &displacements[1]);
+    PMPI_Get_address(&dummy.msgs, &displacements[2]);
+    PMPI_Get_address(&dummy.size, &displacements[3]);
     displacements[0] = MPI_Aint_diff(displacements[0], base_address);
     displacements[1] = MPI_Aint_diff(displacements[1], base_address);
     displacements[2] = MPI_Aint_diff(displacements[2], base_address);
     displacements[3] = MPI_Aint_diff(displacements[3], base_address);
     /* displacements[4] = MPI_Aint_diff(displacements[4], base_address); */
 
-    MPI_Type_create_struct(4, blocklen, displacements, types, &profiler_data);
-    MPI_Type_commit(&profiler_data);
+    PMPI_Type_create_struct(4, blocklen, displacements, types, &profiler_data);
+    PMPI_Type_commit(&profiler_data);
     k = 0;
     for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != NULL ){
@@ -1085,6 +1121,9 @@ _Finalize(){
             }
         }
     }
+    /* for ( i =0; i< num_of_comms; i++ ){ */
+    /*     printf("RANK %d: comm =%s bytes =%lu\n",rank,array[i].name,array[i].bytes); */
+    /* } */
     fp = fopen("profiler_stats.txt","w");
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
@@ -1121,7 +1160,7 @@ _Finalize(){
         j = 0;
         for ( i=0; i<total; i++ ){
             /* Build the global communicator tree */
-            if ( strcmp(names[i], "W") != 0 ){
+            /* if ( strcmp(names[i], "W") != 0 ){ */
                 found = 0;
                 for ( k =0; k<total; k++ ){
                     if ( strcmp(names[i], unames[k] ) == 0 ){
@@ -1135,9 +1174,9 @@ _Finalize(){
                     j++;
                     num_of_comms++;
                 }
-            }
+            /* } */
         }
-        strcpy(unames[j], "W");
+        /* strcpy(unames[j], "W"); */
         /* strcpy(uparents[j],"NULL"); */
         for ( i = 0; i<num_of_comms; i++){
             /* printf("Searching for %s parent %s\n",unames[i],uparents[i]); */

@@ -14,6 +14,6 @@ all:
 	mpicc -g -L$(LIBPATH) comm_split.c -o comm_split.out -lmcpt
 	mpicc -g -L$(LIBPATH) comm_split_v2.c -o comm_split_v2.out -lmcpt
 	mpicc -g -L$(LIBPATH) alltoallv.c -o alltoallv.out  -lmcpt
-	mpicc -g -L$(LIBPATH) cart_sub.c - o cart_sub.out  -lmcpt
+	mpicc -g -L$(LIBPATH) cart_sub.c -o cart_sub.out  -lmcpt
 
 # end

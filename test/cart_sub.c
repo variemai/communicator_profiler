@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <mpi.h>
+#include <string.h>
 
 /**
  * @brief Illustrates how to partition a cartesian topology created with
@@ -87,13 +88,21 @@ int main(int argc, char* argv[])
     // Get the ranks of all MPI processes in my subgrid and print it
     MPI_Allgather(&my_rank, 1, MPI_INT, subgrid_ranks, 1, MPI_INT, subgrid_communicator);
     /* printf("[MPI process %d] I am in the 1D subgrid that contains MPI processes %d, %d %d and %d.\n", my_rank, subgrid_ranks[0], subgrid_ranks[1], subgrid_ranks[2],subgrid_ranks[3]); */
-    int i,j,newcomms,maxdims,subdims[3],subperiods[3],subcoords[3];
+    int i,j,newcomms,maxdims,subdims[6],subperiods[6],subcoords[6],realdims;
     int *all_ranks,*uniq;
     newcomms = 1;
-    maxdims = 3;
+    maxdims = 6;
+    realdims = 0;
+    memset(subdims, 0, sizeof(int)*6);
     MPI_Cart_get(cartesian_communicator, maxdims, subdims, subperiods, subcoords);
-    if ( my_rank == 0 )
-        printf("MAXDIMS  = %d\n",maxdims);
+    if ( my_rank == 0 ){
+            for ( i =0; i < maxdims; i++ ){
+                if ( subdims[i] != 0 )
+                    realdims++;
+            }
+            printf("Realdims %d %d %d %d\n",realdims,subdims[0],subdims[1],subdims[2]);
+            //printf("MAXDIMS  = %d\n",maxdims);
+    }
     for ( i =0; i<maxdims; i++ ){
         if ( !remain_dims[i]  )
             newcomms = newcomms * subdims[i];
