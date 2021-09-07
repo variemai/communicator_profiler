@@ -492,6 +492,21 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
     return ret;
 }
 
+
+extern void
+F77_MPI_CART_SUB(MPI_Fint  * comm, mpip_const_int_t  *remain_dims,
+                 MPI_Fint  *comm_new , MPI_Fint *ierr)
+{
+    int rc;
+    MPI_Comm c_comm;
+    MPI_Comm c_comm_new;
+    c_comm = MPI_Comm_f2c(*comm);
+    c_comm_new = MPI_Comm_f2c(*comm_new);
+    rc = MPI_Cart_sub(c_comm, remain_dims, &c_comm_new);
+    *comm_new = MPI_Comm_c2f(c_comm_new);
+    *ierr = rc;
+}
+
 extern int
 MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm){
     int ret,length,i, my_rank, newcoms,size;
