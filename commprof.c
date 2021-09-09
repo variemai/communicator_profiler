@@ -306,7 +306,7 @@ F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
  int
 MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 {
-    int ret,i,length,comms,id,rank;
+    int ret,i,length,comms;
     prof_attrs *communicator;
     char *buf;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
@@ -318,10 +318,10 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     communicator = get_comm_parent(comm);
-    PMPI_Comm_rank(comm, &rank);
-    PMPI_Allreduce(&rank, &id, 1, MPI_INT, MPI_MIN, *newcomm);
+    /* PMPI_Comm_rank(comm, &rank); */
+    /* PMPI_Allreduce(&rank, &id, 1, MPI_INT, MPI_MIN, *newcomm); */
     buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_s%d.%d",my_coms,id);
+    sprintf(buf,"_s%d.%d",my_coms,color);
     length = strlen(communicator->name);
     for ( i =0; i<strlen(buf); i++ ){
         communicator->name[length+i] = buf[i];
