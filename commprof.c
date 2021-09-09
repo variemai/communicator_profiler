@@ -306,15 +306,17 @@ F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
  int
 MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 {
-    int ret,i,length,comms;
+    int ret,i,length,comms,id,rank;
     prof_attrs *communicator;
     char *buf;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     communicator = get_comm_parent(comm);
+    PMPI_Comm_rank(comm, &rank);
+    PMPI_Allreduce(&rank, &id, 1, MPI_INT, MPI_MIN, comm);
     buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_s%d.%d",my_coms,color);
+    sprintf(buf,"_s%d.%d",my_coms,id);
     length = strlen(communicator->name);
     for ( i =0; i<strlen(buf); i++ ){
         communicator->name[length+i] = buf[i];
@@ -322,8 +324,8 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     /* communicator->name[i+1]='\0'; */
     communicator->bytes = 0;
     communicator->msgs = 0;
-    printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]);
-    fflush(stdout);
+    /* printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]); */
+    /* fflush(stdout); */
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     communicators[my_coms] = *newcomm;
     num_of_comms+=color+1;
