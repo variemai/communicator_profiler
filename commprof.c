@@ -180,40 +180,35 @@ F77_MPI_INIT (int *ierr)
 extern int
 MPI_Init(int *argc, char ***argv)
 {
-    int ret,rank,size;
-    int i;
-    prof_attrs *communicator;
-    /* unsigned long long bytes; */
-    /* Call Init before profiler initializations */
-    ret = PMPI_Init(argc,argv);
-    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    PMPI_Comm_size(MPI_COMM_WORLD, &size);
-    communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
-    local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
-    for ( i =0 ; i<size*4; i++ ){
-        communicators[i] = NULL;
-        local_data[i] = NULL;
-    }
-    /* table = Table_new(128, NULL, NULL); */
-    if ( rank == 0 ){
-        appname = (char*)malloc(sizeof(char)*256);
-        appname = get_appname();
-        printf("MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
-    }
-    communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
-    strcpy(communicator->name,"W");
-    communicator->bytes = 0;
-    communicator->size = size;
-    communicator->msgs = 0;
-    /* communicator->index = num_of_comms; */
+    /* int ret,rank,size; */
+    /* int i; */
+    /* prof_attrs *communicator; */
+    /* ret = PMPI_Init(argc,argv); */
+    /* PMPI_Comm_rank(MPI_COMM_WORLD, &rank); */
+    /* PMPI_Comm_size(MPI_COMM_WORLD, &size); */
+    /* communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4); */
+    /* local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4); */
+    /* for ( i =0 ; i<size*4; i++ ){ */
+    /*     communicators[i] = NULL; */
+    /*     local_data[i] = NULL; */
+    /* } */
+    /* if ( rank == 0 ){ */
+    /*     appname = (char*)malloc(sizeof(char)*256); */
+    /*     appname = get_appname(); */
+    /*     printf("MPI Communicator Profiling Tool\nProfiling application %s\n",appname); */
+    /* } */
+    /* communicator = (prof_attrs*) malloc (sizeof(prof_attrs)); */
+    /* strcpy(communicator->name,"W"); */
+    /* communicator->bytes = 0; */
     /* communicator->size = size; */
-    PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
-    communicators[0] = MPI_COMM_WORLD;
+    /* communicator->msgs = 0; */
 
-    /* Table_put(table, MPI_COMM_WORLD, communicator); */
-    num_of_comms++;
-    my_coms++;
-    return ret;
+    /* PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator); */
+    /* communicators[0] = MPI_COMM_WORLD; */
+
+    /* num_of_comms++; */
+    /* my_coms++; */
+    return _MPI_Init(argc, argv);
 }
 
 
