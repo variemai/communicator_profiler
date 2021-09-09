@@ -116,8 +116,8 @@ _MPI_Init(int *argc, char ***argv){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     communicators[0] = MPI_COMM_WORLD;
-    printf("Rank: %d Return from Init\n",rank);
-    fflush(stdout);
+    /* printf("Rank: %d Return from Init\n",rank); */
+    /* fflush(stdout); */
     return ret;
 }
 
@@ -155,8 +155,8 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     communicators[0] = MPI_COMM_WORLD;
-    printf("Rank: %d Return from Init_thread\n",rank);
-    fflush(stdout);
+    /* printf("Rank: %d Return from Init_thread\n",rank); */
+    /* fflush(stdout); */
     return ret;
 }
 
@@ -326,10 +326,16 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     communicator->msgs = 0;
     printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]);
     fflush(stdout);
+    if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
+        fprintf(stderr,"MPI_Comm_split on NULL Communicator\n");
+        fflush(stderr);
+    }
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     communicators[my_coms] = *newcomm;
     num_of_comms+=color+1;
     my_coms++;
+    printf("Return from MPI_Comm_split\n");
+    fflush(stdout);
     return ret;
 }
 
