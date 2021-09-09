@@ -132,6 +132,7 @@ _MPI_Init(int *argc, char ***argv){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
         printf("MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
+        fflush(stdout);
     /* } */
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
     if ( communicator == NULL ){
