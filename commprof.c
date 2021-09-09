@@ -166,7 +166,7 @@ MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     return _MPI_Init_thread(argc, argv, required, provided);
 }
 
-extern void
+ void
 F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr){
     char **tmp;
     int ret;
@@ -176,7 +176,7 @@ F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr){
     *ierr = ret;
 }
 
-extern void
+ void
 F77_MPI_INIT (int *ierr)
 {
   int ret = 0;
@@ -196,7 +196,7 @@ MPI_Init(int *argc, char ***argv)
 }
 
 
-extern void
+ void
 F77_MPI_COMM_CREATE(MPI_Fint  * comm, MPI_Fint  * group, MPI_Fint  *comm_out ,
                     MPI_Fint *ierr)
 {
@@ -236,7 +236,7 @@ F77_MPI_COMM_CREATE(MPI_Fint  * comm, MPI_Fint  * group, MPI_Fint  *comm_out ,
 
 }
 
-extern int
+ int
 MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
 {
     int ret;
@@ -268,7 +268,7 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     return ret;
 }
 
-extern void
+ void
 F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
                    MPI_Fint  *comm_out , MPI_Fint *ierr)
 {
@@ -301,7 +301,7 @@ F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
 }
 
 
-extern int
+ int
 MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 {
     int ret,i,length,comms;
@@ -328,7 +328,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     return ret;
 }
 
-extern void
+ void
 F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
 {
     int ret,length,i, comms;
@@ -362,7 +362,7 @@ F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
 }
 
 
-extern int
+ int
 MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 {
     int ret,length,i, comms;
@@ -392,7 +392,7 @@ MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 }
 
 
-extern void
+ void
 F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, mpip_const_int_t  *dims,
                     mpip_const_int_t  *periods, int  * reorder,
                     MPI_Fint  *comm_cart , MPI_Fint *ierr)
@@ -429,7 +429,7 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, mpip_const_int_t  *dims,
     free(buffer);
 }
 
-extern int
+ int
 MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
                 const int *periods, int reorder, MPI_Comm *comm_cart)
 {
@@ -463,7 +463,7 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
 }
 
 
-extern void
+ void
 F77_MPI_CART_SUB(MPI_Fint  * comm, mpip_const_int_t  *remain_dims,
                  MPI_Fint  *comm_new , MPI_Fint *ierr)
 {
@@ -477,7 +477,7 @@ F77_MPI_CART_SUB(MPI_Fint  * comm, mpip_const_int_t  *remain_dims,
     *ierr = rc;
 }
 
-extern int
+ int
 MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm){
     int ret,length,i, my_rank, newcoms,size;
     prof_attrs *communicator;
@@ -516,7 +516,7 @@ MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm){
     return ret;
 }
 
-extern void
+ void
 F77_MPI_ISEND(mpip_const_void_t  *buf, int  * count, MPI_Fint  * datatype,
                           int  * dest, int  * tag, MPI_Fint  * comm,
                           MPI_Fint  *request , MPI_Fint *ierr)
@@ -553,7 +553,7 @@ F77_MPI_ISEND(mpip_const_void_t  *buf, int  * count, MPI_Fint  * datatype,
 }
 
 
-extern int
+ int
 MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
           MPI_Comm comm, MPI_Request *request)
 {
@@ -580,7 +580,7 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
 }
 
 
-extern void
+ void
 F77_MPI_SEND(mpip_const_void_t  *buf, int  * count, MPI_Fint  * datatype,
              int  * dest, int  * tag, MPI_Fint  * comm , MPI_Fint *ierr)
 {
@@ -615,7 +615,7 @@ F77_MPI_SEND(mpip_const_void_t  *buf, int  * count, MPI_Fint  * datatype,
 
 
 
-extern int
+ int
 MPI_Send(const void *buf, int count, MPI_Datatype datatype,
          int dest,int tag, MPI_Comm comm)
 {
@@ -642,7 +642,7 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
 }
 
 
-extern void
+ void
 F77_MPI_SENDRECV(mpip_const_void_t  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
                  int  * dest, int  * sendtag, void  *recvbuf, int  * recvcount,
                  MPI_Fint  * recvtype, int  * source, int  * recvtag,
@@ -679,7 +679,7 @@ F77_MPI_SENDRECV(mpip_const_void_t  *sendbuf, int  * sendcount,MPI_Fint  * sendt
     }
 }
 
-extern int
+ int
 MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
              int dest, int sendtag, void *recvbuf, int recvcount,
              MPI_Datatype recvtype, int source, int recvtag,
@@ -709,7 +709,7 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
-extern void
+ void
 F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
               MPI_Fint  * comm , MPI_Fint *ierr)
 {
@@ -742,7 +742,7 @@ F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
 }
 
 
-extern int
+ int
 MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
           MPI_Comm comm)
 {
@@ -768,7 +768,7 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
 
 }
 
-extern void
+ void
 F77_MPI_ALLREDUCE(mpip_const_void_t  *sendbuf, void  *recvbuf, int  * count,
                   MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm ,
                   MPI_Fint *ierr)
@@ -804,7 +804,7 @@ F77_MPI_ALLREDUCE(mpip_const_void_t  *sendbuf, void  *recvbuf, int  * count,
 
 
 
-extern int
+ int
 MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
@@ -830,7 +830,7 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
     return ret;
 }
 
-extern int
+ int
 MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
               void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
 {
@@ -858,7 +858,7 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
-extern int
+ int
 MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
              void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
 {
@@ -885,7 +885,7 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
-extern int
+ int
 MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
               const int *sdispls, MPI_Datatype sendtype, void *recvbuf,
               const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
@@ -926,7 +926,7 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
     return ret;
 }
 
-extern int
+ int
 MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                void *recvbuf, const int *recvcounts, const int *displs,
                MPI_Datatype recvtype, MPI_Comm comm)
@@ -962,7 +962,7 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 
-extern int
+ int
 MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
            MPI_Op op, int root, MPI_Comm comm)
 {
@@ -987,7 +987,7 @@ MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
     return ret;
 }
 
-extern int
+ int
 MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
            int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
@@ -1012,7 +1012,7 @@ MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
 
 }
 
-extern int
+ int
 MPI_Comm_free(MPI_Comm *comm){
     int ret,flag,i;
     prof_attrs *com_info;
@@ -1214,7 +1214,7 @@ _Finalize(){
 }
 
 
-extern int
+ int
 MPI_Finalize (void)
 {
   int rc = 0;
@@ -1224,7 +1224,7 @@ MPI_Finalize (void)
   return rc;
 }
 
-extern void
+ void
 F77_MPI_FINALIZE (int *ierr)
 {
   int rc = 0;
