@@ -97,12 +97,12 @@ _MPI_Init(int *argc, char ***argv){
         local_data[i] = NULL;
     }
     /* table = Table_new(128, NULL, NULL); */
-    /* if ( rank == 0 ){ */
+    if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
-        printf("MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
+        printf("MPI_Init: MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
         fflush(stdout);
-    /* } */
+    }
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
     if ( communicator == NULL ){
         mcpt_abort("malloc failed at line %s\n",__LINE__);
@@ -116,6 +116,8 @@ _MPI_Init(int *argc, char ***argv){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     communicators[0] = MPI_COMM_WORLD;
+    printf("Rank: %d Return from Init\n",rank);
+    fflush(stdout);
     return ret;
 }
 
@@ -134,12 +136,12 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
         local_data[i] = NULL;
     }
     /* table = Table_new(128, NULL, NULL); */
-    /* if ( rank == 0 ){ */
+    if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
-        printf("MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
+        printf("MPI_Init_thread: MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
         fflush(stdout);
-    /* } */
+    }
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
     if ( communicator == NULL ){
         mcpt_abort("malloc failed at line %s\n",__LINE__);
@@ -153,6 +155,8 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     communicators[0] = MPI_COMM_WORLD;
+    printf("Rank: %d Return from Init_thread\n",rank);
+    fflush(stdout);
     return ret;
 }
 
