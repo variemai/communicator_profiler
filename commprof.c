@@ -10,21 +10,6 @@
 #include "symbols.h"
 #define MAX_ARGS 1024
 #define MAX_DIMS 8
-/* static void __attribute__((no_instrument_function)) */
-/* log_func(const void* funcAddr, const char* action, const void* callSite){ */
-/*     fprintf(stdout,"%p %d \n",callSite,__LINE__); */
-/* } */
-
-/* void __attribute__((no_instrument_function)) */
-/* __cyg_profile_func_enter(void* this_fn, void* call_site){ */
-/*     log_func(this_fn, "->", call_site); */
-/* } */
-
-/* void __attribute__((no_instrument_function)) */
-/* __cyg_profile_func_exit(void* this_fn, void* call_site){ */
-/*     log_func(this_fn, "<-", call_site); */
-/* } */
-
 
 MPI_Comm *communicators = NULL;
 prof_attrs **local_data = NULL;
@@ -131,7 +116,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
 static int
 _MPI_Init(int *argc, char ***argv){
     int ret,rank,size;
-    int i;
+    int i,rc;
     prof_attrs *communicator;
     ret = PMPI_Init(argc, argv);
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -144,16 +129,22 @@ _MPI_Init(int *argc, char ***argv){
     }
     /* table = Table_new(128, NULL, NULL); */
     if ( rank == 0 ){
-        appname = (char*)malloc(sizeof(char)*256);
+        appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
         printf("MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
     }
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
+    if ( communicator == NULL ){
+        mcpt_abort("malloc failed at line %s\n",__LINE__);
+    }
     strcpy(communicator->name,"W");
     communicator->bytes = 0;
     communicator->size = size;
     communicator->msgs = 0;
-    PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    if ( rc != MPI_SUCCESS ){
+        mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
+    }
     communicators[0] = MPI_COMM_WORLD;
     return ret;
 }
@@ -1289,4 +1280,19 @@ F77_MPI_FINALIZE (int *ierr)
 /* void print_entry(commtor* communicator){ */
 /*     printf("Name: %s, Bytes  %ld, Prim created %s\n",communicator->name, */
 /*            communicator->bytes,communicator->prim); */
+/* } */
+
+/* static void __attribute__((no_instrument_function)) */
+/* log_func(const void* funcAddr, const char* action, const void* callSite){ */
+/*     fprintf(stdout,"%p %d \n",callSite,__LINE__); */
+/* } */
+
+/* void __attribute__((no_instrument_function)) */
+/* __cyg_profile_func_enter(void* this_fn, void* call_site){ */
+/*     log_func(this_fn, "->", call_site); */
+/* } */
+
+/* void __attribute__((no_instrument_function)) */
+/* __cyg_profile_func_exit(void* this_fn, void* call_site){ */
+/*     log_func(this_fn, "<-", call_site); */
 /* } */
