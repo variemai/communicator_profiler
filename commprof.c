@@ -310,6 +310,11 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     prof_attrs *communicator;
     char *buf;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
+    if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
+        /* fprintf(stderr,"MPI_Comm_split on NULL Communicator\n"); */
+        /* fflush(stderr); */
+        return ret;
+    }
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     communicator = get_comm_parent(comm);
@@ -326,16 +331,12 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     communicator->msgs = 0;
     printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]);
     fflush(stdout);
-    if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
-        fprintf(stderr,"MPI_Comm_split on NULL Communicator\n");
-        fflush(stderr);
-    }
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     communicators[my_coms] = *newcomm;
     num_of_comms+=color+1;
     my_coms++;
-    printf("Return from MPI_Comm_split\n");
-    fflush(stdout);
+    /* printf("Return from MPI_Comm_split\n"); */
+    /* fflush(stdout); */
     return ret;
 }
 
