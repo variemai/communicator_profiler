@@ -313,6 +313,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
         /* fprintf(stderr,"MPI_Comm_split on NULL Communicator\n"); */
         /* fflush(stderr); */
+        num_of_comms+=color+1;
         return ret;
     }
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
@@ -1069,10 +1070,12 @@ _Finalize(){
     uint32_t *msgs, *umsgs;
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
+    num_of_comms = my_coms;
     PMPI_Allreduce(&num_of_comms, &total_comms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     num_of_comms = total_comms;
-
-
+    if ( rank == 0 ){
+        printf("Num of REAL comms = %d\n",num_of_comms);
+    }
     array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
     recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
     MPI_Datatype types[4] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT32_T, MPI_INT };
