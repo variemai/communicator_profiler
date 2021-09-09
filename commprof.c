@@ -512,10 +512,11 @@ MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm){
     int ret,length,i, my_rank, newcoms,size;
     prof_attrs *communicator;
     char *buf;
-    int dims[MAX_DIMS],*recvbuf;
+    int dims[MAX_DIMS],id,min_rank;
     ret = PMPI_Cart_sub(comm, remain_dims, new_comm);
     PMPI_Comm_rank(comm, &my_rank);
     PMPI_Comm_size(*new_comm, &size);
+    PMPI_Allreduce(&my_coms, &id, 1, MPI_INT, MPI_MAX, comm);
     memset(dims, 0, sizeof(int)*MAX_DIMS);
     PMPI_Cartdim_get(*new_comm, dims);
     newcoms = 1;
@@ -524,13 +525,14 @@ MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm){
             newcoms = newcoms*dims[i];
         }
     }
-    recvbuf = (int*) malloc ( size*sizeof(int) );
-    PMPI_Allgather(&my_rank, 1, MPI_INT, recvbuf, 1, MPI_INT, *new_comm);
+    /* recvbuf = (int*) malloc ( size*sizeof(int) ); */
+    /* PMPI_Allgather(&my_rank, 1, MPI_INT, recvbuf, 1, MPI_INT, *new_comm); */
     /* my_coms = newcoms; */
+    PMPI_Allreduce(&my_rank, &min_rank, 1, MPI_INT , MPI_MIN, *new_comm);
     communicator = get_comm_parent(comm);
     /* buffer = strdup(communicator->name); */
     buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_b%d.%d",my_coms,recvbuf[0]);
+    sprintf(buf,"_b%d.%d",id,min_rank);
     length = strlen(communicator->name);
     for ( i =0; i<strlen(buf); i++ ){
         communicator->name[length+i] = buf[i];
@@ -920,7 +922,7 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
               MPI_Comm comm)
 {
 
-    int ret,i,j,flag,size,comm_size,sent,recvd;
+    int ret,i,j,flag,size,comm_size,sent;
     prof_attrs  *communicator;
     unsigned long long  sum = 0;
     ret = PMPI_Alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts,
