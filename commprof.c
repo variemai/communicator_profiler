@@ -277,40 +277,7 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     return ret;
 }
 
- void
-F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
-                   MPI_Fint  *comm_out , MPI_Fint *ierr)
-{
-    int ret,i,length,comms;
-    prof_attrs *communicator;
-    char *buf;
-    MPI_Comm c_comm,c_comm_out;
-    c_comm = MPI_Comm_f2c(*comm);
-    ret = PMPI_Comm_split(c_comm, *color, *key, &c_comm_out);
-    *ierr = ret;
-    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, c_comm);
-    my_coms = comms;
-    communicator = get_comm_parent(c_comm);
-    buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_s%d.%d",my_coms,*color);
-    length = strlen(communicator->name);
-    for ( i =0; i<strlen(buf); i++ ){
-        communicator->name[length+i] = buf[i];
-    }
-    /* communicator->name[i+1]='\0'; */
-    communicator->bytes = 0;
-    communicator->msgs = 0;
-    /* printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]); */
-    PMPI_Comm_set_attr(c_comm_out, namekey(), communicator);
-    communicators[my_coms] = c_comm_out;
-    num_of_comms+=*(color)+1;
-    if ( ret == MPI_SUCCESS )
-        *comm_out = MPI_Comm_c2f(c_comm_out);
-    my_coms++;
-}
-
-
- int
+int
 MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 {
     int ret,i,length,comms;
@@ -325,8 +292,6 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     uniq = (int*) malloc (sizeof(int)*comm_size);
     PMPI_Allgather(&color, 1, MPI_INT, allcolors, 1, MPI_INT, comm);
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
-        /* fprintf(stderr,"MPI_Comm_split on NULL Communicator\n"); */
-        /* fflush(stderr); */
         communicators[my_coms] = NULL;
         my_coms++;
         return ret;
@@ -370,7 +335,22 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     return ret;
 }
 
- void
+void
+F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
+                   MPI_Fint  *comm_out , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Comm c_comm,c_comm_out;
+    c_comm = MPI_Comm_f2c(*comm);
+    ret = MPI_Comm_split(c_comm, *color, *key, &c_comm_out);
+    *ierr = ret;
+    if ( ret == MPI_SUCCESS )
+        *comm_out = MPI_Comm_c2f(c_comm_out);
+}
+
+
+
+void
 F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
 {
     int ret,length,i, comms;
@@ -404,7 +384,7 @@ F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
 }
 
 
- int
+int
 MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 {
     int ret,length,i, comms;
