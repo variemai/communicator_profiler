@@ -318,17 +318,17 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     char *buf;
     int *allcolors,comm_size,tmp,*uniq,j;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
-    if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
-        /* fprintf(stderr,"MPI_Comm_split on NULL Communicator\n"); */
-        /* fflush(stderr); */
-        return ret;
-    }
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     PMPI_Comm_size(comm, &comm_size);
     allcolors = (int*) malloc (sizeof(int)*comm_size);
     uniq = (int*) malloc (sizeof(int)*comm_size);
     PMPI_Allgather(&color, 1, MPI_INT, allcolors, 1, MPI_INT, comm);
+    if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
+        /* fprintf(stderr,"MPI_Comm_split on NULL Communicator\n"); */
+        /* fflush(stderr); */
+        return ret;
+    }
     qsort(allcolors, comm_size, sizeof(int), compare_int);
     comms = 0;
     tmp = 0;
