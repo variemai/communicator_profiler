@@ -327,6 +327,8 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
         /* fprintf(stderr,"MPI_Comm_split on NULL Communicator\n"); */
         /* fflush(stderr); */
+        communicators[my_coms] = NULL;
+        my_coms++;
         return ret;
     }
     qsort(allcolors, comm_size, sizeof(int), compare_int);
