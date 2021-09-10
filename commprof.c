@@ -45,6 +45,13 @@ namekey()
   return namekeyval;
 }
 
+static int
+compare_int(const void *a, const void *b){
+    int *a0, *b0;
+    a0 = (int*)a;
+    b0 = (int*)b;
+    return (*a0)-(*b0);
+}
 
 prof_attrs*
 get_comm_parent(MPI_Comm comm)
@@ -309,20 +316,41 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     int ret,i,length,comms;
     prof_attrs *communicator;
     char *buf;
+    int *allcolors,comm_size,tmp,*uniq,j;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
         /* fprintf(stderr,"MPI_Comm_split on NULL Communicator\n"); */
         /* fflush(stderr); */
-        num_of_comms+=color+1;
         return ret;
     }
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
+    PMPI_Comm_size(comm, &comm_size);
+    allcolors = (int*) malloc (sizeof(int)*comm_size);
+    uniq = (int*) malloc (sizeof(int)*comm_size);
+    PMPI_Allgather(&color, 1, MPI_INT, allcolors, 1, MPI_INT, comm);
+    qsort(allcolors, comm_size, sizeof(int), compare_int);
+    comms = 0;
+    tmp = 0;
+    j = 0;
+    for ( i =0; i<comm_size; i++ ){
+        if ( allcolors[i] > tmp  ){
+            comms ++;
+            tmp = allcolors[i];
+            uniq[j] = tmp;
+            j++;
+        }
+    }
+    for ( j =0; j<comms; j++ ){
+        if ( color == uniq[j]  )
+            break;
+    }
     communicator = get_comm_parent(comm);
     /* PMPI_Comm_rank(comm, &rank); */
     /* PMPI_Allreduce(&rank, &id, 1, MPI_INT, MPI_MIN, *newcomm); */
     buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_s%d.%d",my_coms,color);
+    sprintf(buf,"_s%d.%d",my_coms,j);
+    num_of_comms+=j+1;
     length = strlen(communicator->name);
     for ( i =0; i<strlen(buf); i++ ){
         communicator->name[length+i] = buf[i];
@@ -334,7 +362,6 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     /* fflush(stdout); */
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     communicators[my_coms] = *newcomm;
-    num_of_comms+=color+1;
     my_coms++;
     /* printf("Return from MPI_Comm_split\n"); */
     /* fflush(stdout); */
