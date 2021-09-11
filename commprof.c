@@ -173,7 +173,7 @@ MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     return _MPI_Init_thread(argc, argv, required, provided);
 }
 
- void
+void
 F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr){
     char **tmp;
     int ret;
@@ -181,9 +181,10 @@ F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr){
     tmp = av;
     ret = _MPI_Init_thread(&ac, (char***)&tmp , *required, provided);
     *ierr = ret;
+    return;
 }
 
- void
+void
 F77_MPI_INIT (int *ierr)
 {
   int ret = 0;
@@ -323,6 +324,7 @@ F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
     *ierr = ret;
     if ( ret == MPI_SUCCESS )
         *comm_out = MPI_Comm_c2f(c_comm_out);
+    return;
 }
 
 
@@ -367,6 +369,7 @@ F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
     *ierr = ret;
     if ( ret == MPI_SUCCESS  )
         *comm_out =  MPI_Comm_c2f(newcomm);
+    return;
 }
 
 
@@ -418,6 +421,7 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, mpip_const_int_t  *dims,
     *ierr = ret;
     if ( ret == MPI_SUCCESS  )
         *comm_cart = MPI_Comm_c2f(c_comm_cart);
+    return;
 }
 
 
@@ -472,41 +476,7 @@ F77_MPI_CART_SUB(MPI_Fint  * comm, mpip_const_int_t  *remain_dims,
     rc = MPI_Cart_sub(c_comm, remain_dims, &c_comm_new);
     *comm_new = MPI_Comm_c2f(c_comm_new);
     *ierr = rc;
-}
-
-
-void
-F77_MPI_ISEND(mpip_const_void_t  *buf, int  * count, MPI_Fint  * datatype,
-                          int  * dest, int  * tag, MPI_Fint  * comm,
-                          MPI_Fint  *request , MPI_Fint *ierr)
-{
-
-    int ret;
-    int size,flag,i;
-    prof_attrs  *communicator;
-    unsigned long long  sum = 0;
-    MPI_Datatype c_datatype;
-    MPI_Comm c_comm;
-    MPI_Request c_request;
-    c_datatype = MPI_Type_f2c(*datatype);
-    c_comm = MPI_Comm_f2c(*comm);
-    ret = PMPI_Isend(buf, *count, c_datatype, *dest, *tag, c_comm, &c_request);
-    *ierr = ret;
-    flag = 0;
-    for ( i=0; i< my_coms; i++){
-        if ( c_comm == communicators[i] )
-            break;
-    }
-    PMPI_Comm_get_attr(c_comm, namekey(), &communicator, &flag);
-    PMPI_Type_size(c_datatype, &size);
-    if ( flag ){
-        sum = communicator->bytes;
-        sum = sum + (*count) * size;
-        communicator->bytes = sum;
-        communicator->msgs = communicator->msgs + 1;
-    }
-    if ( ret == MPI_SUCCESS )
-        *request = MPI_Request_c2f(c_request);
+    return;
 }
 
 
@@ -524,7 +494,6 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
         if ( comm == communicators[i] )
             break;
     }
-
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
     PMPI_Type_size(datatype, &size);
     if ( flag ){
@@ -536,38 +505,23 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
     return ret;
 }
 
-
 void
-F77_MPI_SEND(mpip_const_void_t  *buf, int  * count, MPI_Fint  * datatype,
-             int  * dest, int  * tag, MPI_Fint  * comm , MPI_Fint *ierr)
+F77_MPI_ISEND(mpip_const_void_t  *buf, int  * count, MPI_Fint  * datatype,
+                          int  * dest, int  * tag, MPI_Fint  * comm,
+                          MPI_Fint  *request , MPI_Fint *ierr)
 {
 
     int ret;
-    int size,flag,i;
-    prof_attrs  *communicator;
     MPI_Datatype c_datatype;
     MPI_Comm c_comm;
-    unsigned long long  sum = 0;
-
+    MPI_Request c_request;
     c_datatype = MPI_Type_f2c(*datatype);
     c_comm = MPI_Comm_f2c(*comm);
-
-    ret = PMPI_Send(buf, *count, c_datatype, *dest, *tag, c_comm);
+    ret = MPI_Isend(buf, *count, c_datatype, *dest, *tag, c_comm, &c_request);
     *ierr = ret;
-    flag = 0;
-    for ( i=0; i< my_coms; i++){
-        if ( c_comm == communicators[i] )
-            break;
-    }
-
-    PMPI_Comm_get_attr(c_comm, namekey(), &communicator, &flag);
-    PMPI_Type_size(c_datatype, &size);
-    if ( flag ){
-        sum = communicator->bytes;
-        sum = sum + (*count) * size;
-        communicator->bytes = sum;
-        communicator->msgs = communicator->msgs + 1;
-    }
+    if ( ret == MPI_SUCCESS )
+        *request = MPI_Request_c2f(c_request);
+    return;
 }
 
 
@@ -586,7 +540,6 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
         if ( comm == communicators[i] )
             break;
     }
-
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
     PMPI_Type_size(datatype, &size);
     if ( flag ){
@@ -598,43 +551,21 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
     return ret;
 }
 
-
 void
-F77_MPI_SENDRECV(mpip_const_void_t  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
-                 int  * dest, int  * sendtag, void  *recvbuf, int  * recvcount,
-                 MPI_Fint  * recvtype, int  * source, int  * recvtag,
-                 MPI_Fint  * comm, MPI_Status  *status , MPI_Fint *ierr)
+F77_MPI_SEND(mpip_const_void_t  *buf, int  * count, MPI_Fint  * datatype,
+             int  * dest, int  * tag, MPI_Fint  * comm , MPI_Fint *ierr)
 {
-
     int ret;
-    int size,flag,i;
-    prof_attrs  *communicator;
-    MPI_Datatype c_sendtype;
-    MPI_Datatype c_recvtype;
+    MPI_Datatype c_datatype;
     MPI_Comm c_comm;
-    unsigned long long  sum = 0;
-    c_sendtype = MPI_Type_f2c(*sendtype);
-    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_datatype = MPI_Type_f2c(*datatype);
     c_comm = MPI_Comm_f2c(*comm);
-
-    ret = PMPI_Sendrecv(sendbuf, *sendcount, c_sendtype, *dest, *sendtag, recvbuf,
-                        *recvcount, c_recvtype, *source, *recvtag, c_comm, status);
+    ret = MPI_Send(buf, *count, c_datatype, *dest, *tag, c_comm);
     *ierr = ret;
-    flag = 0;
-    for ( i=0; i< my_coms; i++){
-        if ( c_comm == communicators[i] )
-            break;
-    }
-
-    PMPI_Comm_get_attr(c_comm, namekey(), &communicator, &flag);
-    PMPI_Type_size(c_sendtype, &size);
-    if ( flag ){
-        sum = communicator->bytes;
-        sum = sum + (*sendcount) * size;
-        communicator->bytes = sum;
-        communicator->msgs = communicator->msgs + 1;
-    }
+    return;
 }
+
+
 
 int
 MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
@@ -666,36 +597,25 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
+
 void
-F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
-              MPI_Fint  * comm , MPI_Fint *ierr)
+F77_MPI_SENDRECV(mpip_const_void_t  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
+                 int  * dest, int  * sendtag, void  *recvbuf, int  * recvcount,
+                 MPI_Fint  * recvtype, int  * source, int  * recvtag,
+                 MPI_Fint  * comm, MPI_Status  *status , MPI_Fint *ierr)
 {
 
-    int ret,i,flag,size,comm_size;
-    prof_attrs  *communicator;
-    MPI_Datatype c_datatype;
+    int ret;
+    MPI_Datatype c_sendtype;
+    MPI_Datatype c_recvtype;
     MPI_Comm c_comm;
-    unsigned long long  sum = 0;
-
-    c_datatype = MPI_Type_f2c(*datatype);
+    c_sendtype = MPI_Type_f2c(*sendtype);
+    c_recvtype = MPI_Type_f2c(*recvtype);
     c_comm = MPI_Comm_f2c(*comm);
-
-    ret = PMPI_Bcast(buffer, *count, c_datatype, *root, c_comm);
+    ret = MPI_Sendrecv(sendbuf, *sendcount, c_sendtype, *dest, *sendtag, recvbuf,
+                        *recvcount, c_recvtype, *source, *recvtag, c_comm, status);
     *ierr = ret;
-    flag = 0;
-    for ( i=0; i< my_coms; i++){
-        if ( c_comm == communicators[i] )
-            break;
-    }
-    PMPI_Comm_get_attr(c_comm, namekey(), &communicator, &flag);
-    PMPI_Type_size(c_datatype, &size);
-    PMPI_Comm_size(c_comm, &comm_size);
-    if ( flag ){
-        sum = communicator->bytes;
-        sum = (sum + (*count) * size);
-        communicator->bytes = sum;
-        communicator->msgs = communicator->msgs + comm_size;
-    }
+    return;
 }
 
 
@@ -706,6 +626,7 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
     int ret,i,flag,size,comm_size;
     prof_attrs  *communicator;
     unsigned long long  sum = 0;
+
     ret = PMPI_Bcast(buffer, count, datatype, root, comm);
     flag = 0;
     for ( i=0; i< my_coms; i++){
@@ -726,42 +647,22 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
 }
 
 void
-F77_MPI_ALLREDUCE(mpip_const_void_t  *sendbuf, void  *recvbuf, int  * count,
-                  MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm ,
-                  MPI_Fint *ierr)
+F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
+              MPI_Fint  * comm , MPI_Fint *ierr)
 {
-    int ret,i,flag,size,comm_size;
-    prof_attrs  *communicator;
-    unsigned long long  sum = 0;
-    MPI_Op c_op;
-    MPI_Comm c_comm;
+
+    int ret;
     MPI_Datatype c_datatype;
+    MPI_Comm c_comm;
 
     c_datatype = MPI_Type_f2c(*datatype);
-    c_op = MPI_Op_f2c(*op);
     c_comm = MPI_Comm_f2c(*comm);
-
-    ret = PMPI_Allreduce(sendbuf, recvbuf, *count, c_datatype, c_op, c_comm);
-    *ierr =ret;
-    flag = 0;
-    for ( i=0; i< my_coms; i++){
-        if ( c_comm == communicators[i] )
-            break;
-    }
-    PMPI_Comm_get_attr(c_comm, namekey(), &communicator, &flag);
-    PMPI_Type_size(c_datatype, &size);
-    PMPI_Comm_size(c_comm, &comm_size);
-    if ( flag ){
-        sum = communicator->bytes;
-        sum = sum + ((*count) * size)*comm_size;
-        communicator->bytes = sum;
-        communicator->msgs = communicator->msgs + comm_size;
-    }
+    ret = MPI_Bcast(buffer, *count, c_datatype, *root, c_comm);
+    *ierr = ret;
 }
 
 
-
- int
+int
 MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
@@ -769,7 +670,9 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
     int ret,i,flag,size,comm_size;
     prof_attrs  *communicator;
     unsigned long long  sum = 0;
+
     ret = PMPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+
     flag = 0;
     for ( i=0; i< my_coms; i++){
         if ( comm == communicators[i] )
@@ -787,7 +690,29 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
     return ret;
 }
 
- int
+void
+F77_MPI_ALLREDUCE(mpip_const_void_t  *sendbuf, void  *recvbuf, int  * count,
+                  MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm ,
+                  MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Op c_op;
+    MPI_Comm c_comm;
+    MPI_Datatype c_datatype;
+
+    c_datatype = MPI_Type_f2c(*datatype);
+    c_op = MPI_Op_f2c(*op);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Allreduce(sendbuf, recvbuf, *count, c_datatype, c_op, c_comm);
+    *ierr =ret;
+    return;
+}
+
+
+
+
+int
 MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
               void *recvbuf, int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
 {
