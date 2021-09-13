@@ -1108,7 +1108,7 @@ _Finalize(){
             /* PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag); */
             /* com_info = local_comms[i]; */
             if ( rank == 1 || rank == 3 || rank == 5){
-                printf("RANK %d : COMM %s bytes = %lu, Msgs = %u\n",rank,
+                printf("RANK %d : i = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i,
                        local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs);
             }
 
