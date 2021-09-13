@@ -9,7 +9,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 #include <string.h>
-#define NAMELEN 256
+#define NAMELEN 512
 #define PRIMLEN 16
 
 #ifdef USE_MPI3_CONSTS
