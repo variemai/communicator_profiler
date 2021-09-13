@@ -295,9 +295,9 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     PMPI_Allgather(&color, 1, MPI_INT, allcolors, 1, MPI_INT, comm);
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
-        communicators[my_coms] = MPI_COMM_NULL;
+        /* communicators[my_coms] = MPI_COMM_NULL; */
         /* printf("Rank %d failed to SPLIT\n",rank); */
-        my_coms++;
+        /* my_coms++; */
         return ret;
     }
     qsort(allcolors, comm_size, sizeof(int), compare_int);
@@ -1114,6 +1114,7 @@ _Finalize(){
             if ( rank == 1 || rank == 3 || rank == 5){
                 printf("RANK %d : i = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i,
                        local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs);
+                fflush(stdout);
             }
 
             strcpy(array[i].name, local_comms[i]->name);
@@ -1130,8 +1131,10 @@ _Finalize(){
         else{
             if ( num_of_local > 0 && k < num_of_local){
                 if ( rank == 1 || rank == 3 || rank == 5){
-                    printf("RANK %d : i = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i,
+                    printf("RANK %d : k = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i,
                            local_data[k]->name,local_data[k]->bytes,local_data[k]->msgs);
+
+                    fflush(stdout);
                 }
                 strcpy(array[i].name, local_data[k]->name);
                 /* strcpy(array[i].parent, local_data[k]->parent); */
