@@ -1062,7 +1062,7 @@ _Finalize(){
         }
     }
     if ( rank == 1 || rank == 3 || rank == 5){
-        printf("RANK %d: i = %d\n",rank,i);
+        printf("RANK %d: local_cid = %d\n",rank,local_cid);
         fflush(stdout);
     }
     for ( i = 0; i < num_of_comms; i++ ){
