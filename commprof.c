@@ -322,7 +322,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     /* printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]); */
     /* fflush(stdout); */
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
-    local_data[local_cid] = communicator;
+    local_comms[local_cid] = communicator;
     local_cid++;
     communicators[my_coms] = *newcomm;
     my_coms++;
@@ -371,6 +371,8 @@ MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
     communicator->bytes = 0;
     communicator->msgs = 0;
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
+    local_comms[local_cid] = communicator;
+    local_cid++;
     communicators[my_coms] = *newcomm;
     num_of_comms+=1;
     my_coms++;
@@ -418,6 +420,8 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
     /* printf("MPI_cart_create\n"); */
     /* fflush(stdout); */
     PMPI_Comm_set_attr(*comm_cart, namekey(), communicator);
+    local_comms[local_cid] = communicator;
+    local_cid++;
     /* printf("MPI Cart comm with name %s and parent %s\n",communicator->name,buffer); */
     communicators[my_coms] = *comm_cart;
     num_of_comms+=1;
@@ -476,6 +480,8 @@ MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm){
     communicator->bytes = 0;
     communicator->msgs = 0;
     PMPI_Comm_set_attr(*new_comm, namekey(), communicator);
+    local_comms[local_cid] = communicator;
+    local_cid++;
     communicators[my_coms] = *new_comm;
     num_of_comms+=newcoms;
     my_coms++;
