@@ -13,6 +13,8 @@
 
 MPI_Comm *communicators = NULL;
 prof_attrs **local_data = NULL;
+prof_attrs **local_comms = NULL;
+int local_cid= 0;
 int num_of_comms = 1;
 int my_coms = 1;
 int num_of_local = 0;
@@ -101,9 +103,11 @@ _MPI_Init(int *argc, char ***argv){
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
         local_data[i] = NULL;
+        local_comms[i] = NULL;
     }
     /* table = Table_new(128, NULL, NULL); */
     if ( rank == 0 ){
@@ -121,6 +125,8 @@ _MPI_Init(int *argc, char ***argv){
     communicator->size = size;
     communicator->msgs = 0;
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    local_data[local_cid] = communicator;
+    local_cid++;
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
@@ -159,6 +165,8 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     communicator->bytes = 0;
     communicator->size = size;
     communicator->msgs = 0;
+    local_data[local_cid] = communicator;
+    local_cid++;
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
@@ -232,6 +240,8 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     printf("MPI_Comm_create\n");
     fflush(stdout);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
+    local_data[local_cid] = communicator;
+    local_cid++;
     communicators[my_coms] = *newcomm;
     num_of_comms++;
     my_coms++;
@@ -310,6 +320,8 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     /* printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]); */
     /* fflush(stdout); */
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
+    local_data[local_cid] = communicator;
+    local_cid++;
     communicators[my_coms] = *newcomm;
     my_coms++;
     /* printf("Return from MPI_Comm_split\n"); */
@@ -499,12 +511,20 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
             break;
     }
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    for ( i =0; i< local_cid; i++ ){
+        if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
+            break;
+    }
+    if ( i == local_cid  )
+        mcpt_abort("Isend on wrong communicator\n");
     PMPI_Type_size(datatype, &size);
     if ( flag ){
         sum = communicator->bytes;
         sum = sum + count * size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + 1;
+        local_comms[i]->bytes = sum;
+        local_comms[i]->msgs = communicator->msgs + 1;
     }
     return ret;
 }
@@ -545,12 +565,20 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
             break;
     }
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    for ( i =0; i< local_cid; i++ ){
+        if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
+            break;
+    }
+    if ( i == local_cid  )
+        mcpt_abort("Isend on wrong communicator\n");
     PMPI_Type_size(datatype, &size);
     if ( flag ){
         sum = communicator->bytes;
         sum = sum + count * size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + 1;
+        local_comms[i]->bytes = sum;
+        local_comms[i]->msgs = communicator->msgs;
     }
     return ret;
 }
@@ -591,12 +619,20 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
 
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    for ( i =0; i< local_cid; i++ ){
+        if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
+            break;
+    }
+    if ( i == local_cid  )
+        mcpt_abort("Isend on wrong communicator\n");
     PMPI_Type_size(sendtype, &size);
     if ( flag ){
         sum = communicator->bytes;
         sum = sum + sendcount * size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + 1;
+        local_comms[i]->bytes = sum;
+        local_comms[i]->msgs = communicator->msgs;
     }
     return ret;
 }
@@ -638,6 +674,12 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
             break;
     }
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    for ( i =0; i< local_cid; i++ ){
+        if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
+            break;
+    }
+    if ( i == local_cid  )
+        mcpt_abort("Isend on wrong communicator\n");
     PMPI_Type_size(datatype, &size);
     PMPI_Comm_size(comm, &comm_size);
     if ( flag ){
@@ -645,6 +687,8 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
         sum = (sum + count * size);
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + comm_size;
+        local_comms[i]->bytes = sum;
+        local_comms[i]->msgs = communicator->msgs;
     }
     return ret;
 
@@ -683,6 +727,12 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
             break;
     }
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    for ( i =0; i< local_cid; i++ ){
+        if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
+            break;
+    }
+    if ( i == local_cid  )
+        mcpt_abort("Isend on wrong communicator\n");
     PMPI_Type_size(datatype, &size);
     PMPI_Comm_size(comm, &comm_size);
     if ( flag ){
@@ -690,6 +740,8 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
         sum = sum + (count * size)*comm_size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + comm_size;
+        local_comms[i]->bytes = sum;
+        local_comms[i]->msgs = communicator->msgs;
     }
     return ret;
 }
@@ -732,6 +784,12 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             break;
     }
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    for ( i =0; i< local_cid; i++ ){
+        if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
+            break;
+    }
+    if ( i == local_cid  )
+        mcpt_abort("Isend on wrong communicator\n");
     PMPI_Type_size(sendtype, &size);
     PMPI_Comm_size(comm, &comm_size);
     if ( flag ){
@@ -740,6 +798,8 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + comm_size;
         /* printf("Send bytes %d to %s\n",(sendcount * size)*comm_size,communicator->name); */
+        local_comms[i]->bytes = sum;
+        local_comms[i]->msgs = communicator->msgs;
     }
     return ret;
 }
@@ -760,6 +820,12 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             break;
     }
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    for ( i =0; i< local_cid; i++ ){
+        if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
+            break;
+    }
+    if ( i == local_cid  )
+        mcpt_abort("Isend on wrong communicator\n");
     PMPI_Type_size(sendtype, &size);
     PMPI_Comm_size(comm, &comm_size);
     if ( flag ){
@@ -767,6 +833,8 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = sum + sendcount*size*comm_size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + comm_size;
+        local_comms[i]->bytes = sum;
+        local_comms[i]->msgs = communicator->msgs;
     }
     return ret;
 }
@@ -863,12 +931,20 @@ MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
             break;
     }
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    for ( i =0; i< local_cid; i++ ){
+        if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
+            break;
+    }
+    if ( i == local_cid  )
+        mcpt_abort("Isend on wrong communicator\n");
     PMPI_Type_size(datatype, &size);
     if ( flag ){
         sum = communicator->bytes;
         sum = sum + count*size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + 1;
+        local_comms[i]->bytes = sum;
+        local_comms[i]->msgs = communicator->msgs;
     }
     return ret;
 }
@@ -887,12 +963,20 @@ MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
             break;
     }
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    for ( i =0; i< local_cid; i++ ){
+        if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
+            break;
+    }
+    if ( i == local_cid  )
+        mcpt_abort("Isend on wrong communicator\n");
     PMPI_Type_size(sendtype, &size);
     if ( flag ){
         sum = communicator->bytes;
         sum = sum + sendcount*size;
         communicator->bytes = sum;
         communicator->msgs = communicator->msgs + 1;
+        local_comms[i]->bytes = sum;
+        local_comms[i]->msgs = communicator->msgs;
     }
     return ret;
 
