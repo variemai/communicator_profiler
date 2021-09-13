@@ -125,7 +125,7 @@ _MPI_Init(int *argc, char ***argv){
     communicator->size = size;
     communicator->msgs = 0;
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
-    local_data[local_cid] = communicator;
+    local_comms[local_cid] = communicator;
     local_cid++;
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
@@ -148,7 +148,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
-        communicators[i] = NULL;
+        communicators[i] = MPI_COMM_NULL;
         local_data[i] = NULL;
         local_comms[i] = NULL;
     }
@@ -167,7 +167,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     communicator->bytes = 0;
     communicator->size = size;
     communicator->msgs = 0;
-    local_data[local_cid] = communicator;
+    local_comms[local_cid] = communicator;
     local_cid++;
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     if ( rc != MPI_SUCCESS ){
