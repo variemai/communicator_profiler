@@ -317,8 +317,8 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     /* communicator->name[i+1]='\0'; */
     communicator->bytes = 0;
     communicator->msgs = 0;
-    printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[length+i-1]);
-    fflush(stdout);
+    /* printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[length+i-1]); */
+    /* fflush(stdout); */
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     local_comms[local_cid] = communicator;
     local_cid++;
@@ -1056,6 +1056,11 @@ _Finalize(){
     k = 0;
     /* printf("RANK %d Called Finalize() comms = %d\n",rank,num_of_comms); */
     /* fflush(stdout); */
+    for ( i = 0; i < num_of_comms; i++ ){
+        if ( i >= local_cid ){
+            local_comms[i] = NULL;
+        }
+    }
     for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != MPI_COMM_NULL && local_comms[i] != NULL ){
             /* printf("RANK %d %p %d\n",rank,communicators[i],namekey()); */
