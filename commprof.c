@@ -92,8 +92,12 @@ get_comm_parent(MPI_Comm comm)
     return communicator;
 }
 
+void
+_profile_this(prof_attrs *communicator,int index){
+    return;
+}
 
-static int
+int
 _MPI_Init(int *argc, char ***argv){
     int ret,rank,size;
     int i,rc;
@@ -113,7 +117,8 @@ _MPI_Init(int *argc, char ***argv){
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
-        printf("MPI_Init: MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
+        printf("MPI_Init: MPI Communicator Profiling Tool\nProfiling application\
+ %s\n",appname);
         fflush(stdout);
     }
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
@@ -156,7 +161,8 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
-        printf("MPI_Init_thread: MPI Communicator Profiling Tool\nProfiling application %s\n",appname);
+        printf("MPI_Init_thread: MPI Communicator Profiling Tool\nProfiling\
+ application %s\n",appname);
         fflush(stdout);
     }
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
@@ -239,7 +245,9 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     /* communicator->name[i]='\0'; */
     communicator->bytes = 0;
     communicator->msgs = 0;
-    printf("MPI_Comm_create\n");
+    int rank;
+    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    printf("Rank %d, local_cid = %d Func %s\n",rank,local_cid,__FUNCTION__);
     fflush(stdout);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     local_data[local_cid] = communicator;
@@ -321,13 +329,11 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     /* fflush(stdout); */
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     local_comms[local_cid] = communicator;
-    local_cid++;
     int rank;
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if ( rank == 1 || rank == 3 || rank == 5 ){
-        printf("Rank %d, local_cid = %d\n",rank,local_cid);
-        fflush(stdout);
-    }
+    printf("Rank %d, local_cid = %d Func %s\n",rank,local_cid,__FUNCTION__);
+    fflush(stdout);
+    local_cid++;
     communicators[my_coms] = *newcomm;
     my_coms++;
     /* printf("Return from MPI_Comm_split\n"); */
