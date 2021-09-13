@@ -285,6 +285,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     prof_attrs *communicator;
     char *buf;
     int *allcolors,comm_size,tmp,*uniq,j;
+    int rank;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
@@ -292,8 +293,10 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     allcolors = (int*) malloc (sizeof(int)*comm_size);
     uniq = (int*) malloc (sizeof(int)*comm_size);
     PMPI_Allgather(&color, 1, MPI_INT, allcolors, 1, MPI_INT, comm);
+    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
         communicators[my_coms] = MPI_COMM_NULL;
+        printf("Rank %d failed to SPLIT\n",rank);
         my_coms++;
         return ret;
     }
@@ -329,8 +332,6 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     communicator->size = comm_size;
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     local_comms[local_cid] = communicator;
-    int rank;
-    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if ( rank == 1 || rank == 3 || rank == 5 ){
         printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[length+i-1]);
         printf("Rank %d, local_cid = %d Func %s\n",rank,local_cid,__FUNCTION__);
