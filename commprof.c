@@ -18,6 +18,8 @@ int my_coms = 1;
 int num_of_local = 0;
 int ac;
 char *av[MAX_ARGS];
+int WTF[64];
+int wtf_inx = 0;
 /* int line_called; */
 /* char file_called[32]; */
 
@@ -271,6 +273,8 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     PMPI_Allgather(&color, 1, MPI_INT, allcolors, 1, MPI_INT, comm);
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
         communicators[my_coms] = MPI_COMM_NULL;
+        WTF[wtf_inx] = my_coms;
+        wtf_inx++;
         my_coms++;
         return ret;
     }
@@ -962,6 +966,16 @@ _Finalize(){
     k = 0;
     for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL ){
+            found = 0;
+            for ( j =0; j<wtf_inx; j++ ){
+                if ( i == WTF[j] ){
+                    found = 1;
+                    break;
+
+                }
+            }
+            if ( found  )
+                continue;
             PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
             if ( flag ){
                 strcpy(array[i].name, com_info->name);
