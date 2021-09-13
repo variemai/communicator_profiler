@@ -1099,11 +1099,11 @@ _Finalize(){
         fflush(stdout);
     }
     for ( i = 0; i < num_of_comms; i++ ){
-        if ( communicators[i] != MPI_COMM_NULL && local_comms[i] != NULL ){
+        if ( local_comms[i] != NULL ){
             /* printf("RANK %d %p %d\n",rank,communicators[i],namekey()); */
             /* fflush(stdout); */
             /* PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag); */
-            com_info = local_comms[i];
+            /* com_info = local_comms[i]; */
             if ( rank == 1 || rank == 3 || rank == 5){
                 printf("RANK %d : COMM %s bytes = %lu, Msgs = %u\n",rank,
                        local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs);
