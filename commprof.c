@@ -20,8 +20,6 @@ int my_coms = 1;
 int num_of_local = 0;
 int ac;
 char *av[MAX_ARGS];
-int WTF[64];
-int wtf_inx = 0;
 /* int line_called; */
 /* char file_called[32]; */
 
@@ -285,8 +283,6 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     PMPI_Allgather(&color, 1, MPI_INT, allcolors, 1, MPI_INT, comm);
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
         communicators[my_coms] = MPI_COMM_NULL;
-        WTF[wtf_inx] = my_coms;
-        wtf_inx++;
         my_coms++;
         return ret;
     }
@@ -1007,7 +1003,7 @@ MPI_Comm_free(MPI_Comm *comm){
         if ( *comm  == communicators[i])
             break;
     }
-    communicators[i]=NULL;
+    communicators[i]=MPI_COMM_NULL;
     ret = PMPI_Comm_free(comm);
     return ret;
 }
@@ -1059,11 +1055,16 @@ _Finalize(){
     printf("RANK %d Called Finalize() comms = %d\n",rank,num_of_comms);
     fflush(stdout);
     for ( i = 0; i < num_of_comms; i++ ){
-        if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL && local_comms[i] != NULL ){
+        if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL
+             && local_comms[i] != NULL ){
             /* printf("RANK %d %p %d\n",rank,communicators[i],namekey()); */
             /* fflush(stdout); */
             /* PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag); */
             com_info = local_comms[i];
+            if ( rank == 1 || rank == 3 || rank == 5){
+                printf("RANK %d : COMM %s bytes = %lu, Msgs = %u\n",rank,
+                       com_info->name,com_info->bytes,com_info->msgs);
+            }
             /* if ( flag ){ */
                 strcpy(array[i].name, com_info->name);
                 array[i].bytes = com_info->bytes;
@@ -1091,8 +1092,8 @@ _Finalize(){
             }
         }
     }
-    printf ( "RANK %d i = %d\n",rank,i );
-    fflush(stdout);
+    /* printf ( "RANK %d i = %d\n",rank,i ); */
+    /* fflush(stdout); */
     /* for ( i =0; i< num_of_comms; i++ ){ */
     /*     printf("RANK %d: comm =%s bytes =%lu\n",rank,array[i].name,array[i].bytes); */
     /* } */
