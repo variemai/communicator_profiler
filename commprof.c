@@ -1042,9 +1042,10 @@ MPI_Comm_free(MPI_Comm *comm){
     }
     communicators[i]=MPI_COMM_NULL;
     for ( i = 0; i<local_cid; i++ ){
-        if ( *comm == communicators[i] )
+        if ( strcmp(com_info->name, local_comms[i]->name) == 0 )
             break;
     }
+    /* free(&local_comms[i]); */
     local_comms[i] = NULL;
     ret = PMPI_Comm_free(comm);
     return ret;
