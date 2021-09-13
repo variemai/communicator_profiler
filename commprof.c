@@ -213,8 +213,8 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     prof_attrs *communicator;
     ret = PMPI_Comm_create(comm, group, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
-        communicators[num_of_comms] = NULL;
-        num_of_comms++;
+        communicators[my_coms] = MPI_COMM_NULL;
+        my_coms++;
         return ret;
     }
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
@@ -974,17 +974,18 @@ _Finalize(){
 
                 }
             }
-            if ( found  )
-                continue;
-            PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
-            if ( flag ){
-                strcpy(array[i].name, com_info->name);
+            if ( !found  ){
+                PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
+                if ( flag ){
+                    strcpy(array[i].name, com_info->name);
                 /* strcpy(array[i].parent, com_info->parent); */
                 /* strcpy(array[i].prim, com_info->prim); */
-                array[i].bytes = com_info->bytes;
-                array[i].msgs= com_info->msgs;
-                array[i].size = com_info->size;
+                    array[i].bytes = com_info->bytes;
+                    array[i].msgs= com_info->msgs;
+                    array[i].size = com_info->size;
+                }
             }
+            printf("FOUND SHIT\n");
         }
         else{
             if ( num_of_local > 0 && k < num_of_local){
