@@ -1051,16 +1051,17 @@ _Finalize(){
     /* printf("RANK %d Called Finalize() comms = %d\n",rank,num_of_comms); */
     /* fflush(stdout); */
     for ( i = 0; i < num_of_comms; i++ ){
-        if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL ){
-            printf("RANK %d %p %d\n",rank,communicators[i],namekey());
-            fflush(stdout);
-            PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
-            if ( flag ){
+        if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL && local_comms[i] != NULL ){
+            /* printf("RANK %d %p %d\n",rank,communicators[i],namekey()); */
+            /* fflush(stdout); */
+            /* PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag); */
+            com_info = local_comms[i];
+            /* if ( flag ){ */
                 strcpy(array[i].name, com_info->name);
                 array[i].bytes = com_info->bytes;
                 array[i].msgs= com_info->msgs;
                 array[i].size = com_info->size;
-            }
+            /* } */
         }
         else{
             if ( num_of_local > 0 && k < num_of_local){
