@@ -325,10 +325,10 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     /* communicator->name[i]='\0'; */
     communicator->bytes = 0;
     communicator->msgs = 0;
-    /* printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[length+i-1]); */
-    /* fflush(stdout); */
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     local_comms[local_cid] = communicator;
+    printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[length+i-1]);
+    fflush(stdout);
     int rank;
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if ( rank == 1 || rank == 3 || rank == 5 ){
