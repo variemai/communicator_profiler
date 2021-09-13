@@ -964,19 +964,19 @@ _Finalize(){
     PMPI_Type_create_struct(4, blocklen, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
-    printf("RANK %d Called Finalize()\n",rank);
+    printf("RANK %d Called Finalize() comms = %d\n",rank,num_of_comms);
     fflush(stdout);
     for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL ){
-            found = 0;
-            for ( j =0; j<wtf_inx; j++ ){
-                if ( i == WTF[j] ){
-                    found = 1;
-                    break;
+            /* found = 0; */
+            /* for ( j =0; j<wtf_inx; j++ ){ */
+            /*     if ( i == WTF[j] ){ */
+            /*         found = 1; */
+            /*         break; */
 
-                }
-            }
-            if ( !found  ){
+            /*     } */
+            /* } */
+            /* if ( !found  ){ */
                 PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
                 if ( flag ){
                     strcpy(array[i].name, com_info->name);
@@ -987,11 +987,11 @@ _Finalize(){
                     array[i].size = com_info->size;
                 }
             }
-            else{
-                printf("FOUND SHIT\n");
-                fflush(stdout);
-            }
-        }
+            /* else{ */
+            /*     printf("FOUND SHIT\n"); */
+            /*     fflush(stdout); */
+            /* } */
+        /* } */
         else{
             if ( num_of_local > 0 && k < num_of_local){
                 strcpy(array[i].name, local_data[k]->name);
