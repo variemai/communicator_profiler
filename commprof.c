@@ -270,7 +270,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     uniq = (int*) malloc (sizeof(int)*comm_size);
     PMPI_Allgather(&color, 1, MPI_INT, allcolors, 1, MPI_INT, comm);
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
-        communicators[my_coms] = NULL;
+        communicators[my_coms] = MPI_COMM_NULL;
         my_coms++;
         return ret;
     }
