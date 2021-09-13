@@ -960,7 +960,7 @@ _Finalize(){
     PMPI_Type_create_struct(4, blocklen, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
-    for ( i = 0; i < my_coms; i++ ){
+    for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL ){
             PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
             if ( flag ){
