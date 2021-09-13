@@ -109,34 +109,34 @@ int main(int argc, char* argv[])
     }
     if ( my_rank == 0 )
         printf("Newcoms = %d\n",newcomms);
-    all_ranks = (int*) malloc (size*sizeof(int));
-    uniq = (int*) calloc (newcomms,sizeof(int));
-    MPI_Gather(&subgrid_ranks[0], 1, MPI_INT, all_ranks,1, MPI_INT, 0, MPI_COMM_WORLD);
+    /* all_ranks = (int*) malloc (size*sizeof(int)); */
+    /* uniq = (int*) calloc (newcomms,sizeof(int)); */
+    /* MPI_Gather(&subgrid_ranks[0], 1, MPI_INT, all_ranks,1, MPI_INT, 0, MPI_COMM_WORLD); */
     /* if ( my_rank == 0 ){ */
     /*     for ( i =0 ; i<size; i++ ){ */
     /*         printf("Recvd rank = %d\n",all_ranks[i]); */
     /*     } */
     /* } */
-    int found;
-    int k = 0;
-    if ( my_rank == 0 ){
-    for (i = 0; i < size; i++) {
-        found = 0;
-        for ( j =0; j<newcomms; j++ ){
-            if ( all_ranks[i] == uniq[j] ){
-                found = 1;
-                break;
-            }
-        }
-        if ( !found  ){
-            uniq[k] = all_ranks[i];
-            k++;
-        }
-    }
-        for ( i =0; i<newcomms; i++ ){
-            printf("%d\n",uniq[i]);
-        }
-    }
+    /* int found; */
+    /* int k = 0; */
+    /* if ( my_rank == 0 ){ */
+    /* for (i = 0; i < size; i++) { */
+    /*     found = 0; */
+    /*     for ( j =0; j<newcomms; j++ ){ */
+    /*         if ( all_ranks[i] == uniq[j] ){ */
+    /*             found = 1; */
+    /*             break; */
+    /*         } */
+    /*     } */
+    /*     if ( !found  ){ */
+    /*         uniq[k] = all_ranks[i]; */
+    /*         k++; */
+    /*     } */
+    /* } */
+    /*     for ( i =0; i<newcomms; i++ ){ */
+    /*         printf("%d\n",uniq[i]); */
+    /*     } */
+    /* } */
 
     MPI_Finalize();
 
