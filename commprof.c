@@ -78,8 +78,8 @@ get_comm_parent(MPI_Comm comm)
             PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
             if ( flag ){
                 strcpy(communicator->name, com_info->name);
-                printf("Parent = %s\n",communicator->name);
-                fflush(stdout);
+                /* printf("Parent = %s\n",communicator->name); */
+                /* fflush(stdout); */
             }
             else{
                 mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",__FILE__,__LINE__);
@@ -317,8 +317,8 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     /* communicator->name[i+1]='\0'; */
     communicator->bytes = 0;
     communicator->msgs = 0;
-    /* printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]); */
-    /* fflush(stdout); */
+    printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]);
+    fflush(stdout);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     local_comms[local_cid] = communicator;
     local_cid++;
