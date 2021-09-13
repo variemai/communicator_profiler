@@ -968,30 +968,15 @@ _Finalize(){
     fflush(stdout);
     for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL ){
-            /* found = 0; */
-            /* for ( j =0; j<wtf_inx; j++ ){ */
-            /*     if ( i == WTF[j] ){ */
-            /*         found = 1; */
-            /*         break; */
-
-            /*     } */
-            /* } */
-            /* if ( !found  ){ */
-                PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
-                if ( flag ){
-                    strcpy(array[i].name, com_info->name);
-                /* strcpy(array[i].parent, com_info->parent); */
-                /* strcpy(array[i].prim, com_info->prim); */
-                    array[i].bytes = com_info->bytes;
-                    array[i].msgs= com_info->msgs;
-                    array[i].size = com_info->size;
-                }
+            printf("%p %d\n",communicators[i],namekey());
+            PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
+            if ( flag ){
+                strcpy(array[i].name, com_info->name);
+                array[i].bytes = com_info->bytes;
+                array[i].msgs= com_info->msgs;
+                array[i].size = com_info->size;
             }
-            /* else{ */
-            /*     printf("FOUND SHIT\n"); */
-            /*     fflush(stdout); */
-            /* } */
-        /* } */
+        }
         else{
             if ( num_of_local > 0 && k < num_of_local){
                 strcpy(array[i].name, local_data[k]->name);
