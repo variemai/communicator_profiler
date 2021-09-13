@@ -317,8 +317,6 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
             break;
     }
     communicator = get_comm_parent(comm);
-    /* PMPI_Comm_rank(comm, &rank); */
-    /* PMPI_Allreduce(&rank, &id, 1, MPI_INT, MPI_MIN, *newcomm); */
     buf = (char*) malloc ( sizeof(char)*16);
     sprintf(buf,"_s%d.%d",my_coms,j);
     num_of_comms+=j+1;
@@ -326,7 +324,6 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     for ( i =0; i<strlen(buf); i++ ){
         communicator->name[length+i] = buf[i];
     }
-    /* communicator->name[i]='\0'; */
     communicator->bytes = 0;
     communicator->msgs = 0;
     communicator->size = comm_size;
