@@ -333,12 +333,12 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     communicator->size = comm_size;
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     local_comms[local_cid] = communicator;
-    if ( rank == 1 || rank == 3 || rank == 5 ){
-        printf("Rank %d, local_cid = %d Func %s\n",rank,local_cid,__FUNCTION__);
-        fflush(stdout);
-        printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[length+i-1]);
-        fflush(stdout);
-    }
+    /* if ( rank == 1 || rank == 3 || rank == 5 ){ */
+    /*     printf("Rank %d, local_cid = %d Func %s\n",rank,local_cid,__FUNCTION__); */
+    /*     fflush(stdout); */
+    /*     printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[length+i-1]); */
+    /*     fflush(stdout); */
+    /* } */
     local_cid++;
     communicators[my_coms] = *newcomm;
     my_coms++;
@@ -1102,21 +1102,21 @@ _Finalize(){
     /*         local_comms[i] = NULL; */
     /*     } */
     /* } */
-    if ( rank == 1 || rank == 3 || rank == 5){
-        printf("RANK %d: local_cid = %d\n",rank,local_cid);
-        fflush(stdout);
-    }
+    /* if ( rank == 1 || rank == 3 || rank == 5){ */
+    /*     printf("RANK %d: local_cid = %d\n",rank,local_cid); */
+    /*     fflush(stdout); */
+    /* } */
     for ( i = 0; i < num_of_comms; i++ ){
         if ( local_comms[i] != NULL ){
             /* printf("RANK %d %p %d\n",rank,communicators[i],namekey()); */
             /* fflush(stdout); */
             /* PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag); */
             /* com_info = local_comms[i]; */
-            if ( rank == 1 || rank == 3 || rank == 5){
-                printf("RANK %d : i = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i,
-                       local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs);
-                fflush(stdout);
-            }
+            /* if ( rank == 1 || rank == 3 || rank == 5){ */
+            /*     printf("RANK %d : i = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i, */
+            /*            local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs); */
+            /*     fflush(stdout); */
+            /* } */
 
             strcpy(array[i].name, local_comms[i]->name);
             array[i].bytes = local_comms[i]->bytes;
@@ -1131,12 +1131,12 @@ _Finalize(){
         }
         else{
             if ( num_of_local > 0 && k < num_of_local){
-                if ( rank == 1 || rank == 3 || rank == 5){
-                    printf("RANK %d : k = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i,
-                           local_data[k]->name,local_data[k]->bytes,local_data[k]->msgs);
+                /* if ( rank == 1 || rank == 3 || rank == 5){ */
+                /*     printf("RANK %d : k = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i, */
+                /*            local_data[k]->name,local_data[k]->bytes,local_data[k]->msgs); */
 
-                    fflush(stdout);
-                }
+                /*     fflush(stdout); */
+                /* } */
                 strcpy(array[i].name, local_data[k]->name);
                 /* strcpy(array[i].parent, local_data[k]->parent); */
                 /* strcpy(array[i].prim, local_data[k]->prim); */
