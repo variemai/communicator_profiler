@@ -329,11 +329,10 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     communicator->size = comm_size;
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     local_comms[local_cid] = communicator;
-    printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[length+i-1]);
-    fflush(stdout);
     int rank;
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if ( rank == 1 || rank == 3 || rank == 5 ){
+        printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[length+i-1]);
         printf("Rank %d, local_cid = %d Func %s\n",rank,local_cid,__FUNCTION__);
         fflush(stdout);
     }
