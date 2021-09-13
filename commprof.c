@@ -1061,6 +1061,10 @@ _Finalize(){
             local_comms[i] = NULL;
         }
     }
+    if ( rank == 1 || rank == 3 || rank == 5){
+        printf("RANK %d: i = %d\n",rank,i);
+        fflush(stdout);
+    }
     for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != MPI_COMM_NULL && local_comms[i] != NULL ){
             /* printf("RANK %d %p %d\n",rank,communicators[i],namekey()); */
