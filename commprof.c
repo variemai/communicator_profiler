@@ -1013,6 +1013,7 @@ _Finalize(){
         }
     }
     printf ( "RANK %d i = %d\n",rank,i );
+    fflush(stdout);
     /* for ( i =0; i< num_of_comms; i++ ){ */
     /*     printf("RANK %d: comm =%s bytes =%lu\n",rank,array[i].name,array[i].bytes); */
     /* } */
