@@ -964,6 +964,8 @@ _Finalize(){
     PMPI_Type_create_struct(4, blocklen, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
+    printf("RANK %d Called Finalize()\n",rank);
+    fflush(stdout);
     for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL ){
             found = 0;
@@ -985,7 +987,10 @@ _Finalize(){
                     array[i].size = com_info->size;
                 }
             }
-            printf("FOUND SHIT\n");
+            else{
+                printf("FOUND SHIT\n");
+                fflush(stdout);
+            }
         }
         else{
             if ( num_of_local > 0 && k < num_of_local){
