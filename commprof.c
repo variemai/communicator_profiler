@@ -1037,6 +1037,11 @@ MPI_Comm_free(MPI_Comm *comm){
             break;
     }
     communicators[i]=MPI_COMM_NULL;
+    for ( i = 0; i<local_cid; i++ ){
+        if ( *comm == communicators[i] )
+            break;
+    }
+    local_comms[i] = NULL;
     ret = PMPI_Comm_free(comm);
     return ret;
 }
