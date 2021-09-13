@@ -1104,13 +1104,18 @@ _Finalize(){
             com_info = local_comms[i];
             if ( rank == 1 || rank == 3 || rank == 5){
                 printf("RANK %d : COMM %s bytes = %lu, Msgs = %u\n",rank,
-                       com_info->name,com_info->bytes,com_info->msgs);
+                       local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs);
             }
+
+            strcpy(array[i].name, local_comms[i]->name);
+            array[i].bytes = local_comms[i]->bytes;
+            array[i].msgs= local_comms[i]->msgs;
+            array[i].size = local_comms[i]->size;
             /* if ( flag ){ */
-                strcpy(array[i].name, com_info->name);
-                array[i].bytes = com_info->bytes;
-                array[i].msgs= com_info->msgs;
-                array[i].size = com_info->size;
+                /* strcpy(array[i].name, com_info->name); */
+                /* array[i].bytes = com_info->bytes; */
+                /* array[i].msgs= com_info->msgs; */
+                /* array[i].size = com_info->size; */
             /* } */
         }
         else{
