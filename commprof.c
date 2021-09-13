@@ -962,6 +962,7 @@ _Finalize(){
     k = 0;
     for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL ){
+            fprintf(stderr, "Rank :%d, i = %d\n",rank,i);
             PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
             if ( flag ){
                 strcpy(array[i].name, com_info->name);
