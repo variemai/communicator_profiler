@@ -324,7 +324,10 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     local_cid++;
     int rank;
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    printf("Rank %d, local_cid = %d",rank,local_cid);
+    if ( rank == 1 || rank == 3 || rank == 5 ){
+        printf("Rank %d, local_cid = %d\n",rank,local_cid);
+        fflush(stdout);
+    }
     communicators[my_coms] = *newcomm;
     my_coms++;
     /* printf("Return from MPI_Comm_split\n"); */
