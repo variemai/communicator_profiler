@@ -1129,6 +1129,10 @@ _Finalize(){
         }
         else{
             if ( num_of_local > 0 && k < num_of_local){
+                if ( rank == 1 || rank == 3 || rank == 5){
+                    printf("RANK %d : i = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i,
+                           local_data[i]->name,local_data[i]->bytes,local_data[i]->msgs);
+                }
                 strcpy(array[i].name, local_data[k]->name);
                 /* strcpy(array[i].parent, local_data[k]->parent); */
                 /* strcpy(array[i].prim, local_data[k]->prim); */
