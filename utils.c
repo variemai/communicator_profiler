@@ -27,7 +27,6 @@ char *get_appname (){
   }
 
   exelen = readlink (file, inbuf, 256);
-  /* printf("EXELEN %d\n",exelen); */
   if (exelen == -1){
       if (errno != ENOENT){
           while (exelen == -1 && errno == ENAMETOOLONG){

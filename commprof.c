@@ -397,8 +397,8 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
     /* communicator->name[i+1]='\0'; */
     communicator->bytes = 0;
     communicator->msgs = 0;
-    printf("MPI_cart_create\n");
-    fflush(stdout);
+    /* printf("MPI_cart_create\n"); */
+    /* fflush(stdout); */
     PMPI_Comm_set_attr(*comm_cart, namekey(), communicator);
     /* printf("MPI Cart comm with name %s and parent %s\n",communicator->name,buffer); */
     communicators[my_coms] = *comm_cart;

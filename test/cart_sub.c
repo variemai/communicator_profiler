@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
 
     if(size != 24)
     {
-        printf("This application is meant to be run with 6 processes.\n");
+        printf("This application is meant to be run with 24 processes.\n");
         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
     }
 
