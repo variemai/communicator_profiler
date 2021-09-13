@@ -146,9 +146,11 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = NULL;
         local_data[i] = NULL;
+        local_comms[i] = NULL;
     }
     /* table = Table_new(128, NULL, NULL); */
     if ( rank == 0 ){
@@ -1048,8 +1050,8 @@ _Finalize(){
     PMPI_Type_create_struct(4, blocklen, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
-    /* printf("RANK %d Called Finalize() comms = %d\n",rank,num_of_comms); */
-    /* fflush(stdout); */
+    printf("RANK %d Called Finalize() comms = %d\n",rank,num_of_comms);
+    fflush(stdout);
     for ( i = 0; i < num_of_comms; i++ ){
         if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL && local_comms[i] != NULL ){
             /* printf("RANK %d %p %d\n",rank,communicators[i],namekey()); */
