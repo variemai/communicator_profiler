@@ -27,7 +27,7 @@ static int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
 {
   prof_attrs *com = (prof_attrs*)attr;
-  if ( comm == NULL )
+  if ( comm == MPI_COMM_NULL )
       return -1;
   else
       free(com);
@@ -1052,11 +1052,10 @@ _Finalize(){
     PMPI_Type_create_struct(4, blocklen, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
-    printf("RANK %d Called Finalize() comms = %d\n",rank,num_of_comms);
-    fflush(stdout);
+    /* printf("RANK %d Called Finalize() comms = %d\n",rank,num_of_comms); */
+    /* fflush(stdout); */
     for ( i = 0; i < num_of_comms; i++ ){
-        if ( communicators[i] != NULL && communicators[i] != MPI_COMM_NULL
-             && local_comms[i] != NULL ){
+        if ( communicators[i] != MPI_COMM_NULL && local_comms[i] != NULL ){
             /* printf("RANK %d %p %d\n",rank,communicators[i],namekey()); */
             /* fflush(stdout); */
             /* PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag); */
