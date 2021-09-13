@@ -317,7 +317,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     /* communicator->name[i+1]='\0'; */
     communicator->bytes = 0;
     communicator->msgs = 0;
-    printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[i]);
+    printf("MPI_Comm_split comm with name %s and %c\n",communicator->name,communicator->name[length+i]);
     fflush(stdout);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     local_comms[local_cid] = communicator;
