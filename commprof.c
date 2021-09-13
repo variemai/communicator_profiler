@@ -102,7 +102,7 @@ _MPI_Init(int *argc, char ***argv){
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
-        communicators[i] = NULL;
+        communicators[i] = MPI_COMM_NULL;
         local_data[i] = NULL;
     }
     /* table = Table_new(128, NULL, NULL); */
