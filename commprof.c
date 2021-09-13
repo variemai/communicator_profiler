@@ -78,7 +78,8 @@ get_comm_parent(MPI_Comm comm)
             PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
             if ( flag ){
                 strcpy(communicator->name, com_info->name);
-                fprintf(stderr, "Parent = %s\n",communicator->name);
+                printf("Parent = %s\n",communicator->name);
+                fflush(stdout);
             }
             else{
                 mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",__FILE__,__LINE__);
