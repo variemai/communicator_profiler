@@ -321,10 +321,10 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     sprintf(buf,"_s%d.%d",my_coms,j);
     num_of_comms+=j+1;
     length = strlen(communicator->name);
-    if ( rank == 1  ){
-        printf("strlen = %d\n",length);
-        fflush(stdout);
-    }
+    /* if ( rank == 1  ){ */
+    /*     printf("strlen = %d\n",length); */
+    /*     fflush(stdout); */
+    /* } */
     for ( i =0; i<strlen(buf); i++ ){
         communicator->name[length+i] = buf[i];
     }
