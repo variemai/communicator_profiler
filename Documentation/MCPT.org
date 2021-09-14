@@ -1,0 +1,44 @@
+#+TITLE: Documentation: MPI Communicator Profiling Tool
+#+OPTIONS: ^:nil num:nil
+#+SETUPFILE: setup.conf
+#+BIBLIOGRAPHY: bibliography plain
+#+INCLUDE: code.inc
+#+CALL: init()
+
+
+* Overview
+The main idea of this tool is to provide accurate information about the MPI Communicators.
+* Installation
+** Dependencies
+1. MPI version bla bla bla
+** Compile
+1. Get the tool from here www.bla.org
+2. Compile with bla
+** Tests
+Run the tests blablabla
+* Usage
+#+begin_src shell
+echo "Techincal documentation using Emacs <3"
+#+end_src
+** Output
+Output file name "profiler_stats.txt"
+* Implementation
+** Basic idea
+- Keep data for each communicator using ~MPI_Comm_set_attr()~
+  + This has worked so far but it has some issues with ~MPI_Comm_free()~
+  + To solve these issues I have kept a local data structure with the communicators and their corresponding data
+    + Since the data are *copied* in this local data structure ~MPI_Comm_free()~ is no longer an issue
+- Communicator name prefix includes its ancestor
+  + The name includes an id that is the number of communicators
+** Supported Communicator Primitives
+- MPI_Comm_split
+- MPI_Comm_dup
+** Unsupported Communicator Primitives
+- MPI_Comm_create_group
+** Supported MPI Collective communication Primitives
+** Supported MPI Point to Point Primitives
+* Future Work
+** TODO Describe Comm Split and Cart Sub implementations
+** TODO Remove unnecessary parts of code
+** TODO Keep only the name in the communicator with Comm_set_attr
+** TODO Cleanup code

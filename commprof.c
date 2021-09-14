@@ -27,11 +27,10 @@ static int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
 {
   prof_attrs *com = (prof_attrs*)attr;
-  if ( comm == MPI_COMM_NULL )
-      return -1;
-  else
-      free(com);
-  return 0;
+  /* printf("Namedel %s\n",com->name); */
+  /* fflush(stdout); */
+  free(com);
+  return MPI_SUCCESS;
 }
 
 static int
@@ -47,13 +46,13 @@ namekey()
   return namekeyval;
 }
 
-static int
-compare_int(const void *a, const void *b){
-    int *a0, *b0;
-    a0 = (int*)a;
-    b0 = (int*)b;
-    return (*a0)-(*b0);
-}
+/* static int */
+/* compare_int(const void *a, const void *b){ */
+/*     int *a0, *b0; */
+/*     a0 = (int*)a; */
+/*     b0 = (int*)b; */
+/*     return (*a0)-(*b0); */
+/* } */
 
 prof_attrs*
 get_comm_parent(MPI_Comm comm)
@@ -284,15 +283,15 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     int ret,i,length,comms;
     prof_attrs *communicator;
     char *buf;
-    int *allcolors,comm_size,tmp,*uniq,j;
-    int rank;
+    /* int *allcolors,comm_size,tmp,*uniq,j; */
+    int rank, min_rank,comm_size;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     PMPI_Comm_size(comm, &comm_size);
-    allcolors = (int*) malloc (sizeof(int)*comm_size);
-    uniq = (int*) malloc (sizeof(int)*comm_size);
-    PMPI_Allgather(&color, 1, MPI_INT, allcolors, 1, MPI_INT, comm);
+    /* allcolors = (int*) malloc (sizeof(int)*comm_size); */
+    /* uniq = (int*) malloc (sizeof(int)*comm_size); */
+    /* PMPI_Allgather(&color, 1, MPI_INT, allcolors, 1, MPI_INT, comm); */
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
         /* communicators[my_coms] = MPI_COMM_NULL; */
@@ -300,26 +299,27 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
         /* my_coms++; */
         return ret;
     }
-    qsort(allcolors, comm_size, sizeof(int), compare_int);
-    comms = 0;
-    tmp = 0;
-    j = 0;
-    for ( i =0; i<comm_size; i++ ){
-        if ( allcolors[i] > tmp  ){
-            comms ++;
-            tmp = allcolors[i];
-            uniq[j] = tmp;
-            j++;
-        }
-    }
-    for ( j =0; j<comms; j++ ){
-        if ( color == uniq[j]  )
-            break;
-    }
+    PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
+    /* qsort(allcolors, comm_size, sizeof(int), compare_int); */
+    /* comms = 0; */
+    /* tmp = 0; */
+    /* j = 0; */
+    /* for ( i =0; i<comm_size; i++ ){ */
+    /*     if ( allcolors[i] > tmp  ){ */
+    /*         comms ++; */
+    /*         tmp = allcolors[i]; */
+    /*         uniq[j] = tmp; */
+    /*         j++; */
+    /*     } */
+    /* } */
+    /* for ( j =0; j<comms; j++ ){ */
+    /*     if ( color == uniq[j]  ) */
+    /*         break; */
+    /* } */
     communicator = get_comm_parent(comm);
     buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_s%d.%d",my_coms,j);
-    num_of_comms+=j+1;
+    sprintf(buf,"_s%d.%d",my_coms,min_rank);
+    num_of_comms=+1;
     length = strlen(communicator->name);
     /* if ( rank == 1  ){ */
     /*     printf("strlen = %d\n",length); */
@@ -1027,6 +1027,8 @@ int
 MPI_Comm_free(MPI_Comm *comm){
     int ret,flag,i;
     prof_attrs *com_info;
+    /* printf("CALLING SPLIT\n"); */
+    /* fflush(stdout); */
     PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
     if ( flag ){
         local_data[num_of_local] = (prof_attrs*) malloc (sizeof(prof_attrs));
@@ -1034,21 +1036,21 @@ MPI_Comm_free(MPI_Comm *comm){
         local_data[num_of_local]->msgs = com_info->msgs;
         local_data[num_of_local]->size = com_info->size;
         strcpy(local_data[num_of_local]->name,com_info->name);
+        for ( i = 0; i<local_cid; i++ ){
+            if ( strcmp(com_info->name, local_comms[i]->name) == 0 )
+            break;
+        }
+        if ( i == local_cid  )
+            mcpt_abort("Comm_free on wrong communicator\n");
+        local_comms[i] = local_data[num_of_local];
         num_of_local++;
     }
-    for ( i = 0; i<num_of_comms; i++ ){
-        if ( *comm  == communicators[i])
-            break;
-    }
-    communicators[i]=MPI_COMM_NULL;
-    for ( i = 0; i<local_cid; i++ ){
-        if ( strcmp(com_info->name, local_comms[i]->name) == 0 )
-            break;
-    }
-    if ( i == local_cid  )
-        mcpt_abort("Comm_free on wrong communicator\n");
-    /* free(&local_comms[i]); */
-    local_comms[i] = NULL;
+    /* for ( i = 0; i<num_of_comms; i++ ){ */
+    /*     if ( *comm  == communicators[i]) */
+    /*         break; */
+    /* } */
+    /* communicators[i]=MPI_COMM_NULL; */
+    /* free(local_comms[i]); */
     ret = PMPI_Comm_free(comm);
     return ret;
 }
@@ -1071,7 +1073,8 @@ _Finalize(){
     PMPI_Allreduce(&num_of_comms, &total_comms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     num_of_comms = total_comms;
     /* if ( rank == 0 ){ */
-    /*     printf("Num of REAL comms = %d\n",num_of_comms); */
+        printf("Num of REAL comms = %d\n",num_of_comms);
+        fflush(stdout);
     /* } */
     array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
     recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
@@ -1102,11 +1105,11 @@ _Finalize(){
             /* fflush(stdout); */
             /* PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag); */
             /* com_info = local_comms[i]; */
-            /* if ( rank == 1 || rank == 3 || rank == 5){ */
-            /*     printf("RANK %d : i = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i, */
-            /*            local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs); */
-            /*     fflush(stdout); */
-            /* } */
+            if ( rank == 1 || rank == 3 || rank == 5){
+                printf("RANK %d : i = %d COMM %s bytes = %lu, Msgs = %u\n",rank,i,
+                       local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs);
+                fflush(stdout);
+            }
 
             strcpy(array[i].name, local_comms[i]->name);
             array[i].bytes = local_comms[i]->bytes;
