@@ -1070,9 +1070,9 @@ _Finalize(){
     num_of_comms = my_coms;
     PMPI_Allreduce(&num_of_comms, &total_comms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     num_of_comms = total_comms;
-    if ( rank == 0 ){
-        printf("Num of REAL comms = %d\n",num_of_comms);
-    }
+    /* if ( rank == 0 ){ */
+    /*     printf("Num of REAL comms = %d\n",num_of_comms); */
+    /* } */
     array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
     recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
     MPI_Datatype types[4] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT32_T, MPI_INT };
