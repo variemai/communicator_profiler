@@ -3,7 +3,7 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2021-09-14 Tue 19:50 -->
+<!-- 2021-09-15 Wed 12:42 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Documentation: MPI Communicator Profiling Tool</title>
@@ -207,34 +207,38 @@ pre.src:hover:before { display: none; }
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#org9d1a2c5">Overview</a></li>
-<li><a href="#orgb1f67b9">Installation</a>
+<li><a href="#orgf5dcf90">Overview</a>
 <ul>
-<li><a href="#org667836e">Dependencies</a></li>
-<li><a href="#org5535b44">Compile</a></li>
-<li><a href="#org33a40b2">Tests</a></li>
+<li><a href="#org9786b02">Specifications</a></li>
 </ul>
 </li>
-<li><a href="#org25d13a7">Usage</a>
+<li><a href="#org83badc0">Installation</a>
 <ul>
-<li><a href="#org53cd81f">Output</a></li>
+<li><a href="#org2614f52">Dependencies</a></li>
+<li><a href="#org1668681">Compile</a></li>
+<li><a href="#org1a9f3e0">Tests</a></li>
 </ul>
 </li>
-<li><a href="#orgd52665c">Implementation</a>
+<li><a href="#org9f758d7">Usage</a>
 <ul>
-<li><a href="#org81fd0fe">Basic idea</a></li>
-<li><a href="#orgcb4126d">Supported Communicator Primitives</a></li>
-<li><a href="#org0a53860">Unsupported Communicator Primitives</a></li>
-<li><a href="#orgfe1dc49">Supported MPI Collective communication Primitives</a></li>
-<li><a href="#org3984397">Supported MPI Point to Point Primitives</a></li>
+<li><a href="#org96ac38f">Output</a></li>
 </ul>
 </li>
-<li><a href="#org7a1bdd8">Future Work</a>
+<li><a href="#org7927947">Implementation</a>
 <ul>
-<li><a href="#org01ebff7"><span class="todo TODO">TODO</span> Describe Comm Split and Cart Sub implementations</a></li>
-<li><a href="#orgaf0b2a7"><span class="todo TODO">TODO</span> Remove unnecessary parts of code</a></li>
-<li><a href="#org908fbef"><span class="todo TODO">TODO</span> Keep only the name in the communicator with Comm_set_attr</a></li>
-<li><a href="#org46eeb0a"><span class="todo TODO">TODO</span> Cleanup code</a></li>
+<li><a href="#orgfcfaa31">Basic idea</a></li>
+<li><a href="#org5fed623">Supported Communicator Primitives</a></li>
+<li><a href="#org938ab1c">Unsupported Communicator Primitives</a></li>
+<li><a href="#org7766eb4">Supported MPI Collective communication Primitives</a></li>
+<li><a href="#orga26c487">Supported MPI Point to Point Primitives</a></li>
+</ul>
+</li>
+<li><a href="#org165ef0b">Future Work</a>
+<ul>
+<li><a href="#orgc3a60e6"><span class="todo TODO">TODO</span> Describe Comm Split and Cart Sub implementations</a></li>
+<li><a href="#org0ff1c81"><span class="todo TODO">TODO</span> Remove unnecessary parts of code</a></li>
+<li><a href="#orgd7234b0"><span class="todo TODO">TODO</span> Keep only the name in the communicator with Comm_set_attr</a></li>
+<li><a href="#orgb99db75"><span class="todo TODO">TODO</span> Cleanup code</a></li>
 </ul>
 </li>
 </ul>
@@ -242,68 +246,78 @@ pre.src:hover:before { display: none; }
 </div>
 
 
-<div id="outline-container-org9d1a2c5" class="outline-2">
-<h2 id="org9d1a2c5">Overview</h2>
-<div class="outline-text-2" id="text-org9d1a2c5">
+<div id="outline-container-orgf5dcf90" class="outline-2">
+<h2 id="orgf5dcf90">Overview</h2>
+<div class="outline-text-2" id="text-orgf5dcf90">
 <p>
-What is this tool and what it&rsquo;s not.
+The main idea of this tool is to provide accurate information about the MPI Communicators via profiling with low overhead.
 </p>
 </div>
+<div id="outline-container-org9786b02" class="outline-3">
+<h3 id="org9786b02">Specifications</h3>
+<div class="outline-text-3" id="text-org9786b02">
+<ol class="org-ol">
+<li>Communicator related information (calls, tree)</li>
+<li>Data traffic (Bytes sent) in every communicator</li>
+<li>MPI communication primitives information in every communicator</li>
+</ol>
 </div>
-<div id="outline-container-orgb1f67b9" class="outline-2">
-<h2 id="orgb1f67b9">Installation</h2>
-<div class="outline-text-2" id="text-orgb1f67b9">
 </div>
-<div id="outline-container-org667836e" class="outline-3">
-<h3 id="org667836e">Dependencies</h3>
-<div class="outline-text-3" id="text-org667836e">
+</div>
+<div id="outline-container-org83badc0" class="outline-2">
+<h2 id="org83badc0">Installation</h2>
+<div class="outline-text-2" id="text-org83badc0">
+</div>
+<div id="outline-container-org2614f52" class="outline-3">
+<h3 id="org2614f52">Dependencies</h3>
+<div class="outline-text-3" id="text-org2614f52">
 <ol class="org-ol">
 <li>MPI version bla bla bla</li>
 </ol>
 </div>
 </div>
-<div id="outline-container-org5535b44" class="outline-3">
-<h3 id="org5535b44">Compile</h3>
-<div class="outline-text-3" id="text-org5535b44">
+<div id="outline-container-org1668681" class="outline-3">
+<h3 id="org1668681">Compile</h3>
+<div class="outline-text-3" id="text-org1668681">
 <ol class="org-ol">
 <li>Get the tool from here www.bla.org</li>
 <li>Compile with bla</li>
 </ol>
 </div>
 </div>
-<div id="outline-container-org33a40b2" class="outline-3">
-<h3 id="org33a40b2">Tests</h3>
-<div class="outline-text-3" id="text-org33a40b2">
+<div id="outline-container-org1a9f3e0" class="outline-3">
+<h3 id="org1a9f3e0">Tests</h3>
+<div class="outline-text-3" id="text-org1a9f3e0">
 <p>
 Run the tests blablabla
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-org25d13a7" class="outline-2">
-<h2 id="org25d13a7">Usage</h2>
-<div class="outline-text-2" id="text-org25d13a7">
+<div id="outline-container-org9f758d7" class="outline-2">
+<h2 id="org9f758d7">Usage</h2>
+<div class="outline-text-2" id="text-org9f758d7">
 <div class="org-src-container">
 <pre class="src src-shell"><span style="color: #FCCE7B;">echo</span> <span style="color: #7bc275;">"Techincal documentation using Emacs &lt;3"</span>
 </pre>
 </div>
 </div>
-<div id="outline-container-org53cd81f" class="outline-3">
-<h3 id="org53cd81f">Output</h3>
-<div class="outline-text-3" id="text-org53cd81f">
+<div id="outline-container-org96ac38f" class="outline-3">
+<h3 id="org96ac38f">Output</h3>
+<div class="outline-text-3" id="text-org96ac38f">
 <p>
 Output file name &ldquo;profiler_stats.txt&rdquo;
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-orgd52665c" class="outline-2">
-<h2 id="orgd52665c">Implementation</h2>
-<div class="outline-text-2" id="text-orgd52665c">
+<div id="outline-container-org7927947" class="outline-2">
+<h2 id="org7927947">Implementation</h2>
+<div class="outline-text-2" id="text-org7927947">
 </div>
-<div id="outline-container-org81fd0fe" class="outline-3">
-<h3 id="org81fd0fe">Basic idea</h3>
-<div class="outline-text-3" id="text-org81fd0fe">
+<div id="outline-container-orgfcfaa31" class="outline-3">
+<h3 id="orgfcfaa31">Basic idea</h3>
+<div class="outline-text-3" id="text-orgfcfaa31">
 <ul class="org-ul">
 <li>Keep data for each communicator using <code>MPI_Comm_set_attr()</code>
 <ul class="org-ul">
@@ -320,51 +334,54 @@ Output file name &ldquo;profiler_stats.txt&rdquo;
 </ul>
 </div>
 </div>
-<div id="outline-container-orgcb4126d" class="outline-3">
-<h3 id="orgcb4126d">Supported Communicator Primitives</h3>
-<div class="outline-text-3" id="text-orgcb4126d">
+<div id="outline-container-org5fed623" class="outline-3">
+<h3 id="org5fed623">Supported Communicator Primitives</h3>
+<div class="outline-text-3" id="text-org5fed623">
 <ul class="org-ul">
 <li>MPI_Comm_split</li>
 <li>MPI_Comm_dup</li>
+<li>MPI_Comm_create</li>
+<li>MPI_Cart_create</li>
+<li>MPI_Cart_sub</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org0a53860" class="outline-3">
-<h3 id="org0a53860">Unsupported Communicator Primitives</h3>
-<div class="outline-text-3" id="text-org0a53860">
+<div id="outline-container-org938ab1c" class="outline-3">
+<h3 id="org938ab1c">Unsupported Communicator Primitives</h3>
+<div class="outline-text-3" id="text-org938ab1c">
 <ul class="org-ul">
 <li>MPI_Comm_create_group</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orgfe1dc49" class="outline-3">
-<h3 id="orgfe1dc49">Supported MPI Collective communication Primitives</h3>
+<div id="outline-container-org7766eb4" class="outline-3">
+<h3 id="org7766eb4">Supported MPI Collective communication Primitives</h3>
 </div>
-<div id="outline-container-org3984397" class="outline-3">
-<h3 id="org3984397">Supported MPI Point to Point Primitives</h3>
+<div id="outline-container-orga26c487" class="outline-3">
+<h3 id="orga26c487">Supported MPI Point to Point Primitives</h3>
 </div>
 </div>
-<div id="outline-container-org7a1bdd8" class="outline-2">
-<h2 id="org7a1bdd8">Future Work</h2>
-<div class="outline-text-2" id="text-org7a1bdd8">
+<div id="outline-container-org165ef0b" class="outline-2">
+<h2 id="org165ef0b">Future Work</h2>
+<div class="outline-text-2" id="text-org165ef0b">
 </div>
-<div id="outline-container-org01ebff7" class="outline-3">
-<h3 id="org01ebff7"><span class="todo TODO">TODO</span> Describe Comm Split and Cart Sub implementations</h3>
+<div id="outline-container-orgc3a60e6" class="outline-3">
+<h3 id="orgc3a60e6"><span class="todo TODO">TODO</span> Describe Comm Split and Cart Sub implementations</h3>
 </div>
-<div id="outline-container-orgaf0b2a7" class="outline-3">
-<h3 id="orgaf0b2a7"><span class="todo TODO">TODO</span> Remove unnecessary parts of code</h3>
+<div id="outline-container-org0ff1c81" class="outline-3">
+<h3 id="org0ff1c81"><span class="todo TODO">TODO</span> Remove unnecessary parts of code</h3>
 </div>
-<div id="outline-container-org908fbef" class="outline-3">
-<h3 id="org908fbef"><span class="todo TODO">TODO</span> Keep only the name in the communicator with Comm_set_attr</h3>
+<div id="outline-container-orgd7234b0" class="outline-3">
+<h3 id="orgd7234b0"><span class="todo TODO">TODO</span> Keep only the name in the communicator with Comm_set_attr</h3>
 </div>
-<div id="outline-container-org46eeb0a" class="outline-3">
-<h3 id="org46eeb0a"><span class="todo TODO">TODO</span> Cleanup code</h3>
+<div id="outline-container-orgb99db75" class="outline-3">
+<h3 id="orgb99db75"><span class="todo TODO">TODO</span> Cleanup code</h3>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Ioannis Vardas</p>
-<p class="date">Created: 2021-09-14 Tue 19:50</p>
+<p class="date">Created: 2021-09-15 Wed 12:42</p>
 </div>
 </body>
 </html>

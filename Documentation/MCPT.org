@@ -7,7 +7,11 @@
 
 
 * Overview
-The main idea of this tool is to provide accurate information about the MPI Communicators.
+The main idea of this tool is to provide accurate information about the MPI Communicators via profiling with low overhead.
+** Specifications
+1. Communicator related information (calls, tree)
+2. Data traffic (Bytes sent) in every communicator
+3. MPI communication primitives information in every communicator
 * Installation
 ** Dependencies
 1. MPI version bla bla bla
@@ -33,6 +37,9 @@ Output file name "profiler_stats.txt"
 ** Supported Communicator Primitives
 - MPI_Comm_split
 - MPI_Comm_dup
+- MPI_Comm_create
+- MPI_Cart_create
+- MPI_Cart_sub
 ** Unsupported Communicator Primitives
 - MPI_Comm_create_group
 ** Supported MPI Collective communication Primitives
