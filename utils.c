@@ -62,28 +62,25 @@ getProcCmdLine (int *ac, char **av)
   snprintf (file, 256, "/proc/%d/cmdline", pid);
   infile = fopen (file, "r");
 
-  if (infile != NULL)
-    {
-      while (!feof (infile))
-        {
-          inbuf = malloc (MAX_ARG_STRING_SIZE);
-          if (fread (inbuf, 1, MAX_ARG_STRING_SIZE, infile) > 0)
-            {
-              arg_ptr = inbuf;
-              while (*arg_ptr != '\0')
-                {
-                  av[i] = strdup (arg_ptr);
-                  arg_ptr += strlen (av[i]) + 1;
-                  i++;
-                }
-            }
+  if (infile != NULL){
+    while (!feof (infile)){
+      inbuf = malloc (MAX_ARG_STRING_SIZE);
+      if (fread (inbuf, 1, MAX_ARG_STRING_SIZE, infile) > 0){
+        arg_ptr = inbuf;
+        while (*arg_ptr != '\0'){
+          av[i] = strdup (arg_ptr);
+          arg_ptr += strlen (av[i]) + 1;
+          i++;
         }
-      *ac = i;
-      if(inbuf)
-          free (inbuf);
-      fclose (infile);
+      }
     }
+    *ac = i;
+    if(inbuf != NULL ){
+      free (inbuf);
+    }
+    fclose (infile);
+  }
   else{
-      mcpt_abort("Error opening file %s FILE:LINE = %d",file,__FILE__,__LINE__);
+    mcpt_abort("Error opening file %s FILE:LINE = %d",file,__FILE__,__LINE__);
   }
 }

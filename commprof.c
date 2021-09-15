@@ -126,11 +126,11 @@ _MPI_Init(int *argc, char ***argv){
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
-    local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    /* local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4); */
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
-        local_data[i] = NULL;
+        /* local_data[i] = NULL; */
         local_comms[i] = NULL;
     }
     /* table = Table_new(128, NULL, NULL); */
@@ -1026,18 +1026,23 @@ MPI_Comm_free(MPI_Comm *comm){
     /* fflush(stdout); */
     PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
     if ( flag ){
-        local_data[num_of_local] = (prof_attrs*) malloc (sizeof(prof_attrs));
-        local_data[num_of_local]->bytes = com_info->bytes;
-        local_data[num_of_local]->msgs = com_info->msgs;
-        local_data[num_of_local]->size = com_info->size;
-        strcpy(local_data[num_of_local]->name,com_info->name);
         for ( i = 0; i<local_cid; i++ ){
             if ( strcmp(com_info->name, local_comms[i]->name) == 0 )
             break;
         }
         if ( i == local_cid  )
             mcpt_abort("Comm_free on wrong communicator\n");
-        local_comms[i] = local_data[num_of_local];
+        /* local_data[num_of_local] = (prof_attrs*) malloc (sizeof(prof_attrs)); */
+        /* local_data[num_of_local]->bytes = com_info->bytes; */
+        /* local_data[num_of_local]->msgs = com_info->msgs; */
+        /* local_data[num_of_local]->size = com_info->size; */
+        /* strcpy(local_data[num_of_local]->name,com_info->name); */
+        local_comms[i] = (prof_attrs*) malloc (sizeof(prof_attrs));
+        local_comms[i]->bytes = com_info->bytes;
+        local_comms[i]->msgs = com_info->msgs;
+        local_comms[i]->size = com_info->size;
+        strcpy(local_comms[i]->name,com_info->name);
+        /* local_comms[i] = local_data[num_of_local]; */
         num_of_local++;
     }
     /* for ( i = 0; i<num_of_comms; i++ ){ */
@@ -1118,19 +1123,19 @@ _Finalize(){
             /* } */
         }
         else{
-            if ( num_of_local > 0 && k < num_of_local){
-                strcpy(array[i].name, local_data[k]->name);
-                array[i].bytes = local_data[k]->bytes;
-                array[i].size = local_data[k]->size;
-                array[i].msgs = local_data[k]->msgs;
-                k++;
-            }
-            else{
+            /* if ( num_of_local > 0 && k < num_of_local){ */
+            /*     strcpy(array[i].name, local_data[k]->name); */
+            /*     array[i].bytes = local_data[k]->bytes; */
+            /*     array[i].size = local_data[k]->size; */
+            /*     array[i].msgs = local_data[k]->msgs; */
+            /*     k++; */
+            /* } */
+            /* else{ */
                 strcpy(array[i].name, "NULL");
                 array[i].msgs = 0;
                 array[i].bytes = 0;
                 array[i].size = 0;
-            }
+            /* } */
         }
     }
     /* printf ( "RANK %d i = %d\n",rank,i ); */

@@ -51,7 +51,8 @@ Communicator suffix includes two distinct ids:
 *** Code
 #+INCLUDE: "../commprof.c" src c :lines "300-343"
 * Future Work
-** TODO Describe Comm Split and Cart Sub implementations
+** TODO Describe Cart Sub implementations
 ** TODO Remove unnecessary parts of code
+** TODO Free memory
 ** TODO Keep only the name in the communicator with Comm_set_attr
 ** TODO Cleanup code
