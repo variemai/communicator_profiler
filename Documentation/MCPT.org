@@ -44,6 +44,12 @@ Output file name "profiler_stats.txt"
 - MPI_Comm_create_group
 ** Supported MPI Collective communication Primitives
 ** Supported MPI Point to Point Primitives
+** Profiling MPI_Comm_split
+Communicator suffix includes two distinct ids:
+- The first id denotes the current number of communicators among all processes
+- The second denotes the communicator after the split
+*** Code
+#+INCLUDE: "../commprof.c" src c :lines "300-343"
 * Future Work
 ** TODO Describe Comm Split and Cart Sub implementations
 ** TODO Remove unnecessary parts of code
