@@ -15,13 +15,9 @@ MPI_Comm *communicators = NULL;
 prof_attrs **local_data = NULL;
 prof_attrs **local_comms = NULL;
 int local_cid= 0;
-/* int num_of_comms = 1; */
 int my_coms = 1;
-int num_of_local = 0;
 int ac;
 char *av[MAX_ARGS];
-/* int line_called; */
-/* char file_called[32]; */
 
 static int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
@@ -54,6 +50,10 @@ namekey()
 /*     return (*a0)-(*b0); */
 /* } */
 
+/*
+ * Create a new communicator structure and add the parent
+ * communicator's name prefix to it
+ */
 prof_attrs*
 get_comm_parent(MPI_Comm comm)
 {
@@ -240,42 +240,37 @@ MPI_Init(int *argc, char ***argv)
     return _MPI_Init(argc, argv);
 }
 
+/*
+ * The naming scheme for the MPI_Comm_create is done by collecting the
+ * maximum number of communicators from all processes and using it as id.
+ * Use parent communicator name as prefix
+ */
 int
 MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
 {
     int ret;
-    int i,length,comms;
+    int comms;
     char *buf;
     prof_attrs *communicator;
     ret = PMPI_Comm_create(comm, group, newcomm);
-    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
-        /* communicators[my_coms] = MPI_COMM_NULL; */
-        /* my_coms++; */
-        return ret;
-    }
+    /*
+     * Synchronize with other processess and get the maximum number
+     * of communicators to use it an id. This must be done in the
+     * parent communicator. Even if Comm_split fails for a process
+     * that process must call this Allreduce
+     */
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
+    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
+        return ret;
+    }
+    /* Use the parent's name as a prefix for the newly created communicator */
     communicator = get_comm_parent(comm);
     buf = (char*) malloc ( sizeof(char)*8);
+    /* Append prefix+suffix and initialize the data for the new communicator */
     sprintf(buf,"_c%d",my_coms);
-    length = strlen(communicator->name);
-    for ( i =0; i<strlen(buf); i++ ){
-        communicator->name[length+i] = buf[i];
-    }
-    /* communicator->name[i]='\0'; */
-    communicator->bytes = 0;
-    communicator->msgs = 0;
-    communicator->size = 0;
-    /* int rank; */
-    /* PMPI_Comm_rank(MPI_COMM_WORLD, &rank); */
-    /* printf("Rank %d, local_cid = %d Func %s\n",rank,local_cid,__FUNCTION__); */
-    /* fflush(stdout); */
+    new_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
-    local_data[local_cid] = communicator;
-    local_cid++;
-    communicators[my_coms] = *newcomm;
-    /* num_of_comms++; */
-    my_coms++;
     return ret;
 }
 
@@ -360,33 +355,19 @@ F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
 int
 MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 {
-    int ret,length,i, comms;
+    int ret,comms;
     prof_attrs *communicator;
     char *buf;
     ret = PMPI_Comm_dup(comm, newcomm);
-    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
-        return ret;
-    /* if ( comm == MPI_COMM_WORLD ){ */
-        /* Synchronize */
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
-    /* } */
+    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
+        return ret;
     communicator = get_comm_parent(comm);
     buf = (char*) malloc ( sizeof(char)*8);
     sprintf(buf,"_d%d",my_coms);
-    length = strlen(communicator->name);
-    for ( i =0; i<strlen(buf); i++ ){
-        communicator->name[length+i] = buf[i];
-    }
-    /* communicator->name[i]='\0'; */
-    communicator->bytes = 0;
-    communicator->msgs = 0;
+    new_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
-    local_comms[local_cid] = communicator;
-    local_cid++;
-    communicators[my_coms] = *newcomm;
-    /* num_of_comms+=1; */
-    my_coms++;
     return ret;
 }
 
@@ -409,35 +390,18 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
                 const int *periods, int reorder, MPI_Comm *comm_cart)
 {
 
-    int ret,length,i,comms;
+    int ret,comms;
     prof_attrs *communicator;
-    char *buf, *buffer;
+    char *buf;
     ret = PMPI_Cart_create(old_comm, ndims, dims, periods, reorder, comm_cart);
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, old_comm);
     my_coms = comms;
+    /* Should we have an if condition here to check if comm_cart is null? */
     communicator = get_comm_parent(old_comm);
-    buffer = strdup(communicator->name);
-    /* buf = (char*) malloc ( sizeof(char)*8); */
-    buf = (char*)calloc(8, sizeof(char));
-    /* snprintf(buf, 8, "_a%d",my_coms); */
+    buf = (char*)malloc(8*sizeof(char));
     sprintf(buf,"_a%d",my_coms);
-    length = strlen(communicator->name);
-    for ( i =0; i<strlen(buf); i++ ){
-        communicator->name[length+i] = buf[i];
-    }
-    /* communicator->name[i+1]='\0'; */
-    communicator->bytes = 0;
-    communicator->msgs = 0;
-    /* printf("MPI_cart_create\n"); */
-    /* fflush(stdout); */
+    new_comm(buf, &communicator, old_comm, comm_cart);
     PMPI_Comm_set_attr(*comm_cart, namekey(), communicator);
-    local_comms[local_cid] = communicator;
-    local_cid++;
-    printf("MPI Cart comm with name %s and parent %s\n",communicator->name,buffer);
-    communicators[my_coms] = *comm_cart;
-    /* num_of_comms+=1; */
-    my_coms++;
-    free(buffer);
     return ret;
 }
 
@@ -1043,7 +1007,7 @@ MPI_Comm_free(MPI_Comm *comm){
         local_comms[i]->size = com_info->size;
         strcpy(local_comms[i]->name,com_info->name);
         /* local_comms[i] = local_data[num_of_local]; */
-        num_of_local++;
+        /* num_of_local++; */
     }
     /* for ( i = 0; i<num_of_comms; i++ ){ */
     /*     if ( *comm  == communicators[i]) */
