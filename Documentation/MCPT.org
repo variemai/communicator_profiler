@@ -1,4 +1,4 @@
-#+TITLE: Documentation: MPI Communicator Profiling Tool
+#+TITLE: MPI Communicator Profiling Tool
 #+OPTIONS: ^:nil num:nil
 #+SETUPFILE: setup.conf
 #+BIBLIOGRAPHY: bibliography plain
@@ -42,17 +42,24 @@ Output file name "profiler_stats.txt"
 - MPI_Cart_sub
 ** Unsupported Communicator Primitives
 - MPI_Comm_create_group
+** Communicator Primitives not yet implemented
+- MPI_Graph_create
+- MPI_Dist_graph_create
 ** Supported MPI Collective communication Primitives
 ** Supported MPI Point to Point Primitives
-** Profiling MPI_Comm_split
+** Communicator creator primitives profiling
+The implementations of some of the communicator primitives is also included. I chose to present some of them just to give an idea of how this tool works.
+*** Profiling MPI_Comm_split
 Communicator suffix includes two distinct ids:
 - The first id denotes the current number of communicators among all processes
 - The second denotes the communicator after the split
-*** Code
+There are two collective calls of ~MPI_Allreduce()~ in order to get the correct ids for the name. The first call synchronizes between the processes and get the maximum number. This way all processes agree on the first id of this communicator. Note that this call is done in the parent communicator. The second ~MPI_Allreduce()~ call is done in the newly created communicators where every processes sends its corresponding rank in the parent communicator and gets the minimum. This is allows the profiler to distinct between the newly created communicators. The second id of each of the new communicators is the minimum rank of the process in the parent communicator.
+**** Code
 #+INCLUDE: "../commprof.c" src c :lines "300-343"
+*** Profiling MPI_Cart_create
 * Future Work
 ** TODO Describe Cart Sub implementations
 ** TODO Remove unnecessary parts of code
 ** TODO Free memory
-** TODO Keep only the name in the communicator with Comm_set_attr
+** HOLD Keep only the name in the communicator with Comm_set_attr
 ** TODO Cleanup code
