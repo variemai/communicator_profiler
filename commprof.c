@@ -237,6 +237,7 @@ F77_MPI_INIT (int *ierr)
 int
 MPI_Init(int *argc, char ***argv)
 {
+    getProcCmdLine (&ac, av);
     return _MPI_Init(argc, argv);
 }
 
@@ -1181,7 +1182,13 @@ _Finalize(){
         }
         PMPI_Get_library_version(version, &resultlen);
         fprintf(fp, "#'MPI LIBRARY'='%s'\n",version);
-        fprintf(fp,"#'Num of REAL comms'='%d'\n",num_of_comms);
+        fprintf(fp, "#'Application'='%s'\n",av[0]);
+        fprintf(fp, "#'Arguments'='");
+        for ( i = 1; i<ac; i++ ){
+            fprintf(fp, "%s",av[i]);
+        }
+        fprintf(fp, "'\n");
+        fprintf(fp, "#'Num of REAL comms'='%d'\n",num_of_comms);
         for ( i =0; i<num_of_comms; i++ )
             fprintf(fp,"Comm: %s Bytes = %lu Msgs = %u\n",unames[i],ubytes[i],
                    umsgs[i]);
