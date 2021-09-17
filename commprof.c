@@ -6,6 +6,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <ctype.h>
+#include <time.h>
 #include <unistd.h>
 #include "symbols.h"
 #define MAX_ARGS 1024
@@ -1022,6 +1023,7 @@ _Finalize(){
     int total_comms,total,num_of_comms, resultlen;
     uint64_t *bytes, *ubytes;
     uint32_t *msgs, *umsgs;
+    time_t t;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -1190,6 +1192,11 @@ _Finalize(){
         }
         fprintf(fp, "'\n");
         fprintf(fp, "#'Num of REAL comms'='%d'\n",num_of_comms);
+        time(&t);
+        char *tmp = ctime(&t);
+        char *date = (char*) malloc ( strlen(tmp)-1 );
+        strncpy(date, tmp, strlen(tmp)-1);
+        fprintf(fp, "# Len=%lu 'Date'=%s'\n",strlen(date),date);
         for ( i =0; i<num_of_comms; i++ )
             fprintf(fp,"Comm: %s Bytes = %lu Msgs = %u\n",unames[i],ubytes[i],
                    umsgs[i]);
@@ -1202,6 +1209,7 @@ _Finalize(){
         /* free(uparents); */
         free(ubytes);
         free(umsgs);
+        free(date);
     }
     fclose(fp);
     /* if (communicators) */
