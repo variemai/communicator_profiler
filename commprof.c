@@ -1186,7 +1186,7 @@ _Finalize(){
         fprintf(fp, "#'Application'='%s'\n",av[0]);
         fprintf(fp, "#'Arguments'='");
         for ( i = 1; i<ac; i++ ){
-            fprintf(fp, "%s",av[i]);
+            fprintf(fp, " %s",av[i]);
         }
         fprintf(fp, "'\n");
         fprintf(fp, "#'Num of REAL comms'='%d'\n",num_of_comms);
