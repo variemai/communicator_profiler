@@ -1017,9 +1017,10 @@ _Finalize(){
     prof_attrs *recv_buffer;
     prof_attrs dummy;
     char **names, **unames;
-    int total_comms,total,num_of_comms;
+    int total_comms,total,num_of_comms, resultlen;
     uint64_t *bytes, *ubytes;
     uint32_t *msgs, *umsgs;
+    char version[MPI_MAX_LIBRARY_VERSION_STRING];
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     num_of_comms = my_coms;
@@ -1178,7 +1179,9 @@ _Finalize(){
             fprintf(stderr, "Failed to open output file: profiler_stats.txt\n");
             mcpt_abort("Aborting\n");
         }
-        fprintf(fp,"Num of REAL comms = %d\n",num_of_comms);
+        PMPI_Get_library_version(version, &resultlen);
+        fprintf(fp, "#'MPI LIBRARY'='%s'\n",version);
+        fprintf(fp,"#'Num of REAL comms'='%d'\n",num_of_comms);
         for ( i =0; i<num_of_comms; i++ )
             fprintf(fp,"Comm: %s Bytes = %lu Msgs = %u\n",unames[i],ubytes[i],
                    umsgs[i]);

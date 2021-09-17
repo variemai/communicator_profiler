@@ -26,6 +26,12 @@ echo "Techincal documentation using Emacs <3"
 #+end_src
 ** Output
 Output file name "profiler_stats.txt"
+*** Header
+- MPI Version and MPI Implementation
+- Application name and arguments
+- Number of processes
+- Machine Name of Process 0
+- Date of the Run
 * Implementation
 ** Basic idea
 - Keep data for each communicator using ~MPI_Comm_set_attr()~
@@ -49,6 +55,7 @@ Output file name "profiler_stats.txt"
 ** Supported MPI Point to Point Primitives
 ** Communicator creator primitives profiling
 The implementations of some of the communicator primitives is also included. I chose to present some of them just to give an idea of how this tool works.
+*** Profiling MPI_Comm_create
 *** Profiling MPI_Comm_split
 Communicator suffix includes two distinct ids:
 - The first id denotes the current number of communicators among all processes
@@ -56,7 +63,6 @@ Communicator suffix includes two distinct ids:
 There are two collective calls of ~MPI_Allreduce()~ in order to get the correct ids for the name. The first call synchronizes between the processes and get the maximum number. This way all processes agree on the first id of this communicator. Note that this call is done in the parent communicator. The second ~MPI_Allreduce()~ call is done in the newly created communicators where every processes sends its corresponding rank in the parent communicator and gets the minimum. This is allows the profiler to distinct between the newly created communicators. The second id of each of the new communicators is the minimum rank of the process in the parent communicator.
 **** Code
 #+INCLUDE: "../commprof.c" src c :lines "300-343"
-*** Profiling MPI_Cart_create
 * Future Work
 ** TODO Describe Cart Sub implementations
 ** TODO Remove unnecessary parts of code
