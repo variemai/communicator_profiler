@@ -208,6 +208,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
 
 int
 MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
+    getProcCmdLine (&ac, av);
     return _MPI_Init_thread(argc, argv, required, provided);
 }
 
