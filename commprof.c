@@ -92,7 +92,7 @@ get_comm_parent(MPI_Comm comm)
 }
 
 void
-new_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm){
+_new_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm){
     size_t length;
     int comm_size;
     if ( buf == NULL || communicator == NULL ||
@@ -269,7 +269,7 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     buf = (char*) malloc ( sizeof(char)*8);
     /* Append prefix+suffix and initialize the data for the new communicator */
     sprintf(buf,"_c%d",my_coms);
-    new_comm(buf, &communicator, comm, newcomm);
+    _new_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -332,7 +332,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     /* Suffix of the new communicator with the two ids */
     sprintf(buf,"_s%d.%d",my_coms,min_rank);
     /* Append prefix+suffix and initialize the data for the new communicator */
-    new_comm(buf, &communicator, comm, newcomm);
+    _new_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -366,7 +366,7 @@ MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
     communicator = get_comm_parent(comm);
     buf = (char*) malloc ( sizeof(char)*8);
     sprintf(buf,"_d%d",my_coms);
-    new_comm(buf, &communicator, comm, newcomm);
+    _new_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -400,7 +400,7 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
     communicator = get_comm_parent(old_comm);
     buf = (char*)malloc(8*sizeof(char));
     sprintf(buf,"_a%d",my_coms);
-    new_comm(buf, &communicator, old_comm, comm_cart);
+    _new_comm(buf, &communicator, old_comm, comm_cart);
     PMPI_Comm_set_attr(*comm_cart, namekey(), communicator);
     return ret;
 }
@@ -424,42 +424,31 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, mpip_const_int_t  *dims,
 
 int
 MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm){
-    int ret,length,i, my_rank, newcoms,size;
+    int ret, my_rank;
     prof_attrs *communicator;
     char *buf;
-    int dims[MAX_DIMS],id,min_rank;
+    int id,min_rank;
     ret = PMPI_Cart_sub(comm, remain_dims, new_comm);
-    PMPI_Comm_rank(comm, &my_rank);
-    PMPI_Comm_size(*new_comm, &size);
     PMPI_Allreduce(&my_coms, &id, 1, MPI_INT, MPI_MAX, comm);
-    memset(dims, 0, sizeof(int)*MAX_DIMS);
-    PMPI_Cartdim_get(*new_comm, dims);
-    newcoms = 1;
-    for ( i =0; i<MAX_DIMS; i++ ){
-        if ( dims[i] != 0 ){
-            newcoms = newcoms*dims[i];
-        }
+    PMPI_Comm_rank(comm, &my_rank);
+    if ( new_comm == NULL || *new_comm == MPI_COMM_NULL ){
+        return ret;
     }
-    /* recvbuf = (int*) malloc ( size*sizeof(int) ); */
-    /* PMPI_Allgather(&my_rank, 1, MPI_INT, recvbuf, 1, MPI_INT, *new_comm); */
-    /* my_coms = newcoms; */
     PMPI_Allreduce(&my_rank, &min_rank, 1, MPI_INT , MPI_MIN, *new_comm);
     communicator = get_comm_parent(comm);
+    /* memset(dims, 0, sizeof(int)*MAX_DIMS); */
+    /* PMPI_Cartdim_get(*new_comm, dims); */
+    /* newcoms = 1; */
+    /* for ( i =0; i<MAX_DIMS; i++ ){ */
+    /*     if ( dims[i] != 0 ){ */
+    /*         newcoms = newcoms*dims[i]; */
+    /*     } */
+    /* } */
     /* buffer = strdup(communicator->name); */
     buf = (char*) malloc ( sizeof(char)*16);
     sprintf(buf,"_b%d.%d",id,min_rank);
-    length = strlen(communicator->name);
-    for ( i =0; i<strlen(buf); i++ ){
-        communicator->name[length+i] = buf[i];
-    }
-    communicator->bytes = 0;
-    communicator->msgs = 0;
+    _new_comm(buf, &communicator, comm, new_comm);
     PMPI_Comm_set_attr(*new_comm, namekey(), communicator);
-    local_comms[local_cid] = communicator;
-    local_cid++;
-    communicators[my_coms] = *new_comm;
-    /* num_of_comms+=newcoms; */
-    my_coms++;
     return ret;
 }
 
