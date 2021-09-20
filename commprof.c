@@ -1196,7 +1196,7 @@ _Finalize(){
         char *tmp = ctime(&t);
         char *date = (char*) malloc ( strlen(tmp)-1 );
         strncpy(date, tmp, strlen(tmp)-1);
-        fprintf(fp, "# Len=%lu 'Date'=%s'\n",strlen(date),date);
+        fprintf(fp, "# Len=%lu 'Date'='%s'\n",strlen(date),date);
         for ( i =0; i<num_of_comms; i++ )
             fprintf(fp,"Comm: %s Bytes = %lu Msgs = %u\n",unames[i],ubytes[i],
                    umsgs[i]);
