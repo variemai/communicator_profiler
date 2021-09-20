@@ -11,6 +11,7 @@
 #include <string.h>
 #define NAMELEN 256
 #define PRIMLEN 16
+#define NUM_OF_PRIMS 27
 
 #ifdef USE_MPI3_CONSTS
 typedef const void mpip_const_void_t;
@@ -23,13 +24,42 @@ typedef int mpip_const_int_t;
 typedef char mpip_const_char_t;
 #endif
 
+enum primitives{
+Send,                           /* DO NOT ANYHTING BEFORE THIS */
+Isend,
+Sendrecv,
+Bcast,
+Barrier,
+Allreduce,
+Allgather,
+Allgatherv,
+Alltoall,
+Alltoallv,
+Gather,
+Gatherv,
+Scan,
+Exscan,
+Scatter,
+Scatterv,
+Reduce_scatter,
+Waitall,
+Wait,
+Waitany,
+Test,
+Iallreduce,
+Ibcast,
+Ialltoall,
+Iscatter,
+Ibarrier,
+Testany                         /* DO NOT ADD ANYTHING AFTER THIS */
+};
+
 typedef struct profiler_attributes{
     char name[NAMELEN];
-    /* char parent[NAMELEN]; */
-    /* char prim[PRIMLEN]; */
     uint64_t bytes;
     uint32_t msgs;
     int size;
+    int prims[NUM_OF_PRIMS];
 }prof_attrs;
 
 /* Globals */

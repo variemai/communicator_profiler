@@ -48,10 +48,16 @@ Output file name "profiler_stats.txt"
 - MPI_Cart_sub
 ** Unsupported Communicator Primitives
 - MPI_Comm_create_group
-** Communicator Primitives not yet implemented
+** TODO Supported Communicator Primitives
 - MPI_Graph_create
 - MPI_Dist_graph_create
 ** Supported MPI Collective communication Primitives
+** TODO Supported MPI Collective communication Primitives
+- MPI_Barrier
+- MPI_Ibarrier
+- MPI_Gatherv
+- MPI_Scatter
+- MPI_Scatterv
 ** Supported MPI Point to Point Primitives
 ** Communicator creator primitives profiling
 The implementations of some of the communicator primitives is also included. I chose to present some of them just to give an idea of how this tool works.
@@ -69,3 +75,4 @@ There are two collective calls of ~MPI_Allreduce()~ in order to get the correct 
 ** TODO Free memory
 ** HOLD Keep only the name in the communicator with Comm_set_attr
 ** TODO Cleanup code
+** TODO How to add a new primitive

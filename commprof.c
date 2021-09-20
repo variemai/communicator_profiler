@@ -20,6 +20,7 @@ int my_coms = 1;
 int ac;
 char *av[MAX_ARGS];
 
+
 static int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
 {
@@ -702,6 +703,8 @@ F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
     *ierr = ret;
 }
 
+/* MPI_Ibcast */
+
 
 int
 MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
@@ -849,6 +852,26 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
+void
+F77_MPI_ALLTOALL(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
+                 void  *recvbuf, int  * recvcnt, MPI_Fint  * recvtype,
+                 MPI_Fint  * comm , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_sendtype;
+    MPI_Datatype c_recvtype;
+    MPI_Comm c_comm;
+
+    c_sendtype = MPI_Type_f2c(*sendtype);
+    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Alltoall(sendbuf, *sendcount, c_sendtype, recvbuf, *recvcnt, c_recvtype, c_comm);
+    *ierr = ret;
+
+    return;
+}
+
 int
 MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
               const int *sdispls, MPI_Datatype sendtype, void *recvbuf,
@@ -885,11 +908,14 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
     return ret;
 }
 
+
 void
-F77_MPI_ALLTOALL(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
-                 void  *recvbuf, int  * recvcnt, MPI_Fint  * recvtype,
-                 MPI_Fint  * comm , MPI_Fint *ierr)
+F77_MPI_ALLTOALLV(const void  *sendbuf, const int  *sendcnts, const int  *sdispls,
+                  MPI_Fint  * sendtype, void  *recvbuf, const int  *recvcnts,
+                  const int  *rdispls, MPI_Fint  * recvtype, MPI_Fint  * comm ,
+                  MPI_Fint *ierr)
 {
+
     int ret;
     MPI_Datatype c_sendtype;
     MPI_Datatype c_recvtype;
@@ -899,10 +925,10 @@ F77_MPI_ALLTOALL(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
     c_recvtype = MPI_Type_f2c(*recvtype);
     c_comm = MPI_Comm_f2c(*comm);
 
-    ret = MPI_Alltoall(sendbuf, *sendcount, c_sendtype, recvbuf, *recvcnt, c_recvtype, c_comm);
+    ret = MPI_Alltoallv(sendbuf, sendcnts, sdispls, c_sendtype, recvbuf, recvcnts, rdispls, c_recvtype, c_comm);
     *ierr = ret;
-
     return;
+
 }
 
 int
@@ -911,7 +937,7 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                MPI_Datatype recvtype, MPI_Comm comm)
 {
 
-    int ret,i,j,flag,size,comm_size,recvd;
+    int ret,i,flag,size,comm_size,recvd;
     prof_attrs  *communicator;
     unsigned long long  sum = 0;
     ret = PMPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts,
@@ -1011,6 +1037,7 @@ void F77_MPI_REDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
     return;
 
 }
+
 int
 MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
            int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
@@ -1103,6 +1130,11 @@ MPI_Comm_free(MPI_Comm *comm){
     return ret;
 }
 
+/* MPI_Gatherv */
+/* MPI_Barrier */
+/* MPI_Scatter */
+/* MPI_Scatterv */
+
 void
 F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr){
     int ret;
@@ -1139,9 +1171,9 @@ _Finalize(){
     /* } */
     array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
     recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
-    MPI_Datatype types[4] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT32_T, MPI_INT };
-    int blocklen[4] = {NAMELEN,1,1,1};
-    MPI_Aint displacements[4];
+    MPI_Datatype types[5] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT32_T, MPI_INT, MPI_INT };
+    int blocklen[5] = {NAMELEN,1,1,1,NUM_OF_PRIMS};
+    MPI_Aint displacements[5];
     MPI_Aint base_address;
     MPI_Datatype profiler_data;
     PMPI_Get_address(&dummy, &base_address);
@@ -1151,13 +1183,14 @@ _Finalize(){
     PMPI_Get_address(&dummy.bytes, &displacements[1]);
     PMPI_Get_address(&dummy.msgs, &displacements[2]);
     PMPI_Get_address(&dummy.size, &displacements[3]);
+    PMPI_Get_address(&dummy.prims[0], &displacements[4]);
     displacements[0] = MPI_Aint_diff(displacements[0], base_address);
     displacements[1] = MPI_Aint_diff(displacements[1], base_address);
     displacements[2] = MPI_Aint_diff(displacements[2], base_address);
     displacements[3] = MPI_Aint_diff(displacements[3], base_address);
-    /* displacements[4] = MPI_Aint_diff(displacements[4], base_address); */
+    displacements[4] = MPI_Aint_diff(displacements[4], base_address);
 
-    PMPI_Type_create_struct(4, blocklen, displacements, types, &profiler_data);
+    PMPI_Type_create_struct(5, blocklen, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
     for ( i = 0; i < num_of_comms; i++ ){
@@ -1176,6 +1209,9 @@ _Finalize(){
             array[i].bytes = local_comms[i]->bytes;
             array[i].msgs= local_comms[i]->msgs;
             array[i].size = local_comms[i]->size;
+            for ( k=0; k<NUM_OF_PRIMS; k++ ){
+                array[i].prims[k] = local_comms[i]->prims[k];
+            }
             /* if ( flag ){ */
                 /* strcpy(array[i].name, com_info->name); */
                 /* array[i].bytes = com_info->bytes; */
