@@ -1324,6 +1324,7 @@ _Finalize(){
         }
         PMPI_Get_library_version(version, &resultlen);
         fprintf(fp, "#'MPI LIBRARY'='%s'\n",version);
+        fprintf(fp, "#'Processes'='%d'\n",size);
         fprintf(fp, "#'Application'='%s'\n",av[0]);
         fprintf(fp, "#'Arguments'='");
         for ( i = 1; i<ac; i++ ){
@@ -1339,7 +1340,6 @@ _Finalize(){
         fprintf(fp, "Comm, Bytes, Calls\n");
         for ( i =0; i<num_of_comms; i++ )
             fprintf(fp,"%s, %lu, %u\n",unames[i],ubytes[i],umsgs[i]);
-
         printf("MCPT File Written: profiler_data.csv\n");
         for ( i =0; i<total; i++ ){
             free(unames[i]);
