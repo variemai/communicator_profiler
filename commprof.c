@@ -202,7 +202,9 @@ _MPI_Init(int *argc, char ***argv){
     communicator->bytes = 0;
     communicator->size = size;
     communicator->msgs = 0;
-    memset(communicator->prims, 0, NUM_OF_PRIMS*sizeof(int));
+    for ( i = 0; i<NUM_OF_PRIMS; i++ ){
+        communicator->prims[i] = 0;
+    }
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     local_comms[local_cid] = communicator;
     local_cid++;
@@ -245,13 +247,16 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     communicator->bytes = 0;
     communicator->size = size;
     communicator->msgs = 0;
+    for ( i = 0; i<NUM_OF_PRIMS; i++ ){
+        communicator->prims[i] = 0;
+    }
     local_comms[local_cid] = communicator;
     local_cid++;
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
-    memset(communicator->prims, 0, NUM_OF_PRIMS*sizeof(int));
+    /* memset(communicator->prims, 0, NUM_OF_PRIMS*sizeof(int)); */
     communicators[0] = MPI_COMM_WORLD;
     /* printf("Rank: %d Return from Init_thread\n",rank); */
     /* fflush(stdout); */
