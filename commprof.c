@@ -126,7 +126,7 @@ get_comm_parent(MPI_Comm comm)
 void
 _new_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm){
     size_t length;
-    int comm_size;
+    int comm_size,i;
     if ( buf == NULL || communicator == NULL ||
          comm == MPI_COMM_NULL || newcomm == NULL){
         mcpt_abort("Newcomm called with NULL\n");
@@ -137,7 +137,10 @@ _new_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
     (*communicator)->bytes = 0;
     (*communicator)->msgs = 0;
     (*communicator)->size = comm_size;
-    memset((*communicator)->prims, 0, NUM_OF_PRIMS*sizeof(int));
+    /* memset((*communicator)->prims, 0, NUM_OF_PRIMS*sizeof(int)); */
+    for (i = 0; i < NUM_OF_PRIMS; i++) {
+        (*communicator)->prims[i] = 0;
+    }
     local_comms[local_cid] = *communicator;
     communicators[my_coms] = *newcomm;
     my_coms++;
@@ -1277,6 +1280,9 @@ _Finalize(){
                 array[i].msgs = 0;
                 array[i].bytes = 0;
                 array[i].size = 0;
+                for ( k=0; k<NUM_OF_PRIMS; k++ ){
+                    array[i].prims[k] = 0;
+                }
             /* } */
         }
     }
