@@ -20,6 +20,36 @@ int my_coms = 1;
 int ac;
 char *av[MAX_ARGS];
 
+char prim_names[][NUM_OF_PRIMS]={
+"Send",
+"Isend",
+"Sendrecv",
+"Bcast",
+"Barrier",
+"Allreduce",
+"Allgather",
+"Allgatherv",
+"Alltoall",
+"Alltoallv",
+"Reduce",
+"Gather",
+"Gatherv",
+"Scan",
+"Exscan",
+"Scatter",
+"Scatterv",
+"Reduce_scatter",
+"Waitall",
+"Wait",
+"Waitany",
+"Test",
+"Iallreduce",
+"Ibcast",
+"Ialltoall",
+"Iscatter",
+"Ibarrier",
+"Testany"
+};
 
 static int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
@@ -107,6 +137,7 @@ _new_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
     (*communicator)->bytes = 0;
     (*communicator)->msgs = 0;
     (*communicator)->size = comm_size;
+    memset((*communicator)->prims, 0, NUM_OF_PRIMS*sizeof(int));
     local_comms[local_cid] = *communicator;
     communicators[my_coms] = *newcomm;
     my_coms++;
@@ -132,7 +163,7 @@ profile_this(MPI_Comm comm, int *flag,int *id){
     if ( i == local_cid  )
         mcpt_abort("Primitive on wrong communicator\n");
     communicator->msgs = communicator->msgs + 1;
-    local_comms[i]->msgs = communicator->msgs + 1;
+    /* local_comms[i]->msgs = communicator->msgs + 1; */
     return communicator;
 }
 
@@ -168,6 +199,7 @@ _MPI_Init(int *argc, char ***argv){
     communicator->bytes = 0;
     communicator->size = size;
     communicator->msgs = 0;
+    memset(communicator->prims, 0, NUM_OF_PRIMS*sizeof(int));
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     local_comms[local_cid] = communicator;
     local_cid++;
@@ -189,11 +221,9 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
-    local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
-        local_data[i] = NULL;
         local_comms[i] = NULL;
     }
     /* table = Table_new(128, NULL, NULL); */
@@ -218,6 +248,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
+    memset(communicator->prims, 0, NUM_OF_PRIMS*sizeof(int));
     communicators[0] = MPI_COMM_WORLD;
     /* printf("Rank: %d Return from Init_thread\n",rank); */
     /* fflush(stdout); */
@@ -517,7 +548,9 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
         sum = communicator->bytes;
         sum = sum + count * size;
         communicator->bytes = sum;
-        local_comms[i]->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Isend] += 1;
+        /* local_comms[i]->prims[Isend] += 1; */
     }
     /* free(prim_name); */
     return ret;
@@ -571,7 +604,9 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
         sum = communicator->bytes;
         sum = sum + count * size;
         communicator->bytes = sum;
-        local_comms[i]->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Send] += 1;
+        /* local_comms[i]->prims[Send] += 1; */
     }
     return ret;
 }
@@ -625,7 +660,8 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = communicator->bytes;
         sum = sum + sendcount * size;
         communicator->bytes = sum;
-        local_comms[i]->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Sendrecv] += 1;
     }
     return ret;
 }
@@ -682,7 +718,8 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
         sum = communicator->bytes;
         sum = (sum + count * size);
         communicator->bytes = sum;
-        local_comms[i]->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Bcast] += 1;
     }
     return ret;
 
@@ -737,7 +774,8 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
         sum = communicator->bytes;
         sum = sum + (count * size)*comm_size;
         communicator->bytes = sum;
-        local_comms[i]->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Allreduce] += 1;
     }
     return ret;
 }
@@ -793,7 +831,8 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = communicator->bytes;
         sum = sum + (sendcount * size)*comm_size;
         communicator->bytes = sum;
-        local_comms[i]->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Allgather] += 1;
     }
     return ret;
 }
@@ -847,7 +886,8 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = communicator->bytes;
         sum = sum + sendcount*size*comm_size;
         communicator->bytes = sum;
-        local_comms[i]->bytes = sum;
+        communicator->prims[Alltoall] += 1;
+        /* local_comms[i]->bytes = sum; */
     }
     return ret;
 }
@@ -903,7 +943,8 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
         sum = communicator->bytes;
         sum = sum + sent;
         communicator->bytes = sum;
-        local_comms[i]->bytes = sum;
+        communicator->prims[Alltoallv] += 1;
+        /* local_comms[i]->bytes = sum; */
     }
     return ret;
 }
@@ -960,7 +1001,8 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = communicator->bytes;
         sum = sum + recvd;
         communicator->bytes = sum;
-        local_comms[i]->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Allgather] += 1;
     }
     return ret;
 }
@@ -1015,6 +1057,7 @@ MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
         sum = sum + count*size;
         communicator->bytes = sum;
         local_comms[i]->bytes = sum;
+        communicator->prims[Reduce] += 1;
     }
     return ret;
 }
@@ -1067,7 +1110,8 @@ MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
         sum = communicator->bytes;
         sum = sum + sendcount*size;
         communicator->bytes = sum;
-        local_comms[i]->bytes = sum;
+        communicator->prims[Gather] += 1;
+        /* local_comms[i]->bytes = sum; */
     }
     return ret;
 
@@ -1159,6 +1203,7 @@ _Finalize(){
     uint64_t *bytes, *ubytes;
     uint32_t *msgs, *umsgs;
     time_t t;
+    int *prims,*uprims;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -1250,9 +1295,10 @@ _Finalize(){
         unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
         /* uparents =(char **) malloc (sizeof(char*)*num_of_comms*size); */
         bytes = (uint64_t *) malloc (sizeof(uint64_t )
-                                               *num_of_comms*size);
+                                     *num_of_comms*size);
         msgs = (uint32_t *) malloc (sizeof(uint32_t )
-                                               *num_of_comms*size);
+                                    *num_of_comms*size);
+        prims = (int*) malloc ( sizeof(int)*num_of_comms*size*NUM_OF_PRIMS );
         j = 0;
         for ( i =0; i<size*num_of_comms; i++ ){
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
@@ -1262,6 +1308,9 @@ _Finalize(){
                 /* uparents[j] = strdup("NULL"); */
                 bytes[j] = recv_buffer[i].bytes;
                 msgs[j] = recv_buffer[i].msgs;
+                for ( k =0; k<NUM_OF_PRIMS; k++){
+                    prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
+                }
                 j++;
             }
         }
@@ -1269,9 +1318,11 @@ _Finalize(){
         ubytes = (uint64_t *) malloc (sizeof(uint64_t )
                                       *total);
         umsgs = (uint32_t *) malloc (sizeof(uint32_t )
-                                                *total);
+                                     *total);
+        uprims = (int *) malloc (sizeof(int)*total*NUM_OF_PRIMS);
         memset(ubytes, 0, sizeof(uint64_t )*total);
         memset(umsgs, 0, sizeof(uint32_t )*total);
+        memset(uprims, 0, sizeof(int)*total*NUM_OF_PRIMS);
         num_of_comms = 1;
         j = 0;
         for ( i=0; i<total; i++ ){
@@ -1303,7 +1354,9 @@ _Finalize(){
                      /* strcmp(uparents[i], parents[j]) == 0){ */
                     ubytes[i]+= bytes[j];
                     umsgs[i]+= msgs[j];
-
+                    for ( k =0; k<NUM_OF_PRIMS; k++){
+                        uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
+                    }
                     /* printf("Match!\n"); */
                 }
             }
@@ -1337,9 +1390,22 @@ _Finalize(){
         char *date = (char*) malloc ( strlen(tmp)-1 );
         strncpy(date, tmp, strlen(tmp)-1);
         fprintf(fp, "#'Date'='%s'\n",date);
-        fprintf(fp, "Comm, Bytes, Calls\n");
-        for ( i =0; i<num_of_comms; i++ )
-            fprintf(fp,"%s, %lu, %u\n",unames[i],ubytes[i],umsgs[i]);
+        fprintf(fp, "Comm, Bytes, Calls, ");
+        for (k = 0; k<NUM_OF_PRIMS; k++){
+            if ( k == NUM_OF_PRIMS -1 )
+                fprintf(fp, "%s\n",prim_names[k]);
+            else
+                fprintf(fp, "%s, ",prim_names[k]);
+        }
+        for ( i =0; i<num_of_comms; i++ ){
+            fprintf(fp,"%s, %lu, %u, ",unames[i],ubytes[i],umsgs[i]);
+            for ( k =0; k<NUM_OF_PRIMS; k++ ){
+                if ( k == NUM_OF_PRIMS -1 )
+                    fprintf(fp, "%d\n",uprims[i*NUM_OF_PRIMS+k]);
+                else
+                    fprintf(fp, "%d, ",uprims[i*NUM_OF_PRIMS+k]);
+            }
+        }
         printf("MCPT File Written: profiler_data.csv\n");
         for ( i =0; i<total; i++ ){
             free(unames[i]);

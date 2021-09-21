@@ -11,7 +11,7 @@
 #include <string.h>
 #define NAMELEN 256
 #define PRIMLEN 16
-#define NUM_OF_PRIMS 27
+#define NUM_OF_PRIMS 28
 
 #ifdef USE_MPI3_CONSTS
 typedef const void mpip_const_void_t;
@@ -35,6 +35,7 @@ Allgather,
 Allgatherv,
 Alltoall,
 Alltoallv,
+Reduce,
 Gather,
 Gatherv,
 Scan,

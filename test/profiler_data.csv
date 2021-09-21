@@ -1,0 +1,15 @@
+#'MPI LIBRARY'='Open MPI v4.1.1, package: Open MPI vardas@kouvas.par.tuwien.ac.at Distribution, ident: 4.1.1, repo rev: v4.1.1, Apr 24, 2021'
+#'Processes'='8'
+#'Application'='./comm_group.out'
+#'Arguments'=''
+#'Num of REAL comms'='8'
+#'Date'='Tue Sep 21 16:29:34 2021!'
+Comm, Bytes, Calls, Send, Isend, Sendrecv, Bcast, Barrier, Allreduce, Allgather, Allgatherv, Alltoall, Alltoallv, Gather, Gatherv, Scan, Exscan, Scatter, Scatterv, Reduce_scatter, Waitall, Wait, Waitany, Test, Iallreduce, Ibcast, Ialltoall, Iscatter, Ibarrier, Testany
+W, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+W_s1.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+W_s1.0_c2, 136, 4, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+W_s1.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+W_s1.1_c2, 128, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+W_s1.1_c2_s3.0, 16, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+W_s1.1_c2_s3.1, 16, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
