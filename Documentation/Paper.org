@@ -1,0 +1,8 @@
+#+TITLE: MPI Communicator Profiling Tool
+
+* Introduction
+* Motivation
+* Contribution
+* Notes
+** Book of 2012 with profiling tools which also references scoreP
+- There is a good argument there "Creating a Tool Set for Optimizing Topology-Aware Node Mappings". Could we sell it like this? A tool for Optimizing Topology-Aware Node mappings.
