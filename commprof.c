@@ -557,8 +557,7 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
         sum = sum + count * size;
         communicator->bytes = sum;
         /* local_comms[i]->bytes = sum; */
-        communicator->prims[Isend] += 1;
-        /* local_comms[i]->prims[Isend] += 1; */
+        communicator->prims[Isend] = communicator->prims[Isend] + 1;
     }
     /* free(prim_name); */
     return ret;
@@ -664,12 +663,19 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
     communicator = profile_this(comm, &flag,&i);
     PMPI_Type_size(sendtype, &size);
+
+    int rank;
+    PMPI_Comm_rank(comm, &rank);
     if ( flag ){
         sum = communicator->bytes;
         sum = sum + sendcount * size;
         communicator->bytes = sum;
-        /* local_comms[i]->bytes = sum; */
+        local_comms[i]->bytes = sum;
+        if ( communicator->prims[Sendrecv] < 0 ){
+            fprintf(stderr,"Rank %d: Illegal value Sendrecv calls = %d\n",rank,communicator->prims[Sendrecv]);
+        }
         communicator->prims[Sendrecv] += 1;
+        /* local_comms[i]->prims[Sendrecv] = communicator->prims[Sendrecv]; */
     }
     return ret;
 }
@@ -1147,7 +1153,7 @@ F77_MPI_GATHER(const void  *sendbuf, int  * sendcnt, MPI_Fint  * sendtype,
 
 int
 MPI_Comm_free(MPI_Comm *comm){
-    int ret,flag,i;
+    int ret,flag,i,j;
     prof_attrs *com_info;
     /* printf("CALLING SPLIT\n"); */
     /* fflush(stdout); */
@@ -1169,6 +1175,9 @@ MPI_Comm_free(MPI_Comm *comm){
         local_comms[i]->msgs = com_info->msgs;
         local_comms[i]->size = com_info->size;
         strcpy(local_comms[i]->name,com_info->name);
+        for (j = 0; j < NUM_OF_PRIMS; j++) {
+            local_comms[i]->prims[j] = com_info->prims[j];
+        }
         /* local_comms[i] = local_data[num_of_local]; */
         /* num_of_local++; */
     }
