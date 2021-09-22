@@ -1293,14 +1293,20 @@ _Finalize(){
     }
     /* printf ( "RANK %d i = %d\n",rank,i ); */
     /* fflush(stdout); */
-    /* for ( i =0; i< num_of_comms; i++ ){ */
-    /*     printf("RANK %d: comm =%s bytes =%lu\n",rank,array[i].name,array[i].bytes); */
-    /* } */
-    fp = fopen("profiler_data.csv","w");
+    if ( rank == 0 ){
+
+        for ( i =0; i< num_of_comms; i++ ){
+            printf("comm =%s calls per primitive\n",array[i].name);
+            for ( k=0; k<NUM_OF_PRIMS; k++ ){
+                printf("%s = %d\n",prim_names[k],array[i].prims[k]);
+            }
+        }
+    }
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
 
     if ( rank == 0 ){
+        fp = fopen("profiler_data.csv","w");
         names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
         /* parents = ( char**)malloc(sizeof(char*)*num_of_comms*size); */
         unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
@@ -1427,8 +1433,8 @@ _Finalize(){
         free(ubytes);
         free(umsgs);
         free(date);
+        fclose(fp);
     }
-    fclose(fp);
     /* if (communicators) */
     /*     FREE(communicators); */
     return PMPI_Finalize();
