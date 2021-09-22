@@ -1302,15 +1302,15 @@ _Finalize(){
     }
     /* printf ( "RANK %d i = %d\n",rank,i ); */
     /* fflush(stdout); */
-    if ( rank == 0 ){
+    /* if ( rank == 0 ){ */
 
-        for ( i =0; i< num_of_comms; i++ ){
-            printf("comm =%s calls per primitive\n",array[i].name);
-            for ( k=0; k<NUM_OF_PRIMS; k++ ){
-                printf("%s = %d\n",prim_names[k],array[i].prims[k]);
-            }
-        }
-    }
+    /*     for ( i =0; i< num_of_comms; i++ ){ */
+    /*         printf("comm =%s calls per primitive\n",array[i].name); */
+    /*         for ( k=0; k<NUM_OF_PRIMS; k++ ){ */
+    /*             printf("%s = %d\n",prim_names[k],array[i].prims[k]); */
+    /*         } */
+    /*     } */
+    /* } */
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
 
@@ -1396,6 +1396,7 @@ _Finalize(){
         /* free(parents); */
         free(bytes);
         free(msgs);
+        free(prims);
 
         if (fp == NULL){
             fprintf(stderr, "Failed to open output file: profiler_stats.txt\n");
@@ -1442,6 +1443,7 @@ _Finalize(){
         free(ubytes);
         free(umsgs);
         free(date);
+        free(uprims);
         fclose(fp);
     }
     /* if (communicators) */
