@@ -671,9 +671,6 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = sum + sendcount * size;
         communicator->bytes = sum;
         local_comms[i]->bytes = sum;
-        if ( communicator->prims[Sendrecv] < 0 ){
-            fprintf(stderr,"Rank %d: Illegal value Sendrecv calls = %d\n",rank,communicator->prims[Sendrecv]);
-        }
         communicator->prims[Sendrecv] += 1;
         /* local_comms[i]->prims[Sendrecv] = communicator->prims[Sendrecv]; */
     }
@@ -1539,11 +1536,11 @@ _Finalize(){
                 /* uparents[j] = strdup("NULL"); */
                 bytes[j] = recv_buffer[i].bytes;
                 msgs[j] = recv_buffer[i].msgs;
-                memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int));
+                /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
                 /* Use memcpy instead of loop */
-                /* for ( k =0; k<NUM_OF_PRIMS; k++){ */
-                /*     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k]; */
-                /* } */
+                for ( k =0; k<NUM_OF_PRIMS; k++){
+                    prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
+                }
                 sizes[j] = recv_buffer[i].size;
                 j++;
             }
