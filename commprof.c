@@ -1539,9 +1539,11 @@ _Finalize(){
                 /* uparents[j] = strdup("NULL"); */
                 bytes[j] = recv_buffer[i].bytes;
                 msgs[j] = recv_buffer[i].msgs;
-                for ( k =0; k<NUM_OF_PRIMS; k++){
-                    prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
-                }
+                memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS);
+                /* Use memcpy instead of loop */
+                /* for ( k =0; k<NUM_OF_PRIMS; k++){ */
+                /*     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k]; */
+                /* } */
                 sizes[j] = recv_buffer[i].size;
                 j++;
             }
@@ -1589,10 +1591,11 @@ _Finalize(){
                     ubytes[i]+= bytes[j];
                     umsgs[i]+= msgs[j];
                     usizes[i]=sizes[j];
-                    for ( k =0; k<NUM_OF_PRIMS; k++){
-                        uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
-                    }
-                    /* printf("Match!\n"); */
+                    memcpy(&uprims[i*NUM_OF_PRIMS], &prims[j*NUM_OF_PRIMS], NUM_OF_PRIMS);
+                    /* Use memcpy instead of loop */
+                    /* for ( k =0; k<NUM_OF_PRIMS; k++){ */
+                    /*     uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k]; */
+                    /* } */
                 }
             }
         }
