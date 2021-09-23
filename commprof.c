@@ -1591,11 +1591,11 @@ _Finalize(){
                     ubytes[i]+= bytes[j];
                     umsgs[i]+= msgs[j];
                     usizes[i]=sizes[j];
-                    memcpy(&uprims[i*NUM_OF_PRIMS], &prims[j*NUM_OF_PRIMS], NUM_OF_PRIMS);
+                    /* memcpy(&uprims[i*NUM_OF_PRIMS], &prims[j*NUM_OF_PRIMS], NUM_OF_PRIMS); */
                     /* Use memcpy instead of loop */
-                    /* for ( k =0; k<NUM_OF_PRIMS; k++){ */
-                    /*     uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k]; */
-                    /* } */
+                    for ( k =0; k<NUM_OF_PRIMS; k++){
+                        uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
+                    }
                 }
             }
         }
@@ -1654,6 +1654,7 @@ _Finalize(){
         /* free(uparents); */
         free(ubytes);
         free(umsgs);
+        free(tmp);
         free(date);
         free(uprims);
         fclose(fp);
