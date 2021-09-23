@@ -163,8 +163,8 @@ profile_this(MPI_Comm comm, int *flag,int *id){
             break;
     }
     *id = i;
-    if ( i == local_cid  )
-        mcpt_abort("Primitive on wrong communicator\n");
+    /* if ( i == local_cid  ) */
+    /*     mcpt_abort("Primitive on wrong communicator\n"); */
     communicator->msgs = communicator->msgs + 1;
     /* local_comms[i]->msgs = communicator->msgs + 1; */
     return communicator;
@@ -1321,6 +1321,33 @@ F77_MPI_SCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * dat
     c_comm = MPI_Comm_f2c(*comm);
 
     ret = MPI_Scan(sendbuf, recvbuf, *count, c_datatype, c_op, c_comm);
+
+    *ierr = (MPI_Fint)ret;
+    return;
+}
+
+
+int MPI_Barrier ( MPI_Comm comm )
+{
+    int ret,flag,i;
+    prof_attrs *communicator;
+    ret = PMPI_Barrier(comm);
+
+    communicator = profile_this(comm, &flag,&i);
+    if ( flag ){
+        communicator->prims[Barrier] += 1;
+    }
+    return ret;
+}
+
+
+void F77_MPI_BARRIER(MPI_Fint  * comm , MPI_Fint *ierr) {
+    int ret;
+    MPI_Comm c_comm;
+
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Barrier(c_comm);
 
     *ierr = (MPI_Fint)ret;
     return;
