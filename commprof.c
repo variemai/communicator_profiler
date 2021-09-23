@@ -1654,7 +1654,6 @@ _Finalize(){
         /* free(uparents); */
         free(ubytes);
         free(umsgs);
-        free(tmp);
         free(date);
         free(uprims);
         fclose(fp);
