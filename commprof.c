@@ -1280,6 +1280,52 @@ F77_MPI_SCATTER(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
     return;
 }
 
+
+int
+MPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+         MPI_Op op, MPI_Comm comm)
+{
+
+    int ret,i,flag,size;
+    prof_attrs  *communicator;
+    unsigned long long  sum = 0;
+
+    ret = PMPI_Scan(sendbuf, recvbuf, count, datatype, op, comm);
+
+    PMPI_Type_size(datatype, &size);
+    communicator = profile_this(comm, &flag,&i);
+    if ( flag ){
+        sum = communicator->bytes;
+        sum = sum + size*count;
+        communicator->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Scan] += 1;
+    }
+    return ret;
+
+}
+
+
+void
+F77_MPI_SCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * datatype,
+             MPI_Fint  * op, MPI_Fint  * comm , MPI_Fint *ierr)
+{
+
+    int ret;
+    MPI_Datatype c_datatype;
+    MPI_Op c_op;
+    MPI_Comm c_comm;
+
+    c_datatype = MPI_Type_f2c(*datatype);
+    c_op = PMPI_Op_f2c(*op);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Scan(sendbuf, recvbuf, *count, c_datatype, c_op, c_comm);
+
+    *ierr = (MPI_Fint)ret;
+    return;
+}
+
 int
 MPI_Comm_free(MPI_Comm *comm){
     int ret,flag,i,j;
