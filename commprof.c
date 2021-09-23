@@ -1016,7 +1016,7 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = sum + recvd;
         communicator->bytes = sum;
         /* local_comms[i]->bytes = sum; */
-        communicator->prims[Allgather] += 1;
+        communicator->prims[Allgatherv] += 1;
     }
     return ret;
 }
@@ -1105,19 +1105,6 @@ MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
 
     ret = PMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
 
-    /* flag = 0; */
-    /* for ( i=0; i< my_coms; i++){ */
-    /*     if ( comm == communicators[i] ) */
-    /*         break; */
-    /* } */
-    /* PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag); */
-    /* for ( i =0; i< local_cid; i++ ){ */
-    /*     if ( strcmp(communicator->name, local_comms[i]->name) == 0 ) */
-    /*         break; */
-    /* } */
-    /* if ( i == local_cid  ) */
-    /*     mcpt_abort("Gather on wrong communicator\n"); */
-
     communicator = profile_this(comm, &flag,&i);
     PMPI_Type_size(sendtype, &size);
     if ( flag ){
@@ -1149,6 +1136,148 @@ F77_MPI_GATHER(const void  *sendbuf, int  * sendcnt, MPI_Fint  * sendtype,
     *ierr = ret;
     return;
 
+}
+
+int
+MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+            void *recvbuf, const int *recvcounts, const int *displs,
+            MPI_Datatype recvtype, int root, MPI_Comm comm)
+{
+    int ret,i,flag,size;
+    prof_attrs  *communicator;
+    unsigned long long  sum = 0;
+    ret = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
+                       recvtype, root, comm);
+    /* flag = 0; */
+    /* for ( i=0; i< my_coms; i++){ */
+    /*     if ( comm == communicators[i] ) */
+    /*         break; */
+    /* } */
+    /* PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag); */
+    PMPI_Type_size(sendtype, &size);
+    communicator = profile_this(comm, &flag,&i);
+    if ( flag ){
+        sum = communicator->bytes;
+        sum = sum + size*sendcount;
+        communicator->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Gatherv] += 1;
+    }
+    return ret;
+}
+
+void
+F77_MPI_GATHERV(const void  *sendbuf, int* sendcount, MPI_Fint  * sendtype,
+                void  *recvbuf, const int* recvcounts, const int  *displs,
+                MPI_Fint  * recvtype, int  * root, MPI_Fint  * comm , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_sendtype;
+    MPI_Datatype c_recvtype;
+    MPI_Comm c_comm;
+
+    c_sendtype = MPI_Type_f2c(*sendtype);
+    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Gatherv(sendbuf, *sendcount, c_sendtype, recvbuf, recvcounts,
+                      displs, c_recvtype, *root, c_comm);
+
+    *ierr = (MPI_Fint)ret;
+    return;
+}
+
+
+int
+MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
+             MPI_Datatype sendtype, void *recvbuf, int recvcount,
+             MPI_Datatype recvtype, int root, MPI_Comm comm)
+{
+
+    int ret,i,flag,size;
+    prof_attrs  *communicator;
+    unsigned long long  sum = 0;
+
+    ret = PMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
+                        recvtype, root, comm);
+
+    PMPI_Type_size(recvtype, &size);
+    communicator = profile_this(comm, &flag,&i);
+    if ( flag ){
+        sum = communicator->bytes;
+        sum = sum + size*recvcount;
+        communicator->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Scatterv] += 1;
+    }
+    return ret;
+}
+
+void
+F77_MPI_SCATTERV(const void  *sendbuf, const int  *sendcounts, const int  *displs,
+                 MPI_Fint  * sendtype, void  *recvbuf, int  * recvcount,
+                 MPI_Fint  * recvtype, int  * root, MPI_Fint  * comm, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_sendtype;
+    MPI_Datatype c_recvtype;
+    MPI_Comm c_comm;
+
+    c_sendtype = MPI_Type_f2c(*sendtype);
+    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Scatterv(sendbuf, sendcounts, displs, c_sendtype, recvbuf, *recvcount,
+                 c_recvtype, *root, c_comm);
+
+    *ierr = (MPI_Fint)ret;
+    return;
+}
+
+int
+MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+            void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
+            MPI_Comm comm)
+{
+
+    int ret,i,flag,size;
+    prof_attrs  *communicator;
+    unsigned long long  sum = 0;
+
+    ret = PMPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                        recvtype, root, comm);
+
+    PMPI_Type_size(recvtype, &size);
+    communicator = profile_this(comm, &flag,&i);
+    if ( flag ){
+        sum = communicator->bytes;
+        sum = sum + size*recvcount;
+        communicator->bytes = sum;
+        /* local_comms[i]->bytes = sum; */
+        communicator->prims[Scatter] += 1;
+    }
+    return ret;
+}
+
+void
+F77_MPI_SCATTER(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
+                void  *recvbuf, int  * recvcount, MPI_Fint  * recvtype, int  * root,
+                MPI_Fint  * comm , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_sendtype;
+    MPI_Datatype c_recvtype;
+    MPI_Comm c_comm;
+
+    c_sendtype = MPI_Type_f2c(*sendtype);
+    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Scatter(sendbuf, *sendcount, c_sendtype, recvbuf, *recvcount,
+                      c_recvtype, *root, c_comm);
+
+    *ierr = (MPI_Fint)ret;
+    return;
 }
 
 int
@@ -1220,7 +1349,7 @@ _Finalize(){
     uint64_t *bytes, *ubytes;
     uint32_t *msgs, *umsgs;
     time_t t;
-    int *prims,*uprims;
+    int *prims,*uprims,*sizes,*usizes;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -1324,6 +1453,9 @@ _Finalize(){
                                      *num_of_comms*size);
         msgs = (uint32_t *) malloc (sizeof(uint32_t )
                                     *num_of_comms*size);
+
+        sizes = (int *) malloc (sizeof(int )
+                                    *num_of_comms*size);
         prims = (int*) malloc ( sizeof(int)*num_of_comms*size*NUM_OF_PRIMS );
         j = 0;
         for ( i =0; i<size*num_of_comms; i++ ){
@@ -1337,6 +1469,7 @@ _Finalize(){
                 for ( k =0; k<NUM_OF_PRIMS; k++){
                     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
                 }
+                sizes[j] = recv_buffer[i].size;
                 j++;
             }
         }
@@ -1346,9 +1479,11 @@ _Finalize(){
         umsgs = (uint32_t *) malloc (sizeof(uint32_t )
                                      *total);
         uprims = (int *) malloc (sizeof(int)*total*NUM_OF_PRIMS);
+        usizes = (int *) malloc (sizeof(int)*total);
         memset(ubytes, 0, sizeof(uint64_t )*total);
         memset(umsgs, 0, sizeof(uint32_t )*total);
         memset(uprims, 0, sizeof(int)*total*NUM_OF_PRIMS);
+        memset(usizes, 0, sizeof(int)*total);
         num_of_comms = 1;
         j = 0;
         for ( i=0; i<total; i++ ){
@@ -1380,6 +1515,7 @@ _Finalize(){
                      /* strcmp(uparents[i], parents[j]) == 0){ */
                     ubytes[i]+= bytes[j];
                     umsgs[i]+= msgs[j];
+                    usizes[i]=sizes[j];
                     for ( k =0; k<NUM_OF_PRIMS; k++){
                         uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
                     }
@@ -1417,7 +1553,7 @@ _Finalize(){
         char *date = (char*) malloc ( strlen(tmp)-1 );
         strncpy(date, tmp, strlen(tmp)-1);
         fprintf(fp, "#'Date'='%s'\n",date);
-        fprintf(fp, "Comm, Bytes, Calls, ");
+        fprintf(fp, "Comm, Size, Bytes, Calls, ");
         for (k = 0; k<NUM_OF_PRIMS; k++){
             if ( k == NUM_OF_PRIMS -1 )
                 fprintf(fp, "%s\n",prim_names[k]);
@@ -1425,7 +1561,7 @@ _Finalize(){
                 fprintf(fp, "%s, ",prim_names[k]);
         }
         for ( i =0; i<num_of_comms; i++ ){
-            fprintf(fp,"%s, %lu, %u, ",unames[i],ubytes[i],umsgs[i]);
+            fprintf(fp,"%s, %d, %lu, %u, ",unames[i],usizes[i],ubytes[i],umsgs[i]);
             for ( k =0; k<NUM_OF_PRIMS; k++ ){
                 if ( k == NUM_OF_PRIMS -1 )
                     fprintf(fp, "%d\n",uprims[i*NUM_OF_PRIMS+k]);
