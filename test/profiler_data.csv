@@ -3,7 +3,7 @@
 #'Application'='/home/staff/vardas/repos/communicator_profiler/test/./tuwqsort.out'
 #'Arguments'=''
 #'Num of REAL comms'='290'
-#'Date'='Thu Sep 23 18:18:15 2021!'
+#'Date'='Thu Sep 23 18:27:53 2021!'
 Comm, Size, Bytes, Calls, Send, Isend, Sendrecv, Bcast, Barrier, Allreduce, Allgather, Allgatherv, Alltoall, Alltoallv, Reduce, Gather, Gatherv, Scan, Exscan, Scatter, Scatterv, Reduce_scatter, Waitall, Wait, Waitany, Test, Iallreduce, Ibcast, Ialltoall, Iscatter, Ibarrier, Testany
 W, 256, 27077599712, 424444, 0, 48, 144, 3, 390, 868, 0, 0, 96, 96, 0, 4, 4, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 W_c1, 128, 4524104, 768, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
