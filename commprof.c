@@ -703,7 +703,7 @@ int
 MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
           MPI_Comm comm)
 {
-    int ret,i,flag,size,comm_size;
+    int ret,i,flag,size,rank;
     prof_attrs  *communicator;
     unsigned long long  sum = 0;
 
@@ -724,13 +724,14 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
 
     PMPI_Type_size(datatype, &size);
     communicator = profile_this(comm, &flag,&i);
-    PMPI_Comm_size(comm, &comm_size);
+    PMPI_Comm_rank(comm, &rank);
     if ( flag ){
         sum = communicator->bytes;
-        sum = (sum + count * size);
+        sum = sum + count * size;
         communicator->bytes = sum;
         /* local_comms[i]->bytes = sum; */
-        communicator->prims[Bcast] += 1;
+        if ( rank == root )
+            communicator->prims[Bcast] += 1;
     }
     return ret;
 
@@ -751,7 +752,7 @@ F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
     *ierr = ret;
 }
 
-/* MPI_Ibcast */
+/* MPI_Ibcast to be implemented */
 
 
 int
