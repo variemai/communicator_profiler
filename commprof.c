@@ -557,7 +557,8 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
         sum = sum + count * size;
         communicator->bytes = sum;
         /* local_comms[i]->bytes = sum; */
-        communicator->prims[Isend] = communicator->prims[Isend] + 1;
+        communicator->prims[Isend] += 1;
+        communicator->msgs += 1;
     }
     /* free(prim_name); */
     return ret;
@@ -612,6 +613,7 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
         sum = sum + count * size;
         communicator->bytes = sum;
         /* local_comms[i]->bytes = sum; */
+        communicator->msgs += 1;
         communicator->prims[Send] += 1;
         /* local_comms[i]->prims[Send] += 1; */
     }
@@ -672,6 +674,7 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         communicator->bytes = sum;
         local_comms[i]->bytes = sum;
         communicator->prims[Sendrecv] += 1;
+        communicator->msgs += 1;
         /* local_comms[i]->prims[Sendrecv] = communicator->prims[Sendrecv]; */
     }
     return ret;
