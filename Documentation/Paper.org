@@ -1,8 +1,31 @@
 #+TITLE: MPI Communicator Profiling Tool
+#+OPTIONS: ^:nil
+#+BIBLIOGRAPHY: bibliography plain
 
 * Introduction
+1. MPI Collectives are an important part of the MPI applications.
+2. A critical component of the MPI collectives is the communicator.
+3. The communicator defines a safe communication context for message passing.
+   a. can also define the communication pattern
+4. Communicators can also carry the topological structure when created using topology constructors.
+
+MPI applications frequently use collective communication primitives to perform communication operations among numerous processes. The work of \cite{10.1145/3295500.3356176} indicates that MPI collective communication is used even more frequently than the corresponding point to point communication. An essential component for performing collective communication is the communicator which defines a safe communication context for message passing. Furthermore, a communicator can carry the topological structure of the application when created using topology constructors. Therefore, a communicator might be define the communication pattern between the processes of a collective communication operation.
+
 * Motivation
+1. Why do we create this tool and do not use the existing tools?
+   a. Is it better?
+      a. What makes it better?
+   b. Is it different?
+      a. What makes it different?
+      b. Why do we care about profiling in another way?
+      c. Could more care about it?
 * Contribution
 * Notes
 ** Book of 2012 with profiling tools which also references scoreP
 - There is a good argument there "Creating a Tool Set for Optimizing Topology-Aware Node Mappings". Could we sell it like this? A tool for Optimizing Topology-Aware Node mappings.
+
+* Bibliography
+#+BEGIN_SRC latex
+\bibliographystyle{plain}
+\bibliography{bibliography}
+#+END_SRC

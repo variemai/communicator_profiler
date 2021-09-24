@@ -55,3 +55,8 @@ dkms.conf
 # Makefile metadata
 compile_commands.json
 .cache/
+
+.auctex*
+*.tex
+Paper.pdf
+*.bbl

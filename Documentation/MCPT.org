@@ -25,7 +25,7 @@ Run the tests blablabla
 echo "Techincal documentation using Emacs <3"
 #+end_src
 ** Output
-Output file name "profiler_stats.txt"
+Output file name "profiler_data.csv". If this file exists it will be overwritten.
 *** Header
 - MPI Version and MPI Implementation
 - Application name and arguments
