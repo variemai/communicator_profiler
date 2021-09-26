@@ -17,6 +17,20 @@ location = {Denver, Colorado},
 series = {SC '19}
 }
 
+@article{GROPP201998,
+title = {Using node and socket information to implement MPI Cartesian topologies},
+journal = {Parallel Computing},
+volume = {85},
+pages = {98-108},
+year = {2019},
+issn = {0167-8191},
+doi = {https://doi.org/10.1016/j.parco.2019.01.001},
+url = {https://www.sciencedirect.com/science/article/pii/S0167819118303156},
+author = {William D. Gropp},
+keywords = {Message passing, MPI, Process topology, Cartesian process topology},
+abstract = {The MPI API provides support for Cartesian process topologies, including the option to reorder the processes to achieve better communication performance. But MPI implementations rarely provide anything useful for the reorder option, typically ignoring it. One argument made is that modern interconnects are fast enough that applications are less sensitive to the exact layout of processes onto the system. However, intranode communication performance is much greater than internode communication performance. In this paper, we show a simple approach that takes into account only information about which MPI processes are on the same node to provide a fast and effective implementation of the MPI Cartesian topology routine. While not optimal, this approach provides a significant improvement over all tested MPI implementations and provides an implementation that may be used as the default in any MPI implementation of MPI_Cart_create. We also explore the impact of taking into account the mapping of processes to processor chips or sockets, and show that this is both relatively easy to accomplish but provides only a small improvement in performance.}
+}
+
 @INPROCEEDINGS{1592864,
   author={Traff, J.L.},
   booktitle={SC '02: Proceedings of the 2002 ACM/IEEE Conference on Supercomputing},
