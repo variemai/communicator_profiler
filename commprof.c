@@ -1681,17 +1681,19 @@ _Finalize(){
         fprintf(fp, "Comm, Size, Bytes, Calls, ");
         for (k = 0; k<NUM_OF_PRIMS; k++){
             if ( k == NUM_OF_PRIMS -1 )
-                fprintf(fp, "%s\n",prim_names[k]);
+                fprintf(fp, "%s Calls,%s Bytes\n",prim_names[k],prim_names[k]);
             else
-                fprintf(fp, "%s, ",prim_names[k]);
+                fprintf(fp, "%s Calls,%s Bytes,",prim_names[k],prim_names[k]);
         }
         for ( i =0; i<num_of_comms; i++ ){
             fprintf(fp,"%s, %d, %lu, %u, ",unames[i],usizes[i],ubytes[i],umsgs[i]);
             for ( k =0; k<NUM_OF_PRIMS; k++ ){
                 if ( k == NUM_OF_PRIMS -1 )
-                    fprintf(fp, "%d\n",uprims[i*NUM_OF_PRIMS+k]);
+                    fprintf(fp, "%d,%d\n",uprims[i*NUM_OF_PRIMS+k],
+                            uprims[i*NUM_OF_PRIMS+k]);
                 else
-                    fprintf(fp, "%d, ",uprims[i*NUM_OF_PRIMS+k]);
+                    fprintf(fp, "%d,%d,",uprims[i*NUM_OF_PRIMS+k],
+                            uprims[i*NUM_OF_PRIMS+k]);
             }
         }
         printf("MCPT File Written: profiler_data.csv\n");
