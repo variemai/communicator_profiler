@@ -1700,8 +1700,8 @@ _Finalize(){
                     fprintf(fp, "%d,%lu,",uprims[i*NUM_OF_PRIMS+k],
                             uprims_bytes[i*NUM_OF_PRIMS+k]);
             }
+            printf("\n");
         }
-        printf("\n");
         printf("MCPT File Written: profiler_data.csv\n");
         for ( i =0; i<total; i++ ){
             free(unames[i]);
