@@ -556,9 +556,9 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
     communicator = profile_this(comm, &flag,&i);
     PMPI_Type_size(datatype, &size);
     if ( flag ){
-        sum = communicator->bytes;
-        sum = sum + count * size;
-        communicator->bytes = sum;
+        sum = count * size;
+        communicator->bytes += sum;
+        communicator->prim_bytes[Isend] += sum;
         /* local_comms[i]->bytes = sum; */
         communicator->prims[Isend] += 1;
         communicator->msgs += 1;
@@ -1684,22 +1684,24 @@ _Finalize(){
         fprintf(fp, "#'Date'='%s'\n",date);
         fprintf(fp, "Comm, Size, Bytes, Calls, ");
         for (k = 0; k<NUM_OF_PRIMS; k++){
-            if ( k == NUM_OF_PRIMS -1 )
-                fprintf(fp, "%s Calls,%s Bytes\n",prim_names[k],prim_names[k]);
-            else
-                fprintf(fp, "%s Calls,%s Bytes,",prim_names[k],prim_names[k]);
+                if ( k == NUM_OF_PRIMS -1 )
+                    fprintf(fp, "%s Calls,%s Bytes",prim_names[k],prim_names[k]);
+                else
+                    fprintf(fp, "%s Calls,%s Bytes,",prim_names[k],prim_names[k]);
         }
+        printf("\n");
         for ( i =0; i<num_of_comms; i++ ){
             fprintf(fp,"%s, %d, %lu, %u, ",unames[i],usizes[i],ubytes[i],umsgs[i]);
             for ( k =0; k<NUM_OF_PRIMS; k++ ){
                 if ( k == NUM_OF_PRIMS -1 )
-                    fprintf(fp, "%d,%lu\n",uprims[i*NUM_OF_PRIMS+k],
+                    fprintf(fp, "%d,%lu",uprims[i*NUM_OF_PRIMS+k],
                             uprims_bytes[i*NUM_OF_PRIMS+k]);
                 else
                     fprintf(fp, "%d,%lu,",uprims[i*NUM_OF_PRIMS+k],
                             uprims_bytes[i*NUM_OF_PRIMS+k]);
             }
         }
+        printf("\n");
         printf("MCPT File Written: profiler_data.csv\n");
         for ( i =0; i<total; i++ ){
             free(unames[i]);
