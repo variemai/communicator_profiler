@@ -1684,21 +1684,25 @@ _Finalize(){
         fprintf(fp, "#'Date'='%s'\n",date);
         fprintf(fp, "Comm, Size, Bytes, Calls, ");
         for (k = 0; k<NUM_OF_PRIMS; k++){
-                if ( k == NUM_OF_PRIMS -1 )
-                    fprintf(fp, "%s Calls,%s Bytes",prim_names[k],prim_names[k]);
-                else
-                    fprintf(fp, "%s Calls,%s Bytes,",prim_names[k],prim_names[k]);
+            fprintf(fp, "%s Calls,",prim_names[k]);
+        }
+        for (k = 0; k<NUM_OF_PRIMS; k++){
+            if ( k == NUM_OF_PRIMS -1 )
+                fprintf(fp, "%s Bytes",prim_names[k]);
+            else
+                fprintf(fp, "%s Bytes,",prim_names[k]);
         }
         fprintf(fp,"\n");
         for ( i =0; i<num_of_comms; i++ ){
-            fprintf(fp,"%s, %d, %lu, %u, ",unames[i],usizes[i],ubytes[i],umsgs[i]);
+            fprintf(fp,"%s,%d,%lu,%u,",unames[i],usizes[i],ubytes[i],umsgs[i]);
+            for ( k =0; k<NUM_OF_PRIMS; k++ ){
+                fprintf(fp, "%d,",uprims[i*NUM_OF_PRIMS+k]);
+            }
             for ( k =0; k<NUM_OF_PRIMS; k++ ){
                 if ( k == NUM_OF_PRIMS -1 )
-                    fprintf(fp, "%d,%lu",uprims[i*NUM_OF_PRIMS+k],
-                            uprims_bytes[i*NUM_OF_PRIMS+k]);
+                    fprintf(fp, "%lu",uprims_bytes[i*NUM_OF_PRIMS+k]);
                 else
-                    fprintf(fp, "%d,%lu,",uprims[i*NUM_OF_PRIMS+k],
-                            uprims_bytes[i*NUM_OF_PRIMS+k]);
+                    fprintf(fp, "%lu,",uprims_bytes[i*NUM_OF_PRIMS+k]);
             }
             fprintf(fp,"\n");
         }
