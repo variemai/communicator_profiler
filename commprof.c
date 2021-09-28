@@ -1684,13 +1684,13 @@ _Finalize(){
         fprintf(fp, "#'Date'='%s'\n",date);
         fprintf(fp, "Comm, Size, Bytes, Calls, ");
         for (k = 0; k<NUM_OF_PRIMS; k++){
-            fprintf(fp, "%s Calls,",prim_names[k]);
+            fprintf(fp, "%s_Calls,",prim_names[k]);
         }
         for (k = 0; k<NUM_OF_PRIMS; k++){
             if ( k == NUM_OF_PRIMS -1 )
-                fprintf(fp, "%s Bytes",prim_names[k]);
+                fprintf(fp, "%s_Bytes",prim_names[k]);
             else
-                fprintf(fp, "%s Bytes,",prim_names[k]);
+                fprintf(fp, "%s_Bytes,",prim_names[k]);
         }
         fprintf(fp,"\n");
         for ( i =0; i<num_of_comms; i++ ){
