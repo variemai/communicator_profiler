@@ -614,7 +614,32 @@ F77_MPI_SEND(const void  *buf, int  * count, MPI_Fint  * datatype,
     return;
 }
 
-int MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
+int
+MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
+          MPI_Comm comm, MPI_Request *request)
+{
+
+    int ret;
+    int size,flag,i;
+    prof_attrs  *communicator;
+    unsigned long long  sum = 0;
+    ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
+    communicator = profile_this(comm, &flag,&i);
+    PMPI_Type_size(datatype, &size);
+    if ( flag  ){
+        sum = count*size;
+        communicator->prim_bytes[Irecv] += sum;
+        communicator->prims[Irecv] += 1;
+        communicator->msgs += 1;
+        /* We do not increase the total bytes transfered to this communicator
+         * this has been already done in the matching send call */
+    }
+    return ret;
+}
+
+
+int
+MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
              MPI_Comm comm, MPI_Status *status)
 {
     int ret;
