@@ -11,22 +11,24 @@
 #include <string.h>
 #define NAMELEN 256
 #define PRIMLEN 16
-#define NUM_OF_PRIMS 28
+#define NUM_OF_PRIMS 30
 
-#ifdef USE_MPI3_CONSTS
-typedef const void mpip_const_void_t;
-typedef const int mpip_const_int_t;
-typedef const char mpip_const_char_t;
-typedef const MPI_Datatype mpip_const_datatype_t;
-#else
-typedef void mpip_const_void_t;
-typedef int mpip_const_int_t;
-typedef char mpip_const_char_t;
-#endif
+/* #ifdef USE_MPI3_CONSTS */
+/* typedef const void mpip_const_void_t; */
+/* typedef const int mpip_const_int_t; */
+/* typedef const char mpip_const_char_t; */
+/* typedef const MPI_Datatype mpip_const_datatype_t; */
+/* #else */
+/* typedef void mpip_const_void_t; */
+/* typedef int mpip_const_int_t; */
+/* typedef char mpip_const_char_t; */
+/* #endif */
 
 enum primitives{
 Send,                           /* DO NOT ANYHTING BEFORE THIS */
+Recv,
 Isend,
+Irecv,
 Sendrecv,
 Bcast,
 Barrier,
