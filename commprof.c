@@ -1532,15 +1532,17 @@ _Finalize(){
     }
     /* printf ( "RANK %d i = %d\n",rank,i ); */
     /* fflush(stdout); */
-    /* if ( rank == 0 ){ */
-
-    /*     for ( i =0; i< num_of_comms; i++ ){ */
-    /*         printf("comm =%s calls per primitive\n",array[i].name); */
-    /*         for ( k=0; k<NUM_OF_PRIMS; k++ ){ */
-    /*             printf("%s = %d\n",prim_names[k],array[i].prims[k]); */
-    /*         } */
-    /*     } */
-    /* } */
+    if ( rank == 0 ){
+        for ( i =0; i< num_of_comms; i++ ){
+            printf("comm =%s p2p calls\n",array[i].name);
+            fflush(stdout);
+            for ( k=0; k<NUM_OF_PRIMS; k++ ){
+                if ( k == Send || k == Isend || k == Irecv || k == Recv )
+                    printf("%s = %d\n",prim_names[k],array[i].prims[k]);
+                fflush(stdout);
+            }
+        }
+    }
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
 
