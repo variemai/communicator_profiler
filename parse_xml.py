@@ -75,4 +75,5 @@ else:
                 sendcount = int( item.get("count") )
             else:
                 sendcount += int( item.get("count") )
-        print(prim,"calls = %d"%sendcount)
+        if ( sendcount > 0 ):
+            print(prim,"calls = %d"%sendcount)
