@@ -20,38 +20,6 @@ int my_coms = 1;
 int ac;
 char *av[MAX_ARGS];
 
-char prim_names[][NUM_OF_PRIMS]={
-"Send",
-"Recv",
-"Isend",
-"Irecv",
-"Sendrecv",
-"Bcast",
-"Barrier",
-"Allreduce",
-"Allgather",
-"Allgatherv",
-"Alltoall",
-"Alltoallv",
-"Reduce",
-"Gather",
-"Gatherv",
-"Scan",
-"Exscan",
-"Scatter",
-"Scatterv",
-"Reduce_scatter",
-"Waitall",
-"Wait",
-"Waitany",
-"Test",
-"Iallreduce",
-"Ibcast",
-"Ialltoall",
-"Iscatter",
-"Ibarrier",
-"Testany"
-};
 
 static int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
@@ -93,16 +61,13 @@ get_comm_parent(MPI_Comm comm)
 {
     int i,flag;
     prof_attrs *communicator, *com_info;
-    /* communicator = (prof_attrs*) malloc (sizeof(prof_attrs)); */
     communicator = (prof_attrs*) calloc(1,sizeof(prof_attrs));
     if ( comm != MPI_COMM_WORLD ){
-        //find the mother
         for ( i = 0; i<my_coms; i++ ){
             if ( comm  == communicators[i] )
                 break;
         }
         if ( i == my_coms ){
-            // Should have found the mother
             fprintf(stderr, "Error: could not find the parent of communicator.\n");
             mcpt_abort("File:%s line:%d Aborting\n",__FILE__,__LINE__);
 
@@ -111,8 +76,6 @@ get_comm_parent(MPI_Comm comm)
             PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
             if ( flag ){
                 strcpy(communicator->name, com_info->name);
-                /* printf("Parent = %s\n",communicator->name); */
-                /* fflush(stdout); */
             }
             else{
                 mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",__FILE__,__LINE__);
@@ -166,10 +129,6 @@ profile_this(MPI_Comm comm, int *flag,int *id){
             break;
     }
     *id = i;
-    /* if ( i == local_cid  ) */
-    /*     mcpt_abort("Primitive on wrong communicator\n"); */
-    /* communicator->msgs = communicator->msgs + 1; */
-    /* local_comms[i]->msgs = communicator->msgs + 1; */
     return communicator;
 }
 
@@ -182,14 +141,11 @@ _MPI_Init(int *argc, char ***argv){
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
-    /* local_data = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4); */
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
-        /* local_data[i] = NULL; */
         local_comms[i] = NULL;
     }
-    /* table = Table_new(128, NULL, NULL); */
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
@@ -216,8 +172,6 @@ _MPI_Init(int *argc, char ***argv){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     communicators[0] = MPI_COMM_WORLD;
-    /* printf("Rank: %d Return from Init\n",rank); */
-    /* fflush(stdout); */
     return ret;
 }
 
@@ -235,7 +189,6 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
         communicators[i] = MPI_COMM_NULL;
         local_comms[i] = NULL;
     }
-    /* table = Table_new(128, NULL, NULL); */
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
@@ -251,6 +204,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     communicator->bytes = 0;
     communicator->size = size;
     communicator->msgs = 0;
+    /* memset(communicator->prims, 0, NUM_OF_PRIMS*sizeof(int)); */
     for ( i = 0; i<NUM_OF_PRIMS; i++ ){
         communicator->prims[i] = 0;
         communicator->prim_bytes[i] = 0;
@@ -261,10 +215,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
-    /* memset(communicator->prims, 0, NUM_OF_PRIMS*sizeof(int)); */
     communicators[0] = MPI_COMM_WORLD;
-    /* printf("Rank: %d Return from Init_thread\n",rank); */
-    /* fflush(stdout); */
     return ret;
 }
 
@@ -548,7 +499,6 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
         sum = count * size;
         communicator->bytes += sum;
         communicator->prim_bytes[Isend] += sum;
-        /* local_comms[i]->bytes = sum; */
         communicator->prims[Isend] += 1;
         communicator->msgs += 1;
     }
@@ -594,8 +544,6 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
         communicator->prim_bytes[Send] += sum;
         communicator->msgs += 1;
         communicator->prims[Send] += 1;
-        /* local_comms[i]->prims[Send] += 1; */
-        /* local_comms[i]->bytes = sum; */
     }
     return ret;
 }
@@ -696,8 +644,6 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         communicator->prim_bytes[Sendrecv] += sum;
         communicator->prims[Sendrecv] += 1;
         communicator->msgs += 1;
-        /* local_comms[i]->prims[Sendrecv] = communicator->prims[Sendrecv]; */
-        /* local_comms[i]->bytes = sum; */
     }
     return ret;
 }
@@ -739,7 +685,6 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
     communicator = profile_this(comm, &flag,&i);
     PMPI_Comm_rank(comm, &rank);
     if ( flag ){
-        /* local_comms[i]->bytes = sum; */
         if ( rank == root ){
             communicator->prims[Bcast] += 1;
             communicator->msgs += 1;
@@ -789,7 +734,6 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
         sum = count * size;
         communicator->bytes += sum;
         communicator->prim_bytes[Allreduce] += sum;
-        /* local_comms[i]->bytes = sum; */
         if ( rank == 0 ){
             communicator->msgs += 1;
             communicator->prims[Allreduce] += 1;
@@ -830,18 +774,6 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     ret = PMPI_Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
                          recvtype, comm);
 
-    /* flag = 0; */
-    /* for ( i=0; i< my_coms; i++){ */
-    /*     if ( comm == communicators[i] ) */
-    /*         break; */
-    /* } */
-    /* PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag); */
-    /* for ( i =0; i< local_cid; i++ ){ */
-    /*     if ( strcmp(communicator->name, local_comms[i]->name) == 0 ) */
-    /*         break; */
-    /* } */
-    /* if ( i == local_cid  ) */
-    /*     mcpt_abort("Allgather on wrong communicator\n"); */
     communicator = profile_this(comm, &flag,&i);
     PMPI_Type_size(sendtype, &size);
     PMPI_Comm_rank(comm, &rank);
@@ -849,7 +781,6 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = sendcount * size;
         communicator->bytes += sum;
         communicator->prim_bytes[Allgather] += sum;
-        /* local_comms[i]->bytes = sum; */
         if ( rank == 0  ){
             communicator->msgs += 1;
             communicator->prims[Allgather] += 1;
@@ -888,18 +819,6 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     ret = PMPI_Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount,
                          recvtype, comm);
 
-    /* flag = 0; */
-    /* for ( i=0; i< my_coms; i++){ */
-    /*     if ( comm == communicators[i] ) */
-    /*         break; */
-    /* } */
-    /* PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag); */
-    /* for ( i =0; i< local_cid; i++ ){ */
-    /*     if ( strcmp(communicator->name, local_comms[i]->name) == 0 ) */
-    /*         break; */
-    /* } */
-    /* if ( i == local_cid  ) */
-    /*     mcpt_abort("Alltoall on wrong communicator\n"); */
     communicator = profile_this(comm, &flag,&i);
     PMPI_Type_size(sendtype, &size);
     PMPI_Comm_rank(comm, &rank);
@@ -911,7 +830,6 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             communicator->msgs += 1;
             communicator->prims[Alltoall] += 1;
         }
-        /* local_comms[i]->bytes = sum; */
     }
     return ret;
 }
@@ -948,12 +866,6 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
     unsigned long long  sum = 0;
     ret = PMPI_Alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts,
                    rdispls, recvtype, comm);
-
-    /* flag = 0; */
-    /* for ( i=0; i< my_coms; i++){ */
-    /*     if ( comm == communicators[i] ) */
-    /*         break; */
-    /* } */
 
     PMPI_Type_size(sendtype, &size);
     PMPI_Comm_size(comm, &comm_size);
@@ -1010,12 +922,6 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     unsigned long long  sum = 0;
     ret = PMPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts,
                           displs, recvtype, comm);
-    /* flag = 0; */
-    /* for ( i=0; i< my_coms; i++){ */
-    /*     if ( comm == communicators[i] ) */
-    /*         break; */
-    /* } */
-    /* PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag); */
     PMPI_Type_size(sendtype, &size);
     PMPI_Comm_size(comm, &comm_size);
     PMPI_Comm_rank(comm, &rank);
@@ -1028,7 +934,6 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     if ( flag ){
         communicator->bytes += sum;
         communicator->prim_bytes[Allgatherv] += sum;
-        /* local_comms[i]->bytes = sum; */
         if ( rank ==0 ){
             communicator->msgs += 1;
             communicator->prims[Allgatherv] += 1;
@@ -1068,18 +973,6 @@ MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 
     ret = PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
 
-    /* flag = 0; */
-    /* for ( i=0; i< my_coms; i++){ */
-    /*     if ( comm == communicators[i] ) */
-    /*         break; */
-    /* } */
-    /* PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag); */
-    /* for ( i =0; i< local_cid; i++ ){ */
-    /*     if ( strcmp(communicator->name, local_comms[i]->name) == 0 ) */
-    /*         break; */
-    /* } */
-    /* if ( i == local_cid  ) */
-    /*     mcpt_abort("Reduce on wrong communicator\n"); */
     communicator = profile_this(comm, &flag,&i);
     PMPI_Type_size(datatype, &size);
     PMPI_Comm_rank(comm, &rank);
@@ -1087,7 +980,6 @@ MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
         sum = count*size;
         communicator->bytes += sum;
         communicator->prim_bytes[Reduce] += sum;
-        /* local_comms[i]->bytes = sum; */
         if ( rank == root ){
             communicator->prims[Reduce] += 1;
             communicator->msgs += 1;
@@ -1136,7 +1028,6 @@ MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
             communicator->prims[Gather] += 1;
             communicator->msgs += 1;
         }
-        /* local_comms[i]->bytes = sum; */
     }
     return ret;
 
@@ -1172,12 +1063,6 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     unsigned long long  sum = 0;
     ret = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
                        recvtype, root, comm);
-    /* flag = 0; */
-    /* for ( i=0; i< my_coms; i++){ */
-    /*     if ( comm == communicators[i] ) */
-    /*         break; */
-    /* } */
-    /* PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag); */
     PMPI_Type_size(sendtype, &size);
     communicator = profile_this(comm, &flag,&i);
     PMPI_Comm_rank(comm, &rank);
@@ -1185,7 +1070,6 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = size*sendcount;
         communicator->bytes += sum;
         communicator->prim_bytes[Gatherv] += sum;
-        /* local_comms[i]->bytes = sum; */
         if ( root == rank ){
             communicator->prims[Gatherv] += 1;
             communicator->msgs += 1;
@@ -1236,7 +1120,6 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
         sum = size*recvcount;
         communicator->bytes += sum;
         communicator->prim_bytes[Scatterv] += sum;
-        /* local_comms[i]->bytes = sum; */
         if ( root == rank ){
             communicator->prims[Scatterv] += 1;
             communicator->msgs += 1;
@@ -1286,7 +1169,6 @@ MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = size*recvcount;
         communicator->bytes += sum;
         communicator->prim_bytes[Scatter] += sum;
-        /* local_comms[i]->bytes = sum; */
         if ( rank == root ){
             communicator->prims[Scatter] += 1;
             communicator->msgs += 1;
@@ -1335,7 +1217,6 @@ MPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
         sum = size*count;
         communicator->bytes += sum;
         communicator->prim_bytes[Scan] += sum;
-        /* local_comms[i]->bytes = sum; */
         if ( rank == 0 ){
             communicator->prims[Scan] += 1;
             communicator->msgs += 1;
@@ -1399,8 +1280,6 @@ int
 MPI_Comm_free(MPI_Comm *comm){
     int ret,flag,i,j;
     prof_attrs *com_info;
-    /* printf("CALLING SPLIT\n"); */
-    /* fflush(stdout); */
     PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
     if ( flag ){
         for ( i = 0; i<local_cid; i++ ){
@@ -1409,11 +1288,6 @@ MPI_Comm_free(MPI_Comm *comm){
         }
         if ( i == local_cid  )
             mcpt_abort("Comm_free on wrong communicator\n");
-        /* local_data[num_of_local] = (prof_attrs*) malloc (sizeof(prof_attrs)); */
-        /* local_data[num_of_local]->bytes = com_info->bytes; */
-        /* local_data[num_of_local]->msgs = com_info->msgs; */
-        /* local_data[num_of_local]->size = com_info->size; */
-        /* strcpy(local_data[num_of_local]->name,com_info->name); */
         local_comms[i] = (prof_attrs*) malloc (sizeof(prof_attrs));
         local_comms[i]->bytes = com_info->bytes;
         local_comms[i]->msgs = com_info->msgs;
@@ -1423,15 +1297,7 @@ MPI_Comm_free(MPI_Comm *comm){
             local_comms[i]->prims[j] = com_info->prims[j];
             local_comms[i]->prim_bytes[j] = com_info->prim_bytes[j];
         }
-        /* local_comms[i] = local_data[num_of_local]; */
-        /* num_of_local++; */
     }
-    /* for ( i = 0; i<num_of_comms; i++ ){ */
-    /*     if ( *comm  == communicators[i]) */
-    /*         break; */
-    /* } */
-    /* communicators[i]=MPI_COMM_NULL; */
-    /* free(local_comms[i]); */
     ret = PMPI_Comm_free(comm);
     return ret;
 }
@@ -1511,12 +1377,6 @@ _Finalize(){
                 array[i].prims[k] = local_comms[i]->prims[k];
                 array[i].prim_bytes[k] =local_comms[i]->prim_bytes[k];
             }
-            /* if ( flag ){ */
-                /* strcpy(array[i].name, com_info->name); */
-                /* array[i].bytes = com_info->bytes; */
-                /* array[i].msgs= com_info->msgs; */
-                /* array[i].size = com_info->size; */
-            /* } */
         }
         else{
             strcpy(array[i].name, "NULL");
@@ -1530,18 +1390,12 @@ _Finalize(){
             }
         }
     }
-    /* printf ( "RANK %d i = %d\n",rank,i ); */
-    /* fflush(stdout); */
-    /* if ( rank == 0 ){ */
-        for ( i =0; i< num_of_comms; i++ ){
-            /* printf("comm =%s p2p calls\n",array[i].name); */
-            /* fflush(stdout); */
-            for ( k=0; k<NUM_OF_PRIMS; k++ ){
-                if ( k == Send || k == Isend || k == Irecv || k == Recv )
-                    printf("Rank %d %s = %d\n",rank,prim_names[k],array[i].prims[k]);
-                fflush(stdout);
-            }
-        }
+    /* for ( i =0; i< num_of_comms; i++ ){ */
+    /*     for ( k=0; k<NUM_OF_PRIMS; k++ ){ */
+    /*         if ( k == Send || k == Isend || k == Irecv || k == Recv ) */
+    /*             printf("Rank %d %s = %d\n",rank,prim_names[k],array[i].prims[k]); */
+    /*         fflush(stdout); */
+    /*     } */
     /* } */
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
@@ -1549,9 +1403,7 @@ _Finalize(){
     if ( rank == 0 ){
         fp = fopen("profiler_data.csv","w");
         names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
-        /* parents = ( char**)malloc(sizeof(char*)*num_of_comms*size); */
         unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
-        /* uparents =(char **) malloc (sizeof(char*)*num_of_comms*size); */
         bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
         msgs = (uint32_t *) malloc (sizeof(uint32_t )*num_of_comms*size);
         sizes = (int *) malloc (sizeof(int )*num_of_comms*size);
@@ -1599,27 +1451,19 @@ _Finalize(){
                 found = 0;
                 for ( k =0; k<total; k++ ){
                     if ( strcmp(names[i], unames[k] ) == 0 ){
-                         /* strcmp(parents[i], uparents[k] ) == 0 ) */
                         found = 1;
                     }
                 }
                 if ( !found ){
                     strcpy(unames[j], names[i]);
-                    /* strcpy(uparents[j], parents[i]); */
                     j++;
                     num_of_comms++;
                 }
             /* } */
         }
-        /* strcpy(unames[j], "W"); */
-        /* strcpy(uparents[j],"NULL"); */
         for ( i = 0; i<num_of_comms; i++){
-            /* printf("Searching for %s parent %s\n",unames[i],uparents[i]); */
             for ( j=0; j<total; j++ ){
-                /* printf("Found Comm: %s parent: %s Bytes= %llu\n",names[j], */
-                /*        parents[j],bytes[j]); */
                 if ( strcmp(unames[i], names[j]) == 0 ){
-                     /* strcmp(uparents[i], parents[j]) == 0){ */
                     ubytes[i]+= bytes[j];
                     umsgs[i]+= msgs[j];
                     usizes[i]=sizes[j];
@@ -1633,10 +1477,8 @@ _Finalize(){
 
         for ( i =0; i<total; i++ ){
             free(names[i]);
-            /* free(parents[i]); */
         }
         free(names);
-        /* free(parents); */
         free(prims_bytes);
         free(bytes);
         free(msgs);
@@ -1699,8 +1541,6 @@ _Finalize(){
         free(uprims_bytes);
         fclose(fp);
     }
-    /* if (communicators) */
-    /*     FREE(communicators); */
     return PMPI_Finalize();
 }
 

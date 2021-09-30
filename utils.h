@@ -13,17 +13,6 @@
 #define PRIMLEN 16
 #define NUM_OF_PRIMS 30
 
-/* #ifdef USE_MPI3_CONSTS */
-/* typedef const void mpip_const_void_t; */
-/* typedef const int mpip_const_int_t; */
-/* typedef const char mpip_const_char_t; */
-/* typedef const MPI_Datatype mpip_const_datatype_t; */
-/* #else */
-/* typedef void mpip_const_void_t; */
-/* typedef int mpip_const_int_t; */
-/* typedef char mpip_const_char_t; */
-/* #endif */
-
 enum primitives{
 Send,                           /* DO NOT ANYHTING BEFORE THIS */
 Recv,
@@ -57,6 +46,7 @@ Ibarrier,
 Testany                         /* DO NOT ADD ANYTHING AFTER THIS */
 };
 
+
 typedef struct profiler_attributes{
     char name[NAMELEN];
     uint64_t bytes;
@@ -68,6 +58,7 @@ typedef struct profiler_attributes{
 
 /* Globals */
 extern char *appname;
+extern const char prim_names[][NUM_OF_PRIMS];
 
 void mcpt_abort (char *fmt, ...);
 

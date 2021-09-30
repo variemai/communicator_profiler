@@ -72,15 +72,16 @@ There are two collective calls of ~MPI_Allreduce()~ in order to get the correct 
 * Contribute
 ** How to add a new primitive for profiling
 1. Increase the "NUM_OF_PRIMS" variable in [[../utils.h::14]] file
-2. Add the new primitive as enumerated type in [[../utils.h::27]] file
-3. Make sure that the enumerated type is the same with the char table "prim_names" in file [[../commprof.c::23]]
+2. Add the new primitive as enumerated type in [[../utils.c::16]] file
+3. Make sure that the enumerated type is the same with the char table "prim_names" in file [[../utils.c::5]]
 4. Write the wrapper code in [[../commprof.c]] - use the other functions as a template
    1. Add the Fortran wrapper for intercepting Fortran code this is an issue with OpenMPI
 * Future Work
-** TODO Describe Cart Sub implementations
-** TODO Remove unnecessary parts of code
+** DONE Describe Cart Sub implementations
+** TODO Add timing for primitives
+** DONE Remove unnecessary parts of code
 ** TODO Free memory
 ** HOLD Keep only the name in the communicator with Comm_set_attr
-** TODO Cleanup code
-** TODO How to add a new primitive
-** TODO Add Recv and Irecv operations
+** DONE Cleanup code
+** DONE How to add a new primitive
+** DONE Add Recv and Irecv operations

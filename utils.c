@@ -2,6 +2,38 @@
 #include "symbols.h"
 #define MAX_ARG_STRING_SIZE 4096
 
+const char prim_names[][NUM_OF_PRIMS]={
+"Send",
+"Recv",
+"Isend",
+"Irecv",
+"Sendrecv",
+"Bcast",
+"Barrier",
+"Allreduce",
+"Allgather",
+"Allgatherv",
+"Alltoall",
+"Alltoallv",
+"Reduce",
+"Gather",
+"Gatherv",
+"Scan",
+"Exscan",
+"Scatter",
+"Scatterv",
+"Reduce_scatter",
+"Waitall",
+"Wait",
+"Waitany",
+"Test",
+"Iallreduce",
+"Ibcast",
+"Ialltoall",
+"Iscatter",
+"Ibarrier",
+"Testany"
+};
 char *appname = NULL;
 prof_attrs **comm_table = NULL;
 
