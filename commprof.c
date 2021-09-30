@@ -25,8 +25,6 @@ static int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
 {
   prof_attrs *com = (prof_attrs*)attr;
-  /* printf("Namedel %s\n",com->name); */
-  /* fflush(stdout); */
   free(com);
   return MPI_SUCCESS;
 }
@@ -44,13 +42,6 @@ namekey()
   return namekeyval;
 }
 
-/* static int */
-/* compare_int(const void *a, const void *b){ */
-/*     int *a0, *b0; */
-/*     a0 = (int*)a; */
-/*     b0 = (int*)b; */
-/*     return (*a0)-(*b0); */
-/* } */
 
 /*
  * Create a new communicator structure and add the parent
@@ -78,7 +69,8 @@ get_comm_parent(MPI_Comm comm)
                 strcpy(communicator->name, com_info->name);
             }
             else{
-                mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",__FILE__,__LINE__);
+                mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",
+                           __FILE__,__LINE__);
             }
         }
     }
@@ -1447,19 +1439,17 @@ _Finalize(){
         j = 0;
         for ( i=0; i<total; i++ ){
             /* Build the global communicator tree */
-            /* if ( strcmp(names[i], "W") != 0 ){ */
-                found = 0;
-                for ( k =0; k<total; k++ ){
-                    if ( strcmp(names[i], unames[k] ) == 0 ){
-                        found = 1;
-                    }
+            found = 0;
+            for ( k =0; k<total; k++ ){
+                if ( strcmp(names[i], unames[k] ) == 0 ){
+                    found = 1;
                 }
-                if ( !found ){
-                    strcpy(unames[j], names[i]);
-                    j++;
-                    num_of_comms++;
-                }
-            /* } */
+            }
+            if ( !found ){
+                strcpy(unames[j], names[i]);
+                j++;
+                num_of_comms++;
+            }
         }
         for ( i = 0; i<num_of_comms; i++){
             for ( j=0; j<total; j++ ){
@@ -1530,10 +1520,8 @@ _Finalize(){
         printf("MCPT File Written: profiler_data.csv\n");
         for ( i =0; i<total; i++ ){
             free(unames[i]);
-            /* free(uparents[i]); */
         }
         free(unames);
-        /* free(uparents); */
         free(ubytes);
         free(umsgs);
         free(date);
@@ -1605,4 +1593,12 @@ F77_MPI_FINALIZE (int *ierr)
 /* void __attribute__((no_instrument_function)) */
 /* __cyg_profile_func_exit(void* this_fn, void* call_site){ */
 /*     log_func(this_fn, "<-", call_site); */
+/* } */
+
+/* static int */
+/* compare_int(const void *a, const void *b){ */
+/*     int *a0, *b0; */
+/*     a0 = (int*)a; */
+/*     b0 = (int*)b; */
+/*     return (*a0)-(*b0); */
 /* } */
