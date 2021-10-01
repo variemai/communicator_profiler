@@ -72,7 +72,9 @@ else:
         sendcount = 0
         for item in mpi_prim:
             if primitive in collectives:
-                sendcount = int( item.get("count") )
+                tmp = int( item.get("count") )
+                if tmp > sendcount:
+                    sendcount = tmp
             else:
                 sendcount += int( item.get("count") )
         if ( sendcount > 0 ):
