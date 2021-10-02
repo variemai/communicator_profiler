@@ -577,6 +577,25 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     return ret;
 }
 
+/* Isrecv fortran wrapper missing */
+void
+F77_MPI_IRECV(void  *buf, int  * count, MPI_Fint  * datatype, int  * source,
+              int  * tag, MPI_Fint  * comm, MPI_Fint  *request , MPI_Fint *ierr)
+{
+
+    int ret;
+    MPI_Datatype c_datatype;
+    MPI_Comm c_comm;
+    MPI_Request c_request;
+
+    c_datatype = MPI_Type_f2c(*datatype);
+    c_comm = MPI_Comm_f2c(*comm);
+    ret = MPI_Irecv(buf, *count, c_datatype, *source, *tag, c_comm, &c_request);
+    *ierr = ret;
+    if ( ret == MPI_SUCCESS )
+        *request = MPI_Request_c2f(c_request);
+    return;
+}
 
 int
 MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
@@ -705,7 +724,47 @@ F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
 }
 
 /* MPI_Ibcast to be implemented */
+int
+MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
+           MPI_Comm comm, MPI_Request *request)
+{
 
+    int ret,i,flag,size,rank;
+    prof_attrs  *communicator;
+    unsigned long long  sum = 0;
+
+    ret = PMPI_Ibcast(buffer, count, datatype, root, comm, request);
+
+    PMPI_Type_size(datatype, &size);
+    communicator = profile_this(comm, &flag,&i);
+    PMPI_Comm_rank(comm, &rank);
+    if ( flag ){
+        if ( rank == root ){
+            communicator->prims[Ibcast] += 1;
+            communicator->msgs += 1;
+            sum = count*size;
+            communicator->bytes += sum;
+            communicator->prim_bytes[Ibcast] += sum;
+        }
+    }
+    return ret;
+}
+
+void
+F77_MPI_IBCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
+               MPI_Fint  * comm, MPI_Fint  *request , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_datatype;
+    MPI_Comm c_comm;
+    MPI_Request c_request;
+    c_datatype = MPI_Type_f2c(*datatype);
+    c_comm = MPI_Comm_f2c(*comm);
+    ret = MPI_Ibcast(buffer, *count, c_datatype, *root, c_comm,&c_request);
+    *ierr = ret;
+    if ( ret == MPI_SUCCESS )
+        *request = MPI_Request_c2f(c_request);
+}
 
 int
 MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
@@ -1240,7 +1299,8 @@ F77_MPI_SCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * dat
 }
 
 
-int MPI_Barrier ( MPI_Comm comm )
+int
+MPI_Barrier ( MPI_Comm comm )
 {
     int ret,flag,i,rank;
     prof_attrs *communicator;
@@ -1256,14 +1316,14 @@ int MPI_Barrier ( MPI_Comm comm )
 }
 
 
-void F77_MPI_BARRIER(MPI_Fint  * comm , MPI_Fint *ierr) {
+void
+F77_MPI_BARRIER(MPI_Fint  * comm , MPI_Fint *ierr)
+{
     int ret;
     MPI_Comm c_comm;
 
     c_comm = MPI_Comm_f2c(*comm);
-
     ret = MPI_Barrier(c_comm);
-
     *ierr = (MPI_Fint)ret;
     return;
 }
@@ -1533,7 +1593,7 @@ _Finalize(){
 }
 
 
- int
+int
 MPI_Finalize (void)
 {
   int rc = 0;
@@ -1543,7 +1603,7 @@ MPI_Finalize (void)
   return rc;
 }
 
- void
+void
 F77_MPI_FINALIZE (int *ierr)
 {
   int rc = 0;
