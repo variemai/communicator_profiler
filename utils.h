@@ -14,10 +14,15 @@
 #define NUM_OF_PRIMS 30
 
 enum primitives{
-Send,                           /* DO NOT ANYHTING BEFORE THIS */
+Send,           /* DO NOT ANYHTING BEFORE THIS */
 Recv,
 Isend,
 Irecv,
+Waitall,
+Wait,
+Waitany,
+Test,
+Testany,
 Sendrecv,
 Bcast,
 Barrier,
@@ -34,16 +39,11 @@ Exscan,
 Scatter,
 Scatterv,
 Reduce_scatter,
-Waitall,
-Wait,
-Waitany,
-Test,
 Iallreduce,
 Ibcast,
 Ialltoall,
 Iscatter,
-Ibarrier,
-Testany                         /* DO NOT ADD ANYTHING AFTER THIS */
+Ibarrier   /* DO NOT ADD ANYTHING AFTER THIS */
 };
 
 
@@ -54,6 +54,7 @@ typedef struct profiler_attributes{
     int size;
     uint32_t prims[NUM_OF_PRIMS];
     uint64_t prim_bytes[NUM_OF_PRIMS];
+    double time_info[NUM_OF_PRIMS];
 }prof_attrs;
 
 /* Globals */

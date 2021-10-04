@@ -7,6 +7,11 @@ const char prim_names[][NUM_OF_PRIMS]={
 "Recv",
 "Isend",
 "Irecv",
+"Waitall",
+"Wait",
+"Waitany",
+"Test",
+"Testany",
 "Sendrecv",
 "Bcast",
 "Barrier",
@@ -23,17 +28,13 @@ const char prim_names[][NUM_OF_PRIMS]={
 "Scatter",
 "Scatterv",
 "Reduce_scatter",
-"Waitall",
-"Wait",
-"Waitany",
-"Test",
 "Iallreduce",
 "Ibcast",
 "Ialltoall",
 "Iscatter",
-"Ibarrier",
-"Testany"
+"Ibarrier"
 };
+
 char *appname = NULL;
 prof_attrs **comm_table = NULL;
 
