@@ -52,7 +52,7 @@ typedef struct profiler_attributes{
     uint64_t bytes;
     uint32_t msgs;
     int size;
-    int prims[NUM_OF_PRIMS];
+    uint64_t prims[NUM_OF_PRIMS];
     uint64_t prim_bytes[NUM_OF_PRIMS];
 }prof_attrs;
 

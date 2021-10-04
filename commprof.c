@@ -328,10 +328,9 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
         return ret;
     }
     /*
-     * Call Allreduce in the new communicators and get the minimum rank
-     * Note that the rank is the rank from the parent communicator
-     * Every new communicator will have an id based on the minimum rank
-     * of a process in the parent communicator
+     * Get the minimum rank. Note that the rank is the rank from the parent
+     * communicator. Every new communicator will have an id based on the
+     * minimum rank of a process in the parent communicator
      */
     PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
     /* Use the parent's name as a prefix for the newly created communicator */
@@ -397,7 +396,6 @@ int
 MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
                 const int *periods, int reorder, MPI_Comm *comm_cart)
 {
-
     int ret,comms;
     prof_attrs *communicator;
     char *buf;
@@ -431,7 +429,8 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, const int  *dims,
 
 
 int
-MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm){
+MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
+{
     int ret, my_rank;
     prof_attrs *communicator;
     char *buf;
@@ -503,7 +502,6 @@ F77_MPI_ISEND(const void  *buf, int  * count, MPI_Fint  * datatype,
                           int  * dest, int  * tag, MPI_Fint  * comm,
                           MPI_Fint  *request , MPI_Fint *ierr)
 {
-
     int ret;
     MPI_Datatype c_datatype;
     MPI_Comm c_comm;
@@ -577,7 +575,6 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     return ret;
 }
 
-/* Isrecv fortran wrapper missing */
 void
 F77_MPI_IRECV(void  *buf, int  * count, MPI_Fint  * datatype, int  * source,
               int  * tag, MPI_Fint  * comm, MPI_Fint  *request , MPI_Fint *ierr)
@@ -666,7 +663,6 @@ F77_MPI_SENDRECV(const void  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
                  MPI_Fint  * recvtype, int  * source, int  * recvtag,
                  MPI_Fint  * comm, MPI_Status  *status , MPI_Fint *ierr)
 {
-
     int ret;
     MPI_Datatype c_sendtype;
     MPI_Datatype c_recvtype;
@@ -723,7 +719,6 @@ F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
     *ierr = ret;
 }
 
-/* MPI_Ibcast to be implemented */
 int
 MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
            MPI_Comm comm, MPI_Request *request)
@@ -770,7 +765,6 @@ int
 MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-
     int ret,i,flag,size,rank;
     prof_attrs  *communicator;
     unsigned long long  sum = 0;
@@ -846,7 +840,6 @@ F77_MPI_ALLGATHER(const void *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
                   void  *recvbuf, int  * recvcount, MPI_Fint  * recvtype,
                   MPI_Fint  * comm , MPI_Fint *ierr)
 {
-
     int ret;
     MPI_Comm c_comm;
     MPI_Datatype c_sendtype, c_recvtype;
@@ -911,7 +904,6 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
               const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
               MPI_Comm comm)
 {
-
     int ret,i,flag,size,comm_size, rank;
     prof_attrs  *communicator;
     unsigned long long  sum = 0;
@@ -946,7 +938,6 @@ F77_MPI_ALLTOALLV(const void  *sendbuf, const int  *sendcnts, const int  *sdispl
                   const int  *rdispls, MPI_Fint  * recvtype, MPI_Fint  * comm ,
                   MPI_Fint *ierr)
 {
-
     int ret;
     MPI_Datatype c_sendtype;
     MPI_Datatype c_recvtype;
@@ -967,7 +958,6 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                void *recvbuf, const int *recvcounts, const int *displs,
                MPI_Datatype recvtype, MPI_Comm comm)
 {
-
     int ret,i,flag,size,comm_size,recvd,rank;
     prof_attrs  *communicator;
     unsigned long long  sum = 0;
@@ -1205,7 +1195,6 @@ MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
             MPI_Comm comm)
 {
-
     int ret,i,flag,size,rank;
     prof_attrs  *communicator;
     unsigned long long  sum = 0;
@@ -1282,7 +1271,6 @@ void
 F77_MPI_SCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * datatype,
              MPI_Fint  * op, MPI_Fint  * comm , MPI_Fint *ierr)
 {
-
     int ret;
     MPI_Datatype c_datatype;
     MPI_Op c_op;
@@ -1329,7 +1317,8 @@ F77_MPI_BARRIER(MPI_Fint  * comm , MPI_Fint *ierr)
 }
 
 int
-MPI_Comm_free(MPI_Comm *comm){
+MPI_Comm_free(MPI_Comm *comm)
+{
     int ret,flag,i,j;
     prof_attrs *com_info;
     PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
@@ -1354,13 +1343,10 @@ MPI_Comm_free(MPI_Comm *comm){
     return ret;
 }
 
-/* MPI_Gatherv */
-/* MPI_Barrier */
-/* MPI_Scatter */
-/* MPI_Scatterv */
 
 void
-F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr){
+F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
+{
     int ret;
     MPI_Comm c_comm;
 
@@ -1371,7 +1357,8 @@ F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr){
 }
 
 static int
-_Finalize(){
+_Finalize()
+{
     FILE *fp;
     prof_attrs *array;
     int rank,size;
@@ -1381,9 +1368,10 @@ _Finalize(){
     char **names, **unames;
     int total_comms,total,num_of_comms, resultlen;
     uint64_t *bytes, *ubytes,*prims_bytes,*uprims_bytes;
-    uint32_t *msgs, *umsgs;
+    uint32_t *prims,*uprims;
+    uint64_t *msgs, *umsgs;
     time_t t;
-    int *prims,*uprims,*sizes,*usizes;
+    int *sizes,*usizes;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -1457,9 +1445,9 @@ _Finalize(){
         names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
         unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
         bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
-        msgs = (uint32_t *) malloc (sizeof(uint32_t )*num_of_comms*size);
+        msgs = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
         sizes = (int *) malloc (sizeof(int )*num_of_comms*size);
-        prims = (int*) malloc ( sizeof(int)*num_of_comms*size*NUM_OF_PRIMS );
+        prims = (uint32_t*) malloc ( sizeof(uint32_t)*num_of_comms*size*NUM_OF_PRIMS );
         prims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size
                                            *NUM_OF_PRIMS);
         j = 0;
@@ -1482,8 +1470,8 @@ _Finalize(){
         total = j;
 
         ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total);
-        umsgs = (uint32_t *) malloc (sizeof(uint32_t )*total);
-        uprims = (int *) malloc (sizeof(int)*total*NUM_OF_PRIMS);
+        umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total);
+        uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS);
         usizes = (int *) malloc (sizeof(int)*total);
         uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*
                                             NUM_OF_PRIMS);
@@ -1565,9 +1553,9 @@ _Finalize(){
         }
         fprintf(fp,"\n");
         for ( i =0; i<num_of_comms; i++ ){
-            fprintf(fp,"%s,%d,%lu,%u,",unames[i],usizes[i],ubytes[i],umsgs[i]);
+            fprintf(fp,"%s,%d,%lu,%lu,",unames[i],usizes[i],ubytes[i],umsgs[i]);
             for ( k =0; k<NUM_OF_PRIMS; k++ ){
-                fprintf(fp, "%d,",uprims[i*NUM_OF_PRIMS+k]);
+                fprintf(fp, "%u,",uprims[i*NUM_OF_PRIMS+k]);
             }
             for ( k =0; k<NUM_OF_PRIMS; k++ ){
                 if ( k == NUM_OF_PRIMS -1 )

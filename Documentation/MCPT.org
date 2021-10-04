@@ -51,8 +51,7 @@ Output file name "profiler_data.csv". If this file exists it will be overwritten
 ** TODO Supported Communicator Primitives
 - MPI_Graph_create
 - MPI_Dist_graph_create
-** Supported MPI Collective communication Primitives
-** TODO Supported MPI Collective communication Primitives
+** DONE Supported MPI Collective communication Primitives
 - MPI_Barrier
 - MPI_Ibarrier
 - MPI_Gatherv
