@@ -1536,12 +1536,12 @@ _Finalize()
         }
         fprintf(fp, "'\n");
         fprintf(fp, "#'Num of REAL comms'='%d'\n",num_of_comms);
-        time(&t);
-        char *tmp = ctime(&t);
-        char *date = (char*) malloc ( strlen(tmp)-1 );
-        strncpy(date, tmp, strlen(tmp)-1);
-        fprintf(fp, "#'Date'='%s'\n",date);
-        fprintf(fp, "Comm, Size, Bytes, Calls, ");
+        /* time(&t); */
+        /* char *tmp = ctime(&t); */
+        /* char *date = (char*) malloc ( strlen(tmp)-1 ); */
+        /* strncpy(date, tmp, strlen(tmp)-1); */
+        /* fprintf(fp, "#'Date'='%s'\n",date); */
+        fprintf(fp, "Comm,Size,Bytes,Calls,");
         for (k = 0; k<NUM_OF_PRIMS; k++){
             fprintf(fp, "%s_Calls,",prim_names[k]);
         }
@@ -1572,7 +1572,7 @@ _Finalize()
         free(unames);
         free(ubytes);
         free(umsgs);
-        free(date);
+        /* free(date); */
         free(uprims);
         free(uprims_bytes);
         fclose(fp);
