@@ -50,9 +50,9 @@ Testany                         /* DO NOT ADD ANYTHING AFTER THIS */
 typedef struct profiler_attributes{
     char name[NAMELEN];
     uint64_t bytes;
-    uint32_t msgs;
+    uint64_t msgs;
     int size;
-    uint64_t prims[NUM_OF_PRIMS];
+    uint32_t prims[NUM_OF_PRIMS];
     uint64_t prim_bytes[NUM_OF_PRIMS];
 }prof_attrs;
 

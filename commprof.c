@@ -1383,7 +1383,7 @@ _Finalize()
     array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
     recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
 
-    MPI_Datatype types[6] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT32_T, MPI_INT, MPI_INT, MPI_UINT64_T };
+    MPI_Datatype types[6] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT32_T, MPI_INT, MPI_UINT32_T, MPI_UINT64_T };
     int blocklen[6] = {NAMELEN,1,1,1,NUM_OF_PRIMS,NUM_OF_PRIMS};
     MPI_Aint displacements[6];
     MPI_Aint base_address;
@@ -1479,7 +1479,7 @@ _Finalize()
 
         memset(ubytes, 0, sizeof(uint64_t )*total);
         memset(umsgs, 0, sizeof(uint32_t )*total);
-        memset(uprims, 0, sizeof(int)*total*NUM_OF_PRIMS);
+        memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS);
         memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS);
         memset(usizes, 0, sizeof(int)*total);
 
