@@ -910,9 +910,8 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
     }
     tmp = tmp*size;
     sum = sum + tmp;
-    communicator = profile_this(comm,i,sendtype,Alltoallv,t_elapsed,0);
+    communicator = profile_this(comm,0,sendtype,Alltoallv,t_elapsed,0);
     if ( rank == 0 ){
-
         communicator->bytes += sum;
         communicator->prim_bytes[Alltoallv] += sum;
     }
@@ -971,7 +970,7 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
     tmp = tmp*size;
     sum = sum + tmp;
-    communicator = profile_this(comm,i,sendtype,Allgatherv,t_elapsed,0);
+    communicator = profile_this(comm,0,sendtype,Allgatherv,t_elapsed,0);
 
     if ( rank ==0 ){
         communicator->bytes += sum;
@@ -1104,7 +1103,7 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     }
     tmp = tmp*size;
     sum = sum + tmp;
-    communicator = profile_this(comm, i, sendtype, Gatherv, t_elapsed, root);
+    communicator = profile_this(comm, 0, sendtype, Gatherv, t_elapsed, root);
     if ( root == rank ){
         communicator->bytes += sum;
         communicator->prim_bytes[Gatherv] += sum;
@@ -1154,19 +1153,19 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
 
     t_elapsed = MPI_Wtime() - t_elapsed;
     PMPI_Comm_rank(comm, &rank);
-    communicator = profile_this(comm, i, sendtype, Scatterv, t_elapsed, root);
+    PMPI_Type_size(recvtype, &size);
+    sum = recvcount*size;
+
+    PMPI_Type_size(sendtype, &size);
+    PMPI_Comm_size(comm, &comm_size);
+    for ( i = 0; i<comm_size; i++ ){
+        tmp += sendcounts[i];
+    }
+    tmp = tmp*size;
+    sum = sum + tmp;
+    communicator = profile_this(comm, 0, sendtype, Scatterv, t_elapsed, root);
     if ( rank == root ){
 
-        PMPI_Type_size(recvtype, &size);
-        sum = recvcount*size;
-
-        PMPI_Type_size(sendtype, &size);
-        PMPI_Comm_size(comm, &comm_size);
-        for ( i = 0; i<comm_size; i++ ){
-            tmp += sendcounts[i];
-        }
-        tmp = tmp*size;
-        sum = sum + tmp;
         communicator->bytes += sum;
         communicator->prim_bytes[Scatterv] += sum;
     }
@@ -1276,13 +1275,12 @@ MPI_Barrier ( MPI_Comm comm )
 {
     int ret;
     double t_elapsed;
-    MPI_Datatype dummy = MPI_DATATYPE_NULL;
 
     t_elapsed = MPI_Wtime();
     ret = PMPI_Barrier(comm);
     t_elapsed = MPI_Wtime()-MPI_Wtime();
 
-    profile_this(comm,0,dummy,Barrier,t_elapsed,0);
+    profile_this(comm,0,MPI_DATATYPE_NULL,Barrier,t_elapsed,0);
     return ret;
 }
 
