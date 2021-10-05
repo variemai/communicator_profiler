@@ -901,12 +901,17 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
               const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
               MPI_Comm comm)
 {
-    int ret,i,flag,size,comm_size, rank;
+    int ret,i,size,comm_size, rank;
     prof_attrs  *communicator;
-    unsigned long long  sum = 0;
+    uint64_t sum, tmp;
+    sum = 0;
+    tmp = 0;
+    double t_elapsed;
 
+    t_elapsed = MPI_Wtime();
     ret = PMPI_Alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts,
-                   rdispls, recvtype, comm);
+                         rdispls, recvtype, comm);
+    t_elapsed = MPI_Wtime() - t_elapsed;
 
     PMPI_Type_size(sendtype, &size);
     PMPI_Comm_size(comm, &comm_size);
@@ -915,15 +920,19 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
         sum += sendcounts[i];
     }
     sum = sum*size;
-    communicator = profile_this(comm, &flag,&i);
-    if ( flag ){
+
+    PMPI_Type_size(recvtype, &size);
+
+    for ( i = 0; i<comm_size; i++ ){
+        tmp += recvcounts[i];
+    }
+    tmp = tmp*size;
+    sum = sum + tmp;
+    communicator = profile_this(comm,i,sendtype,Alltoallv,t_elapsed,0);
+    if ( rank == 0 ){
+
         communicator->bytes += sum;
         communicator->prim_bytes[Alltoallv] += sum;
-        if ( rank == 0 ){
-            communicator->msgs += 1;
-            communicator->prims[Alltoallv] += 1;
-        }
-        /* local_comms[i]->bytes = sum; */
     }
     return ret;
 }
@@ -955,28 +964,38 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                void *recvbuf, const int *recvcounts, const int *displs,
                MPI_Datatype recvtype, MPI_Comm comm)
 {
-    int ret,i,flag,size,comm_size,recvd,rank;
+    int ret,i,size,comm_size,rank;
     prof_attrs  *communicator;
-    unsigned long long  sum = 0;
+    uint64_t sum, tmp;
+    sum = 0;
+    tmp = 0;
+    double t_elapsed;
+
+    t_elapsed = MPI_Wtime();
     ret = PMPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts,
                           displs, recvtype, comm);
+    t_elapsed = MPI_Wtime() - t_elapsed;
+
+
     PMPI_Type_size(sendtype, &size);
     PMPI_Comm_size(comm, &comm_size);
     PMPI_Comm_rank(comm, &rank);
-    recvd = 0;
+    sum = sendcount*size;
+
+    PMPI_Type_size(recvtype, &size);
+
     for ( i = 0; i<comm_size; i++ ){
-        recvd += recvcounts[i];
+        tmp += recvcounts[i];
     }
-    sum = recvd*size;
-    communicator = profile_this(comm, &flag,&i);
-    if ( flag ){
+    tmp = tmp*size;
+    sum = sum + tmp;
+    communicator = profile_this(comm,i,sendtype,Allgatherv,t_elapsed,0);
+
+    if ( rank ==0 ){
         communicator->bytes += sum;
         communicator->prim_bytes[Allgatherv] += sum;
-        if ( rank ==0 ){
-            communicator->msgs += 1;
-            communicator->prims[Allgatherv] += 1;
-        }
     }
+
     return ret;
 }
 
@@ -1005,24 +1024,16 @@ int
 MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
            MPI_Op op, int root, MPI_Comm comm)
 {
-    int ret,i,flag,size,rank;
+    int ret;
     prof_attrs  *communicator;
-    unsigned long long  sum = 0;
+    double t_elapsed;
+
+    t_elapsed = MPI_Wtime();
 
     ret = PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+    t_elapsed = MPI_Wtime() - t_elapsed;
 
-    communicator = profile_this(comm, &flag,&i);
-    PMPI_Type_size(datatype, &size);
-    PMPI_Comm_rank(comm, &rank);
-    if ( flag ){
-        sum = count*size;
-        communicator->bytes += sum;
-        communicator->prim_bytes[Reduce] += sum;
-        if ( rank == root ){
-            communicator->prims[Reduce] += 1;
-            communicator->msgs += 1;
-        }
-    }
+    communicator = profile_this(comm,count,datatype,Reduce,t_elapsed,root);
     return ret;
 }
 
@@ -1050,24 +1061,15 @@ int
 MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
            int recvcount, MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
-    int ret,i,flag,size,rank;
+    int ret;
     prof_attrs  *communicator;
-    unsigned long long  sum = 0;
+    double t_elapsed;
 
+    t_elapsed = MPI_Wtime();
     ret = PMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
 
-    communicator = profile_this(comm, &flag,&i);
-    PMPI_Type_size(sendtype, &size);
-    PMPI_Comm_rank(comm, &rank);
-    if ( flag ){
-        sum = sendcount*size;
-        communicator->bytes += sum;
-        communicator->prim_bytes[Gather] += sum;
-        if ( rank == root ){
-            communicator->prims[Gather] += 1;
-            communicator->msgs += 1;
-        }
-    }
+    t_elapsed = MPI_Wtime() - t_elapsed;
+    communicator = profile_this(comm,recvcount,recvtype,Gather,t_elapsed,root);
     return ret;
 
 }
@@ -1091,6 +1093,7 @@ F77_MPI_GATHER(const void  *sendbuf, int  * sendcnt, MPI_Fint  * sendtype,
     return;
 
 }
+
 
 int
 MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
