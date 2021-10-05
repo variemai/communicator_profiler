@@ -1132,15 +1132,13 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
              MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
 
-    int ret,i,rank;
+    int ret,rank;
     prof_attrs  *communicator;
     uint64_t sum;
     double t_elapsed;
     const int *tmp;
 
     sum = 0;
-    i = 0;
-
     t_elapsed = MPI_Wtime();
     ret = PMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
                         recvtype, root, comm);
