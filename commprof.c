@@ -1156,13 +1156,13 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
     PMPI_Type_size(recvtype, &size);
     sum = recvcount*size;
 
-    PMPI_Type_size(sendtype, &size);
-    PMPI_Comm_size(comm, &comm_size);
-    for ( i = 0; i<comm_size; i++ ){
-        tmp += sendcounts[i];
-    }
-    tmp = tmp*size;
-    sum = sum + tmp;
+    /* PMPI_Type_size(sendtype, &size); */
+    /* PMPI_Comm_size(comm, &comm_size); */
+    /* for ( i = 0; i<comm_size; i++ ){ */
+    /*     tmp += sendcounts[i]; */
+    /* } */
+    /* tmp = tmp*size; */
+    /* sum = sum + tmp; */
     communicator = profile_this(comm, 0, sendtype, Scatterv, t_elapsed, root);
     if ( rank == root ){
 
