@@ -1153,8 +1153,10 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
     t_elapsed = MPI_Wtime() - t_elapsed;
     PMPI_Comm_rank(comm, &rank);
     tmp = sendcounts;
-    while ( tmp )
+    while ( tmp ){
         sum += *tmp;
+        tmp++;
+    }
 
     PMPI_Type_size(sendtype, &size);
     sum = sum*size;
