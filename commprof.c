@@ -1138,9 +1138,9 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
              MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
 
-    int ret,i,size,rank,comm_size;
+    int ret,i,size,rank,comm_size,*tmp;
     prof_attrs  *communicator;
-    uint64_t sum,tmp;
+    uint64_t sum;
     double t_elapsed;
     sum = 0;
     tmp = 0;
@@ -1152,10 +1152,14 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
 
     t_elapsed = MPI_Wtime() - t_elapsed;
     PMPI_Comm_rank(comm, &rank);
-    PMPI_Type_size(recvtype, &size);
-    sum = recvcount*size;
+    tmp = sendcounts;
+    while ( tmp )
+        sum += *tmp;
 
-    /* PMPI_Type_size(sendtype, &size); */
+    PMPI_Type_size(sendtype, &size);
+    sum = sum*size;
+    PMPI_Type_size(recvtype, &size);
+    sum += recvcount*size;
     /* PMPI_Comm_size(comm, &comm_size); */
     /* for ( i = 0; i<comm_size; i++ ){ */
     /*     tmp += sendcounts[i]; */
