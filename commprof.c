@@ -1092,17 +1092,16 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     t_elapsed = MPI_Wtime() - t_elapsed;
 
     PMPI_Type_size(sendtype, &size);
-    PMPI_Comm_size(comm, &comm_size);
     PMPI_Comm_rank(comm, &rank);
     sum = sendcount*size;
 
-    PMPI_Type_size(recvtype, &size);
-
-    for ( i = 0; i<comm_size; i++ ){
-        tmp += recvcounts[i];
-    }
-    tmp = tmp*size;
-    sum = sum + tmp;
+    /* PMPI_Type_size(recvtype, &size); */
+    /* PMPI_Comm_size(comm, &comm_size); */
+    /* for ( i = 0; i<comm_size; i++ ){ */
+    /*     tmp += recvcounts[i]; */
+    /* } */
+    /* tmp = tmp*size; */
+    /* sum = sum + tmp; */
     communicator = profile_this(comm, 0, sendtype, Gatherv, t_elapsed, root);
     if ( root == rank ){
         communicator->bytes += sum;
