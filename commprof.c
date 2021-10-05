@@ -127,7 +127,8 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
         if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
             break;
     }
-    PMPI_Type_size(datatype, &size);
+    if ( datatype != MPI_DATATYPE_NULL )
+        PMPI_Type_size(datatype, &size);
     if ( flag ){
         sum = count * size;
         communicator->time_info[prim] += t_elapsed;
@@ -825,17 +826,6 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     t_elapsed = MPI_Wtime() - t_elapsed;
 
     communicator = profile_this(comm,sendcount,sendtype,Allgather,t_elapsed,0);
-    /* PMPI_Type_size(sendtype, &size); */
-    /* PMPI_Comm_rank(comm, &rank); */
-    /* if ( flag ){ */
-    /*     sum = sendcount * size; */
-    /*     communicator->bytes += sum; */
-    /*     communicator->prim_bytes[Allgather] += sum; */
-    /*     if ( rank == 0  ){ */
-    /*         communicator->msgs += 1; */
-    /*         communicator->prims[Allgather] += 1; */
-    /*     } */
-    /* } */
     return ret;
 }
 
@@ -1100,22 +1090,34 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             void *recvbuf, const int *recvcounts, const int *displs,
             MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
-    int ret,i,flag,size,rank;
+    int ret,i,size,rank,comm_size;
     prof_attrs  *communicator;
-    unsigned long long  sum = 0;
+    uint64_t sum,tmp;
+    sum = 0;
+    tmp = 0;
+    double t_elapsed;
+
+    t_elapsed = MPI_Wtime();
     ret = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
                        recvtype, root, comm);
+    t_elapsed = MPI_Wtime() - t_elapsed;
+
     PMPI_Type_size(sendtype, &size);
-    communicator = profile_this(comm, &flag,&i);
+    PMPI_Comm_size(comm, &comm_size);
     PMPI_Comm_rank(comm, &rank);
-    if ( flag ){
-        sum = size*sendcount;
+    sum = sendcount*size;
+
+    PMPI_Type_size(recvtype, &size);
+
+    for ( i = 0; i<comm_size; i++ ){
+        tmp += recvcounts[i];
+    }
+    tmp = tmp*size;
+    sum = sum + tmp;
+    communicator = profile_this(comm, i, sendtype, Gatherv, t_elapsed, root);
+    if ( root == rank ){
         communicator->bytes += sum;
         communicator->prim_bytes[Gatherv] += sum;
-        if ( root == rank ){
-            communicator->prims[Gatherv] += 1;
-            communicator->msgs += 1;
-        }
     }
     return ret;
 }
@@ -1148,24 +1150,35 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
              MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
 
-    int ret,i,flag,size,rank;
+    int ret,i,size,rank,comm_size;
     prof_attrs  *communicator;
-    unsigned long long  sum = 0;
+    uint64_t sum,tmp;
+    double t_elapsed;
+    sum = 0;
+    tmp = 0;
+    i = 0;
 
+    t_elapsed = MPI_Wtime();
     ret = PMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
                         recvtype, root, comm);
 
-    PMPI_Type_size(recvtype, &size);
-    communicator = profile_this(comm, &flag,&i);
+    t_elapsed = MPI_Wtime() - t_elapsed;
     PMPI_Comm_rank(comm, &rank);
-    if ( flag ){
-        sum = size*recvcount;
+    communicator = profile_this(comm, i, sendtype, Scatterv, t_elapsed, root);
+    if ( rank == root ){
+
+        PMPI_Type_size(recvtype, &size);
+        sum = recvcount*size;
+
+        PMPI_Type_size(sendtype, &size);
+        PMPI_Comm_size(comm, &comm_size);
+        for ( i = 0; i<comm_size; i++ ){
+            tmp += sendcounts[i];
+        }
+        tmp = tmp*size;
+        sum = sum + tmp;
         communicator->bytes += sum;
         communicator->prim_bytes[Scatterv] += sum;
-        if ( root == rank ){
-            communicator->prims[Scatterv] += 1;
-            communicator->msgs += 1;
-        }
     }
     return ret;
 }
@@ -1196,25 +1209,16 @@ MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             void *recvbuf, int recvcount, MPI_Datatype recvtype, int root,
             MPI_Comm comm)
 {
-    int ret,i,flag,size,rank;
+    int ret;
     prof_attrs  *communicator;
-    unsigned long long  sum = 0;
+    double t_elapsed;
 
+    t_elapsed = MPI_Wtime();
     ret = PMPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-                        recvtype, root, comm);
+                       recvtype, root, comm);
+    t_elapsed = MPI_Wtime() - t_elapsed;
 
-    PMPI_Type_size(recvtype, &size);
-    communicator = profile_this(comm, &flag,&i);
-    PMPI_Comm_rank(comm, &rank);
-    if ( flag ){
-        sum = size*recvcount;
-        communicator->bytes += sum;
-        communicator->prim_bytes[Scatter] += sum;
-        if ( rank == root ){
-            communicator->prims[Scatter] += 1;
-            communicator->msgs += 1;
-        }
-    }
+    communicator = profile_this(comm, recvcount, recvtype, Scatter, t_elapsed, root);
     return ret;
 }
 
@@ -1245,24 +1249,15 @@ MPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
          MPI_Op op, MPI_Comm comm)
 {
 
-    int ret,i,flag,size,rank;
+    int ret;
     prof_attrs  *communicator;
-    unsigned long long  sum = 0;
+    double t_elapsed;
 
+    t_elapsed = MPI_Wtime();
     ret = PMPI_Scan(sendbuf, recvbuf, count, datatype, op, comm);
+    t_elapsed = MPI_Wtime() - t_elapsed;
 
-    PMPI_Type_size(datatype, &size);
-    communicator = profile_this(comm, &flag,&i);
-    PMPI_Comm_rank(comm, &rank);
-    if ( flag ){
-        sum = size*count;
-        communicator->bytes += sum;
-        communicator->prim_bytes[Scan] += sum;
-        if ( rank == 0 ){
-            communicator->prims[Scan] += 1;
-            communicator->msgs += 1;
-        }
-    }
+    communicator = profile_this(comm,count,datatype,Scan,t_elapsed,0);
     return ret;
 
 }
@@ -1291,16 +1286,16 @@ F77_MPI_SCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * dat
 int
 MPI_Barrier ( MPI_Comm comm )
 {
-    int ret,flag,i,rank;
+    int ret;
     prof_attrs *communicator;
-    ret = PMPI_Barrier(comm);
+    double t_elapsed;
+    MPI_Datatype dummy = MPI_DATATYPE_NULL;
 
-    communicator = profile_this(comm, &flag,&i);
-    PMPI_Comm_rank(comm, &rank);
-    if ( flag && rank == 0 ){
-        communicator->prims[Barrier] += 1;
-        communicator->msgs += 1;
-    }
+    t_elapsed = MPI_Wtime();
+    ret = PMPI_Barrier(comm);
+    t_elapsed = MPI_Wtime()-MPI_Wtime();
+
+    communicator = profile_this(comm,0,dummy,Barrier,t_elapsed,0);
     return ret;
 }
 
@@ -1331,6 +1326,7 @@ MPI_Comm_free(MPI_Comm *comm)
         if ( i == local_cid  )
             mcpt_abort("Comm_free on wrong communicator\n");
         local_comms[i] = (prof_attrs*) malloc (sizeof(prof_attrs));
+        /* We can use memcpy here */
         local_comms[i]->bytes = com_info->bytes;
         local_comms[i]->msgs = com_info->msgs;
         local_comms[i]->size = com_info->size;
@@ -1338,6 +1334,7 @@ MPI_Comm_free(MPI_Comm *comm)
         for (j = 0; j < NUM_OF_PRIMS; j++) {
             local_comms[i]->prims[j] = com_info->prims[j];
             local_comms[i]->prim_bytes[j] = com_info->prim_bytes[j];
+            local_comms[i]->time_info[j] = com_info->time_info[j];
         }
     }
     ret = PMPI_Comm_free(comm);
@@ -1371,6 +1368,7 @@ _Finalize()
     uint64_t *bytes, *ubytes,*prims_bytes,*uprims_bytes;
     uint32_t *prims,*uprims;
     uint64_t *msgs, *umsgs;
+    double *time_info, *utime_info;
     /* time_t t; */
     int *sizes,*usizes;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
@@ -1384,9 +1382,10 @@ _Finalize()
     array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
     recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
 
-    MPI_Datatype types[6] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT32_T, MPI_INT, MPI_UINT32_T, MPI_UINT64_T };
-    int blocklen[6] = {NAMELEN,1,1,1,NUM_OF_PRIMS,NUM_OF_PRIMS};
-    MPI_Aint displacements[6];
+    MPI_Datatype types[7] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT32_T, MPI_INT,
+    MPI_UINT32_T, MPI_UINT64_T, MPI_DOUBLE };
+    int blocklen[7] = {NAMELEN,1,1,1,NUM_OF_PRIMS,NUM_OF_PRIMS,NUM_OF_PRIMS};
+    MPI_Aint displacements[7];
     MPI_Aint base_address;
     MPI_Datatype profiler_data;
     PMPI_Get_address(&dummy, &base_address);
@@ -1396,14 +1395,16 @@ _Finalize()
     PMPI_Get_address(&dummy.size, &displacements[3]);
     PMPI_Get_address(&dummy.prims[0], &displacements[4]);
     PMPI_Get_address(&dummy.prim_bytes[0], &displacements[5]);
+    PMPI_Get_address(&dummy.time_info[0], &displacements[6]);
     displacements[0] = MPI_Aint_diff(displacements[0], base_address);
     displacements[1] = MPI_Aint_diff(displacements[1], base_address);
     displacements[2] = MPI_Aint_diff(displacements[2], base_address);
     displacements[3] = MPI_Aint_diff(displacements[3], base_address);
     displacements[4] = MPI_Aint_diff(displacements[4], base_address);
     displacements[5] = MPI_Aint_diff(displacements[5], base_address);
+    displacements[5] = MPI_Aint_diff(displacements[6], base_address);
 
-    PMPI_Type_create_struct(6, blocklen, displacements, types, &profiler_data);
+    PMPI_Type_create_struct(7, blocklen, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
     for ( i = 0; i < num_of_comms; i++ ){
@@ -1417,6 +1418,7 @@ _Finalize()
             for ( k=0; k<NUM_OF_PRIMS; k++ ){
                 array[i].prims[k] = local_comms[i]->prims[k];
                 array[i].prim_bytes[k] =local_comms[i]->prim_bytes[k];
+                array[i].time_info[k] = local_comms[i]->time_info[k];
             }
         }
         else{
@@ -1428,6 +1430,7 @@ _Finalize()
             for ( k=0; k<NUM_OF_PRIMS; k++ ){
                 array[i].prims[k] = 0;
                 array[i].prim_bytes[k] = 0;
+                array[i].time_info[k] = 0.0;
             }
         }
     }
@@ -1448,9 +1451,13 @@ _Finalize()
         bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
         msgs = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
         sizes = (int *) malloc (sizeof(int )*num_of_comms*size);
-        prims = (uint32_t*) malloc ( sizeof(uint32_t)*num_of_comms*size*NUM_OF_PRIMS );
+        prims = (uint32_t*) malloc ( sizeof(uint32_t)*num_of_comms*size*
+                                     NUM_OF_PRIMS );
         prims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size
                                            *NUM_OF_PRIMS);
+        time_info = (double*) malloc ( sizeof(double)*num_of_comms*size*
+                                       NUM_OF_PRIMS );
+
         j = 0;
         for ( i =0; i<size*num_of_comms; i++ ){
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
@@ -1464,6 +1471,7 @@ _Finalize()
                 for ( k =0; k<NUM_OF_PRIMS; k++){
                     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
                     prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k];
+                    time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k];
                 }
                 j++;
             }
@@ -1474,8 +1482,8 @@ _Finalize()
         umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total);
         uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS);
         usizes = (int *) malloc (sizeof(int)*total);
-        uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*
-                                            NUM_OF_PRIMS);
+        uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*NUM_OF_PRIMS);
+        utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS);
 
 
         memset(ubytes, 0, sizeof(uint64_t )*total);
@@ -1483,6 +1491,7 @@ _Finalize()
         memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS);
         memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS);
         memset(usizes, 0, sizeof(int)*total);
+        memset(utime_info, 0, sizeof(double)*total*NUM_OF_PRIMS);
 
         num_of_comms = 1;
         j = 0;
@@ -1509,6 +1518,9 @@ _Finalize()
                     for ( k =0; k<NUM_OF_PRIMS; k++){
                         uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
                         uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
+                        if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
+                            utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
+                        }
                         /* DO NOT accumulate timing info take MAX */
                     }
                 }
@@ -1523,6 +1535,7 @@ _Finalize()
         free(bytes);
         free(msgs);
         free(prims);
+        free(time_info);
 
         if (fp == NULL){
             fprintf(stderr, "Failed to open output file: profiler_stats.txt\n");
@@ -1548,10 +1561,13 @@ _Finalize()
             fprintf(fp, "%s_Calls,",prim_names[k]);
         }
         for (k = 0; k<NUM_OF_PRIMS; k++){
+            fprintf(fp, "%s_Bytes,",prim_names[k]);
+        }
+        for (k = 0; k<NUM_OF_PRIMS; k++){
             if ( k == NUM_OF_PRIMS -1 )
-                fprintf(fp, "%s_Bytes",prim_names[k]);
+                fprintf(fp, "%s_Time",prim_names[k]);
             else
-                fprintf(fp, "%s_Bytes,",prim_names[k]);
+                fprintf(fp, "%s_Time,",prim_names[k]);
         }
         fprintf(fp,"\n");
         for ( i =0; i<num_of_comms; i++ ){
@@ -1560,10 +1576,13 @@ _Finalize()
                 fprintf(fp, "%u,",uprims[i*NUM_OF_PRIMS+k]);
             }
             for ( k =0; k<NUM_OF_PRIMS; k++ ){
+                fprintf(fp, "%lu,",uprims_bytes[i*NUM_OF_PRIMS+k]);
+            }
+            for ( k =0; k<NUM_OF_PRIMS; k++ ){
                 if ( k == NUM_OF_PRIMS -1 )
-                    fprintf(fp, "%lu",uprims_bytes[i*NUM_OF_PRIMS+k]);
+                    fprintf(fp, "%lf",utime_info[i*NUM_OF_PRIMS+k]);
                 else
-                    fprintf(fp, "%lu,",uprims_bytes[i*NUM_OF_PRIMS+k]);
+                    fprintf(fp, "%lf,",utime_info[i*NUM_OF_PRIMS+k]);
             }
             fprintf(fp,"\n");
         }
@@ -1574,9 +1593,9 @@ _Finalize()
         free(unames);
         free(ubytes);
         free(umsgs);
-        /* free(date); */
         free(uprims);
         free(uprims_bytes);
+        free(utime_info);
         fclose(fp);
     }
     return PMPI_Finalize();
