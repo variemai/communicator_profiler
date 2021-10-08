@@ -1532,16 +1532,21 @@ _Finalize()
         fprintf(fp, "Comm,Size,Calls,");
         for (k = 0; k<NUM_OF_PRIMS; k++){
             fprintf(fp, "%s_Calls,",prim_names[k]);
-        }
-        for (k = 0; k<NUM_OF_PRIMS; k++){
             fprintf(fp, "%s_AvgMsgSize,",prim_names[k]);
-        }
-        for (k = 0; k<NUM_OF_PRIMS; k++){
             if ( k == NUM_OF_PRIMS -1 )
                 fprintf(fp, "%s_Time",prim_names[k]);
             else
                 fprintf(fp, "%s_Time,",prim_names[k]);
         }
+        /* for (k = 0; k<NUM_OF_PRIMS; k++){ */
+        /*     fprintf(fp, "%s_AvgMsgSize,",prim_names[k]); */
+        /* } */
+        /* for (k = 0; k<NUM_OF_PRIMS; k++){ */
+        /*     if ( k == NUM_OF_PRIMS -1 ) */
+        /*         fprintf(fp, "%s_Time",prim_names[k]); */
+        /*     else */
+        /*         fprintf(fp, "%s_Time,",prim_names[k]); */
+        /* } */
         fprintf(fp,"\n");
         for ( i =0; i<num_of_comms; i++ ){
             if ( strcmp(unames[i], "NULL") !=0 ){
