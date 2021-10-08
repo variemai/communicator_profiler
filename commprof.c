@@ -1529,12 +1529,12 @@ _Finalize()
         /* char *date = (char*) malloc ( strlen(tmp)-1 ); */
         /* strncpy(date, tmp, strlen(tmp)-1); */
         /* fprintf(fp, "#'Date'='%s'\n",date); */
-        fprintf(fp, "Comm,Size,Bytes,Calls,");
+        fprintf(fp, "Comm,Size,Calls,");
         for (k = 0; k<NUM_OF_PRIMS; k++){
             fprintf(fp, "%s_Calls,",prim_names[k]);
         }
         for (k = 0; k<NUM_OF_PRIMS; k++){
-            fprintf(fp, "%s_Bytes,",prim_names[k]);
+            fprintf(fp, "%s_AvgMsgSize,",prim_names[k]);
         }
         for (k = 0; k<NUM_OF_PRIMS; k++){
             if ( k == NUM_OF_PRIMS -1 )
@@ -1544,12 +1544,13 @@ _Finalize()
         }
         fprintf(fp,"\n");
         for ( i =0; i<num_of_comms; i++ ){
-            fprintf(fp,"%s,%d,%lu,%lu,",unames[i],usizes[i],ubytes[i],umsgs[i]);
+            if ( strcmp(unames[i], "NULL") !=0 ){
+            fprintf(fp,"%s,%d,%lu,",unames[i],usizes[i],umsgs[i]);
             for ( k =0; k<NUM_OF_PRIMS; k++ ){
                 fprintf(fp, "%u,",uprims[i*NUM_OF_PRIMS+k]);
             }
             for ( k =0; k<NUM_OF_PRIMS; k++ ){
-                fprintf(fp, "%lu,",uprims_bytes[i*NUM_OF_PRIMS+k]);
+                fprintf(fp, "%lu,",uprims_bytes[i*NUM_OF_PRIMS+k]/uprims[i*NUM_OF_PRIMS+k]);
             }
             for ( k =0; k<NUM_OF_PRIMS; k++ ){
                 if ( k == NUM_OF_PRIMS -1 )
@@ -1558,6 +1559,7 @@ _Finalize()
                     fprintf(fp, "%lf,",utime_info[i*NUM_OF_PRIMS+k]);
             }
             fprintf(fp,"\n");
+            }
         }
         printf("MCPT File Written: profiler_data.csv\n");
         for ( i =0; i<total; i++ ){
