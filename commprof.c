@@ -1557,7 +1557,6 @@ _Finalize()
                     else
                         fprintf(fp, "%lf,",utime_info[i*NUM_OF_PRIMS+k]);
                 }
-            }
                 /* for ( k =0; k<NUM_OF_PRIMS; k++ ){ */
                 /*     fprintf(fp, "%lu,",uprims_bytes[i*NUM_OF_PRIMS+k]/uprims[i*NUM_OF_PRIMS+k]); */
                 /* } */
