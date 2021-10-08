@@ -1554,9 +1554,9 @@ _Finalize()
                 for ( k =0; k<NUM_OF_PRIMS; k++ ){
                     fprintf(fp, "%u,",uprims[i*NUM_OF_PRIMS+k]);
                     if ( uprims[i*NUM_OF_PRIMS+k] > 0 )
-                        fprintf(fp, "%lu,",uprims_bytes[i*NUM_OF_PRIMS+k]/uprims[i*NUM_OF_PRIMS+k]);
+                        fprintf(fp, "%lf,",(double)uprims_bytes[i*NUM_OF_PRIMS+k]/(double)uprims[i*NUM_OF_PRIMS+k]);
                     else
-                        fprintf(fp, "0.0");
+                        fprintf(fp, "0.0,");
                     if ( k == NUM_OF_PRIMS-1 )
                         fprintf(fp, "%lf",utime_info[i*NUM_OF_PRIMS+k]);
                     else
