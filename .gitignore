@@ -60,4 +60,4 @@ compile_commands.json
 *.tex
 Paper.pdf
 *.bbl
-*.csv
+test/*.csv
