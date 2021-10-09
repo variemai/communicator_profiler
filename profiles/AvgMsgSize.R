@@ -15,13 +15,14 @@ df <- df %>% select(ends_with(c("_AvgMsgSize", "Comm")))
 library(reshape)
 
 library(RColorBrewer)
-library(viridis)
+#library(viridis)
                           
 df2 <- melt(df)
 str(df2)
 colnames(df2) <- c("Communicator", "Call", "AvgMSize")
 #heatmap(as.matrix(df2[,-1]))
 library(RColorBrewer)
+library(svglite)
 coul <- colorRampPalette(brewer.pal(8, "PiYG"))(25)
 g <- ggplot(df2, aes(x = Communicator, y = Call, fill = AvgMSize)) +
   geom_tile() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) + 
@@ -29,5 +30,5 @@ g <- ggplot(df2, aes(x = Communicator, y = Call, fill = AvgMSize)) +
   #scale_fill_viridis()
   #scale_fill_gradient(low="yellow",high="black",space="Lab")
   #scale_fill_gradient(low = "#ff2D00",high = "#ffffff",guide = "colorbar")
-ggsave(file="test.svg", plot=g, width=10, height=8)
+ggsave(file="avgmsg_splatt.svg", plot=g, width=10, height=8)
 print(g)

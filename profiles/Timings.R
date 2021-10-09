@@ -9,14 +9,14 @@ df <- df[df$Comm != "NULL", ]
 
 library(tidyverse)
 df <- df %>% select(ends_with(c("_Time", "Comm")))
-df <- df %>% select()
+#df <- df %>% select()
 
 #str(df)
 
 library(reshape)
 
 library(RColorBrewer)
-library(viridis)
+#library(viridis)
 
 df2 <- melt(df)
 str(df2)
@@ -30,4 +30,6 @@ g <- ggplot(df2, aes(x = Communicator, y = Call, fill = Time)) +
   #scale_fill_viridis()
 #scale_fill_gradient(low="yellow",high="black",space="Lab")
 #scale_fill_gradient(low = "#ff2D00",high = "#ffffff",guide = "colorbar")
+library(svglite)
+ggsave(file="timings_splat.svg", plot=g, width=10, height=8)
 print(g)

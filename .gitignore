@@ -61,4 +61,4 @@ compile_commands.json
 Paper.pdf
 *.bbl
 test/*.csv
-*.Rproj*
+profiles/*.R*
