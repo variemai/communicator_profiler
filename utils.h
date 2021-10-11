@@ -57,6 +57,11 @@ typedef struct profiler_attributes{
     double time_info[NUM_OF_PRIMS];
 }prof_attrs;
 
+typedef struct request_data{
+    MPI_Request *req;
+    MPI_Comm *comm;
+}rq;
+
 /* Globals */
 extern char *appname;
 extern const char prim_names[][NUM_OF_PRIMS];

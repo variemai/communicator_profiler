@@ -19,6 +19,8 @@ int local_cid= 0;
 int my_coms = 1;
 int ac;
 char *av[MAX_ARGS];
+rq* request_list = NULL;
+int rq_index = 0;
 
 
 static int
@@ -169,6 +171,7 @@ _MPI_Init(int *argc, char ***argv){
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    request_list = (rq*) malloc ( sizeof(rq)*size*size );
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
         local_comms[i] = NULL;
@@ -528,6 +531,9 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
     ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count, datatype, Isend, t_elapsed, 0);
+    request_list[rq_index].req = request;
+    request_list[rq_index].comm = &comm;
+    rq_index++;
     return ret;
 }
 
@@ -600,6 +606,9 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count,datatype,Irecv,t_elapsed,0);
+    request_list[rq_index].req = request;
+    request_list[rq_index].comm = &comm;
+    rq_index++;
     /* PMPI_Type_size(datatype, &size); */
     /* if ( flag  ){ */
     /*     sum = count*size; */
@@ -1271,6 +1280,23 @@ F77_MPI_BARRIER(MPI_Fint  * comm , MPI_Fint *ierr)
     ret = MPI_Barrier(c_comm);
     *ierr = (MPI_Fint)ret;
     return;
+}
+
+int
+MPI_Wait(MPI_Request *request, MPI_Status *status)
+{
+    int ret;
+    double t_elapsed;
+    int i;
+    t_elapsed = MPI_Wtime();
+    ret = PMPI_Wait(request, status);
+    t_elapsed = MPI_Wtime() - t_elapsed;
+    for ( i =0; i<rq_index; i++ ){
+        if ( *request == *request_list[i].req ){
+            profile_this(*request_list[i].comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+        }
+    }
+    return ret;
 }
 
 int
