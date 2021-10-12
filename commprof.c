@@ -1324,7 +1324,7 @@ MPI_Waitall(int count, MPI_Request *array_of_requests, MPI_Status *array_of_stat
             break;
         for ( i =0; i<rq_index; i++ ){
             if (  request_list[i].req == tmp  ){
-                profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+                /* profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
                 flag = 1;
                 break;
             }
