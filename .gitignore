@@ -62,3 +62,4 @@ Paper.pdf
 *.bbl
 test/*.csv
 profiles/*.R*
+.Rproj.user

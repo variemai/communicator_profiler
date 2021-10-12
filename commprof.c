@@ -1318,17 +1318,17 @@ MPI_Waitall(int count, MPI_Request *array_of_requests, MPI_Status *array_of_stat
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    for ( j =0; j<count; j++  ){
-        if ( flag )
-            break;
+    /* for ( j =0; j<count; j++  ){ */
+    /*     if ( flag ) */
+    /*         break; */
         for ( i =0; i<rq_index; i++ ){
-            if (  *request_list[i].req == array_of_requests[j] ){
+            if (  *request_list[i].req == array_of_requests[0] ){
                 profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
                 flag = 1;
                 break;
             }
         }
-    }
+    /* } */
     return ret;
 }
 
@@ -1635,6 +1635,7 @@ _Finalize()
         free(utime_info);
         fclose(fp);
     }
+    /* free(request_list); */
     return PMPI_Finalize();
 }
 

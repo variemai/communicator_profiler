@@ -741,36 +741,36 @@
 <rect x='189.14' y='7.10' width='23.41' height='16.19' style='stroke-width: 0.21; stroke: none; stroke-linecap: square; stroke-linejoin: miter; fill: #F1EEF6;' />
 </g>
 <g clip-path='url(#cpMC4wMHw3MjAuMDB8MC4wMHw1NzYuMDA=)'>
-<text x='111.63' y='487.79' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.58px' lengthAdjust='spacingAndGlyphs'>Send_Calls</text>
-<text x='111.63' y='471.61' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='46.59px' lengthAdjust='spacingAndGlyphs'>Recv_Calls</text>
-<text x='111.63' y='455.42' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='49.17px' lengthAdjust='spacingAndGlyphs'>Isend_Calls</text>
-<text x='111.63' y='439.24' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='46.89px' lengthAdjust='spacingAndGlyphs'>Irecv_Calls</text>
-<text x='111.63' y='423.05' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='55.13px' lengthAdjust='spacingAndGlyphs'>Waitall_Calls</text>
-<text x='111.63' y='406.86' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='44.84px' lengthAdjust='spacingAndGlyphs'>Wait_Calls</text>
-<text x='111.63' y='390.68' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='61.01px' lengthAdjust='spacingAndGlyphs'>Waitany_Calls</text>
-<text x='111.63' y='374.49' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='42.74px' lengthAdjust='spacingAndGlyphs'>Test_Calls</text>
-<text x='111.63' y='358.31' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='58.91px' lengthAdjust='spacingAndGlyphs'>Testany_Calls</text>
-<text x='111.63' y='342.12' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='66.46px' lengthAdjust='spacingAndGlyphs'>Sendrecv_Calls</text>
-<text x='111.63' y='325.93' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='49.72px' lengthAdjust='spacingAndGlyphs'>Bcast_Calls</text>
-<text x='111.63' y='309.75' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='55.40px' lengthAdjust='spacingAndGlyphs'>Barrier_Calls</text>
-<text x='111.63' y='293.56' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='66.58px' lengthAdjust='spacingAndGlyphs'>Allreduce_Calls</text>
-<text x='111.63' y='277.38' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='65.36px' lengthAdjust='spacingAndGlyphs'>Allgather_Calls</text>
-<text x='111.63' y='261.19' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='70.57px' lengthAdjust='spacingAndGlyphs'>Allgatherv_Calls</text>
-<text x='111.63' y='245.00' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='55.45px' lengthAdjust='spacingAndGlyphs'>Alltoall_Calls</text>
-<text x='111.63' y='228.82' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='60.66px' lengthAdjust='spacingAndGlyphs'>Alltoallv_Calls</text>
-<text x='111.63' y='212.63' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='57.96px' lengthAdjust='spacingAndGlyphs'>Reduce_Calls</text>
-<text x='111.63' y='196.45' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='55.68px' lengthAdjust='spacingAndGlyphs'>Gather_Calls</text>
-<text x='111.63' y='180.26' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='60.88px' lengthAdjust='spacingAndGlyphs'>Gatherv_Calls</text>
-<text x='111.63' y='164.07' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='46.81px' lengthAdjust='spacingAndGlyphs'>Scan_Calls</text>
-<text x='111.63' y='147.89' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='56.57px' lengthAdjust='spacingAndGlyphs'>Exscan_Calls</text>
-<text x='111.63' y='131.70' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='57.16px' lengthAdjust='spacingAndGlyphs'>Scatter_Calls</text>
-<text x='111.63' y='115.51' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='62.37px' lengthAdjust='spacingAndGlyphs'>Scatterv_Calls</text>
-<text x='111.63' y='99.33' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='93.10px' lengthAdjust='spacingAndGlyphs'>Reduce_scatter_Calls</text>
-<text x='111.63' y='83.14' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='68.54px' lengthAdjust='spacingAndGlyphs'>Iallreduce_Calls</text>
-<text x='111.63' y='66.96' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='51.86px' lengthAdjust='spacingAndGlyphs'>Ibcast_Calls</text>
-<text x='111.63' y='50.77' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='57.42px' lengthAdjust='spacingAndGlyphs'>Ialltoall_Calls</text>
-<text x='111.63' y='34.58' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='58.75px' lengthAdjust='spacingAndGlyphs'>Iscatter_Calls</text>
-<text x='111.63' y='18.40' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='57.54px' lengthAdjust='spacingAndGlyphs'>Ibarrier_Calls</text>
+<text x='111.63' y='487.79' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.58px' lengthAdjust='spacingAndGlyphs'>Send_Calls</text>
+<text x='111.63' y='471.61' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='46.59px' lengthAdjust='spacingAndGlyphs'>Recv_Calls</text>
+<text x='111.63' y='455.42' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='49.17px' lengthAdjust='spacingAndGlyphs'>Isend_Calls</text>
+<text x='111.63' y='439.24' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='46.89px' lengthAdjust='spacingAndGlyphs'>Irecv_Calls</text>
+<text x='111.63' y='423.05' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='55.13px' lengthAdjust='spacingAndGlyphs'>Waitall_Calls</text>
+<text x='111.63' y='406.86' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='44.84px' lengthAdjust='spacingAndGlyphs'>Wait_Calls</text>
+<text x='111.63' y='390.68' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='61.01px' lengthAdjust='spacingAndGlyphs'>Waitany_Calls</text>
+<text x='111.63' y='374.49' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='42.74px' lengthAdjust='spacingAndGlyphs'>Test_Calls</text>
+<text x='111.63' y='358.31' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='58.91px' lengthAdjust='spacingAndGlyphs'>Testany_Calls</text>
+<text x='111.63' y='342.12' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='66.46px' lengthAdjust='spacingAndGlyphs'>Sendrecv_Calls</text>
+<text x='111.63' y='325.93' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='49.72px' lengthAdjust='spacingAndGlyphs'>Bcast_Calls</text>
+<text x='111.63' y='309.75' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='55.40px' lengthAdjust='spacingAndGlyphs'>Barrier_Calls</text>
+<text x='111.63' y='293.56' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='66.58px' lengthAdjust='spacingAndGlyphs'>Allreduce_Calls</text>
+<text x='111.63' y='277.38' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='65.36px' lengthAdjust='spacingAndGlyphs'>Allgather_Calls</text>
+<text x='111.63' y='261.19' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='70.57px' lengthAdjust='spacingAndGlyphs'>Allgatherv_Calls</text>
+<text x='111.63' y='245.00' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='55.45px' lengthAdjust='spacingAndGlyphs'>Alltoall_Calls</text>
+<text x='111.63' y='228.82' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='60.66px' lengthAdjust='spacingAndGlyphs'>Alltoallv_Calls</text>
+<text x='111.63' y='212.63' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='57.96px' lengthAdjust='spacingAndGlyphs'>Reduce_Calls</text>
+<text x='111.63' y='196.45' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='55.68px' lengthAdjust='spacingAndGlyphs'>Gather_Calls</text>
+<text x='111.63' y='180.26' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='60.88px' lengthAdjust='spacingAndGlyphs'>Gatherv_Calls</text>
+<text x='111.63' y='164.07' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='46.81px' lengthAdjust='spacingAndGlyphs'>Scan_Calls</text>
+<text x='111.63' y='147.89' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='56.57px' lengthAdjust='spacingAndGlyphs'>Exscan_Calls</text>
+<text x='111.63' y='131.70' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='57.16px' lengthAdjust='spacingAndGlyphs'>Scatter_Calls</text>
+<text x='111.63' y='115.51' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='62.37px' lengthAdjust='spacingAndGlyphs'>Scatterv_Calls</text>
+<text x='111.63' y='99.33' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='93.10px' lengthAdjust='spacingAndGlyphs'>Reduce_scatter_Calls</text>
+<text x='111.63' y='83.14' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='68.54px' lengthAdjust='spacingAndGlyphs'>Iallreduce_Calls</text>
+<text x='111.63' y='66.96' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='51.86px' lengthAdjust='spacingAndGlyphs'>Ibcast_Calls</text>
+<text x='111.63' y='50.77' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='57.42px' lengthAdjust='spacingAndGlyphs'>Ialltoall_Calls</text>
+<text x='111.63' y='34.58' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='58.75px' lengthAdjust='spacingAndGlyphs'>Iscatter_Calls</text>
+<text x='111.63' y='18.40' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='57.54px' lengthAdjust='spacingAndGlyphs'>Ibarrier_Calls</text>
 <polyline points='113.82,484.59 116.56,484.59 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
 <polyline points='113.82,468.40 116.56,468.40 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
 <polyline points='113.82,452.21 116.56,452.21 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
@@ -823,38 +823,38 @@
 <polyline points='575.41,497.04 575.41,494.30 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
 <polyline points='598.82,497.04 598.82,494.30 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
 <polyline points='622.23,497.04 622.23,494.30 ' style='stroke-width: 1.07; stroke: #333333; stroke-linecap: butt;' />
-<text transform='translate(133.82,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='8.70px' lengthAdjust='spacingAndGlyphs'>W</text>
-<text transform='translate(157.23,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='24.08px' lengthAdjust='spacingAndGlyphs'>W_a1</text>
-<text transform='translate(180.64,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.0</text>
-<text transform='translate(204.05,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='58.24px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.112</text>
-<text transform='translate(227.46,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.16</text>
-<text transform='translate(250.87,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.32</text>
-<text transform='translate(274.28,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.48</text>
-<text transform='translate(297.69,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.64</text>
-<text transform='translate(321.10,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.80</text>
-<text transform='translate(344.51,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.96</text>
-<text transform='translate(367.92,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.0</text>
-<text transform='translate(391.33,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.10</text>
-<text transform='translate(414.74,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.12</text>
-<text transform='translate(438.15,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.14</text>
-<text transform='translate(461.56,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.2</text>
-<text transform='translate(484.98,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.4</text>
-<text transform='translate(508.39,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.6</text>
-<text transform='translate(531.80,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.8</text>
-<text transform='translate(555.21,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s4.0</text>
-<text transform='translate(578.62,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s4.1</text>
-<text transform='translate(602.03,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s5.0</text>
-<text transform='translate(625.44,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Liberation Sans;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s6.0</text>
-<text x='376.42' y='568.23' text-anchor='middle' style='font-size: 11.00px; font-family: Liberation Sans;' textLength='81.19px' lengthAdjust='spacingAndGlyphs'>Communicator</text>
-<text transform='translate(13.50,249.89) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: Liberation Sans;' textLength='20.54px' lengthAdjust='spacingAndGlyphs'>Call</text>
+<text transform='translate(133.82,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='8.70px' lengthAdjust='spacingAndGlyphs'>W</text>
+<text transform='translate(157.23,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='24.08px' lengthAdjust='spacingAndGlyphs'>W_a1</text>
+<text transform='translate(180.64,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.0</text>
+<text transform='translate(204.05,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='58.24px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.112</text>
+<text transform='translate(227.46,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.16</text>
+<text transform='translate(250.87,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.32</text>
+<text transform='translate(274.28,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.48</text>
+<text transform='translate(297.69,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.64</text>
+<text transform='translate(321.10,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.80</text>
+<text transform='translate(344.51,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s2.96</text>
+<text transform='translate(367.92,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.0</text>
+<text transform='translate(391.33,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.10</text>
+<text transform='translate(414.74,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.12</text>
+<text transform='translate(438.15,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='52.65px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.14</text>
+<text transform='translate(461.56,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.2</text>
+<text transform='translate(484.98,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.4</text>
+<text transform='translate(508.39,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.6</text>
+<text transform='translate(531.80,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s3.8</text>
+<text transform='translate(555.21,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s4.0</text>
+<text transform='translate(578.62,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s4.1</text>
+<text transform='translate(602.03,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s5.0</text>
+<text transform='translate(625.44,499.23) rotate(-90)' text-anchor='end' style='font-size: 8.80px; fill: #4D4D4D; font-family: Arial;' textLength='47.05px' lengthAdjust='spacingAndGlyphs'>W_a1_s6.0</text>
+<text x='376.42' y='568.23' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;' textLength='81.19px' lengthAdjust='spacingAndGlyphs'>Communicator</text>
+<text transform='translate(13.50,249.89) rotate(-90)' text-anchor='middle' style='font-size: 11.00px; font-family: Arial;' textLength='20.54px' lengthAdjust='spacingAndGlyphs'>Call</text>
 <rect x='647.24' y='193.31' width='67.28' height='113.15' style='stroke-width: 1.07; stroke: none; fill: #FFFFFF;' />
 <image width='17.28' height='86.40' x='652.72' y='214.58' preserveAspectRatio='none' xlink:href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAEsCAYAAAACUNnVAAAAyElEQVQ4jaWTwRXDIAxDJS3WGTsxPRCCBRjS9masb1kkD7zxKiIAEYTEVtUeW6VFrwrhSIi3gUa4qVrB6V5mWYgoPDUdU5EQ6tg/lXYqCIFfV4e9+t2FrNOtusxUggBHrFfos/3ocBkENy29t+Cm2a0pPZWblqVBH4OrqbA32DmHCqnps7GcQ5KlVrcBbwRoCHtwz0fngsGZw/1Ch59y9VyAxwiZ+zPFIkafGOxNqC+e830ZPsmMUL5tAa+FeUdAdETSpDHaCfkATZEkK/K9gn0AAAAASUVORK5CYII='/>
-<text x='675.47' y='304.05' style='font-size: 8.80px; font-family: Liberation Sans;' textLength='5.59px' lengthAdjust='spacingAndGlyphs'>0</text>
-<text x='675.47' y='282.62' style='font-size: 8.80px; font-family: Liberation Sans;' textLength='27.97px' lengthAdjust='spacingAndGlyphs'>25000</text>
-<text x='675.47' y='261.20' style='font-size: 8.80px; font-family: Liberation Sans;' textLength='27.97px' lengthAdjust='spacingAndGlyphs'>50000</text>
-<text x='675.47' y='239.77' style='font-size: 8.80px; font-family: Liberation Sans;' textLength='27.97px' lengthAdjust='spacingAndGlyphs'>75000</text>
-<text x='675.47' y='218.34' style='font-size: 8.80px; font-family: Liberation Sans;' textLength='33.57px' lengthAdjust='spacingAndGlyphs'>100000</text>
-<text x='652.72' y='207.96' style='font-size: 11.00px; font-family: Liberation Sans;' textLength='34.50px' lengthAdjust='spacingAndGlyphs'>NCalls</text>
+<text x='675.47' y='304.05' style='font-size: 8.80px; font-family: Arial;' textLength='5.59px' lengthAdjust='spacingAndGlyphs'>0</text>
+<text x='675.47' y='282.62' style='font-size: 8.80px; font-family: Arial;' textLength='27.97px' lengthAdjust='spacingAndGlyphs'>25000</text>
+<text x='675.47' y='261.20' style='font-size: 8.80px; font-family: Arial;' textLength='27.97px' lengthAdjust='spacingAndGlyphs'>50000</text>
+<text x='675.47' y='239.77' style='font-size: 8.80px; font-family: Arial;' textLength='27.97px' lengthAdjust='spacingAndGlyphs'>75000</text>
+<text x='675.47' y='218.34' style='font-size: 8.80px; font-family: Arial;' textLength='33.57px' lengthAdjust='spacingAndGlyphs'>100000</text>
+<text x='652.72' y='207.96' style='font-size: 11.00px; font-family: Arial;' textLength='34.50px' lengthAdjust='spacingAndGlyphs'>NCalls</text>
 <line x1='652.72' y1='300.84' x2='656.17' y2='300.84' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
 <line x1='652.72' y1='279.41' x2='656.17' y2='279.41' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
 <line x1='652.72' y1='257.99' x2='656.17' y2='257.99' style='stroke-width: 0.38; stroke: #FFFFFF; stroke-linecap: butt;' />
