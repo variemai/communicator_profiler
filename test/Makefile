@@ -16,5 +16,6 @@ all:
 	mpicc -g -L$(LIBPATH) alltoallv.c -o alltoallv.out  -lmcpt
 	mpicc -g -L$(LIBPATH) cart_sub.c -o cart_sub.out  -lmcpt
 	mpicc -g -L$(LIBPATH) tuwqsort.c -o tuwqsort.out  -lmcpt
+	mpicc -g -L$(LIBPATH) wait.c -o wait.out  -lmcpt
 
 # end

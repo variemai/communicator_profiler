@@ -532,7 +532,7 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count, datatype, Isend, t_elapsed, 0);
     request_list[rq_index].req = request;
-    request_list[rq_index].comm = &comm;
+    request_list[rq_index].comm = comm;
     rq_index++;
     return ret;
 }
@@ -607,7 +607,7 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count,datatype,Irecv,t_elapsed,0);
     request_list[rq_index].req = request;
-    request_list[rq_index].comm = &comm;
+    request_list[rq_index].comm = comm;
     rq_index++;
     /* PMPI_Type_size(datatype, &size); */
     /* if ( flag  ){ */
@@ -1292,8 +1292,33 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     ret = PMPI_Wait(request, status);
     t_elapsed = MPI_Wtime() - t_elapsed;
     for ( i =0; i<rq_index; i++ ){
-        if ( *request == *request_list[i].req ){
-            profile_this(*request_list[i].comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+        if (  request_list[i].req == request ){
+            profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+        }
+    }
+    return ret;
+}
+
+int
+MPI_Waitall(int count, MPI_Request *array_of_requests, MPI_Status *array_of_statuses)
+{
+
+    int ret;
+    double t_elapsed;
+    int i,j;
+    int flag = 0;
+    t_elapsed = MPI_Wtime();
+    ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
+    t_elapsed = MPI_Wtime() - t_elapsed;
+    for ( j =0; j<count; j++  ){
+        if ( flag )
+            break;
+        for ( i =0; i<rq_index; i++ ){
+            if (  *request_list[i].req == array_of_requests[j] ){
+                profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+                flag = 1;
+                break;
+            }
         }
     }
     return ret;

@@ -59,7 +59,7 @@ typedef struct profiler_attributes{
 
 typedef struct request_data{
     MPI_Request *req;
-    MPI_Comm *comm;
+    MPI_Comm comm;
 }rq;
 
 /* Globals */
