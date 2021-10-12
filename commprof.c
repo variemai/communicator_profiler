@@ -614,6 +614,10 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count,datatype,Irecv,t_elapsed,0);
+    if (rq_index == world_sz){
+        request_list = (rq*) malloc (sizeof(rq)*world_sz*world_sz);
+        world_sz = world_sz*world_sz;
+    }
     request_list[rq_index].req = request;
     request_list[rq_index].comm = comm;
     rq_index++;
