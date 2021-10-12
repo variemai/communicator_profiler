@@ -1310,25 +1310,27 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
 int
 MPI_Waitall(int count, MPI_Request *array_of_requests, MPI_Status *array_of_statuses)
 {
-
     int ret;
     double t_elapsed;
     int i,j;
     int flag = 0;
+    MPI_Request *tmp;
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    /* for ( j =0; j<count; j++  ){ */
-    /*     if ( flag ) */
-    /*         break; */
+    tmp = array_of_requests;
+    for ( j =0; j<count; j++  ){
+        if ( flag )
+            break;
         for ( i =0; i<rq_index; i++ ){
-            if (  *request_list[i].req == array_of_requests[0] ){
+            if (  request_list[i].req != NULL && *request_list[i].req == *tmp ){
                 profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
                 flag = 1;
                 break;
             }
         }
-    /* } */
+        tmp++;
+    }
     return ret;
 }
 
