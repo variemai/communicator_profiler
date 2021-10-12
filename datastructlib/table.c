@@ -29,7 +29,7 @@ T Table_new(int32_t hint, int32_t cmp(const void *x,const void *y),
     T table;
     int i;
     static int primes [] = {251, 509, 1021, 2053, 4093, 8191, 16381, 32771,
-    65521, INT_MAX};
+    65521,127913, INT_MAX};
     assert( hint >= 0);
     for ( i = 1; primes[i] < hint; i++ )
         ;
@@ -124,18 +124,38 @@ void** Table_toArray(T table, void* end){
     struct binding *p;
     assert(table);
     j = 0;
-    /* array = ALLOC((2*table->length + 1)*sizeof(*array)); */
-    array = ALLOC((table->length + 1)*sizeof(*array));
+    array = ALLOC((2*table->length + 1)*sizeof(*array));
     if ( array == NULL ){
         fprintf(stderr,"ALLOC %d\n",__LINE__);
     }
     for (i = 0; i < table->size; i++) {
         for (p = table->buckets[i]; p; p=p->link) {
+            array[j++] = (void*)p->key;
             array[j++] = p->value;
         }
     }
     array[j] = end;
     return array;
+}
+
+void *Table_remove(T table, const void *key) {
+    int i;
+    struct binding **pp;
+
+    assert(table);
+    assert(key);
+    table->timestamp++;
+    i = (*table->hash)(key)%table->size;
+    for (pp = &table->buckets[i]; *pp; pp = &(*pp)->link)
+        if ((*table->cmp)(key, (*pp)->key) == 0) {
+            struct binding *p = *pp;
+            void *value = p->value;
+            *pp = p->link;
+            FREE(p);
+            table->length--;
+            return value;
+        }
+    return NULL;
 }
 
 

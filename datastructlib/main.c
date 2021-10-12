@@ -19,6 +19,11 @@ typedef struct _node{
     struct _node *next;
 }node;
 
+typedef struct fuck_my_life{
+    const char* key;
+    int* value;
+}fml;
+
 node* head;
 
 void newNode(const char *n){
@@ -44,15 +49,16 @@ int compare(const void *x, const void *y) {
 }
 
 int main(int32_t argc, char const *argv[]){
-	uint32_t i;
-	const char *strn;
-	clock_t begin,end;
-	double time_spent;
-    char **buf;
+	/* uint32_t i; */
+	/* const char *strn; */
+	/* clock_t begin,end; */
+	/* double time_spent; */
+    /* char **buf; */
+    int length,i;
     const char *com0, *com1, *com2, *com3;
     int* b_com0, *b_com1, *b_com2, *b_com3, *count;
     void** array;
-    List_T lista;
+    /* List_T lista; */
     Table_T table;
     table = Table_new(5,NULL,NULL);
     com0=Atom_string("com0");
@@ -85,25 +91,27 @@ int main(int32_t argc, char const *argv[]){
     count = Table_put(table,com0,b_com0);
     if ( count  )
         *count = (*count) + (*b_com0);
+    /* Table_remove(table, com2); */
     Table_map(table,apply_print,NULL);
+    /* printf("%s\n",com2); */
+    length = Table_length(table);
     array = Table_toArray(table, NULL);
     printf("Table length = %d\n",Table_length(table));
-    qsort(array, Table_length(table), 2*sizeof (*array),
-       compare);
+    /* qsort(array, Table_length(table), 2*sizeof (*array), */
+    /*    compare); */
    for (i = 0; array[i]; i += 2)
-       printf("%d\t%s\n", *(int *)array[i+1],
-              (char *)array[i]);
-	strn="paparia";
-	begin=clock();
-	for(i=0; i<1000; i++){
-		Atom_new(strn,7);
-	}
-	end=clock();
-	time_spent=(double)(end-begin)/CLOCKS_PER_SEC;
+       printf("%d\t%s\n", *(int *)array[i+1],(char *)array[i]);
+	/* strn="paparia"; */
+	/* begin=clock(); */
+	/* for(i=0; i<1000; i++){ */
+	/* 	Atom_new(strn,7); */
+	/* } */
+	/* end=clock(); */
+	/* time_spent=(double)(end-begin)/CLOCKS_PER_SEC; */
 	/* printf("%f\n",time_spent); */
-    buf=ALLOC(10*sizeof(char*));
-    buf[0]="PEOS";
-    lista=List_list("arxodoa", "malakies", "kala", NULL);
+    /* buf=ALLOC(10*sizeof(char*)); */
+    /* buf[0]="PEOS"; */
+    /* lista=List_list("arxodoa", "malakies", "kala", NULL); */
     /* printf("%d\n",List_length(lista)); */
     /* List_map(lista,applyPrint,NULL); */
     return 0;
