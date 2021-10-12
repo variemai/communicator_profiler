@@ -21,6 +21,7 @@ int ac;
 char *av[MAX_ARGS];
 rq* request_list = NULL;
 int rq_index = 0;
+int world_sz;
 
 
 static int
@@ -172,6 +173,7 @@ _MPI_Init(int *argc, char ***argv){
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     request_list = (rq*) malloc ( sizeof(rq)*size*size );
+    world_sz = size*size;
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
         local_comms[i] = NULL;
@@ -217,6 +219,8 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    request_list = (rq*) malloc ( sizeof(rq)*size*size );
+    world_sz = size*size;
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
         local_comms[i] = NULL;
@@ -531,6 +535,10 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
     ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count, datatype, Isend, t_elapsed, 0);
+    if (rq_index == world_sz){
+        request_list = (rq*) malloc (sizeof(rq)*world_sz*world_sz);
+        world_sz = world_sz*world_sz;
+    }
     request_list[rq_index].req = request;
     request_list[rq_index].comm = comm;
     rq_index++;
