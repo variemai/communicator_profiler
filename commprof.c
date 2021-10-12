@@ -1308,7 +1308,7 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
 }
 
 int
-MPI_Waitall(int count, MPI_Request *array_of_requests, MPI_Status *array_of_statuses)
+MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[])
 {
     int ret;
     double t_elapsed;
@@ -1318,7 +1318,7 @@ MPI_Waitall(int count, MPI_Request *array_of_requests, MPI_Status *array_of_stat
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    tmp = array_of_requests;
+    /* tmp = array_of_requests; */
     for ( j =0; j<count; j++  ){
         if ( flag )
             break;
@@ -1329,7 +1329,7 @@ MPI_Waitall(int count, MPI_Request *array_of_requests, MPI_Status *array_of_stat
                 break;
             /* } */
         }
-        tmp++;
+        /* tmp++; */
     }
     return ret;
 }
