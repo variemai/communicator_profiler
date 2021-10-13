@@ -9,6 +9,7 @@
 #include <time.h>
 #include <unistd.h>
 #include "symbols.h"
+#include "table.h"
 #define MAX_ARGS 1024
 #define MAX_DIMS 8
 
@@ -19,9 +20,10 @@ int local_cid= 0;
 int my_coms = 1;
 int ac;
 char *av[MAX_ARGS];
-rq* request_list = NULL;
-int rq_index = 0;
-int world_sz;
+/* rq* request_list = NULL; */
+/* int rq_index = 0; */
+/* int world_sz; */
+Table_T request_tab;
 
 
 static int
@@ -172,8 +174,11 @@ _MPI_Init(int *argc, char ***argv){
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
-    request_list = (rq*) malloc ( sizeof(rq)*size*size );
-    world_sz = size*size;
+
+    /* request_list = (rq*) malloc ( sizeof(rq)*size*size ); */
+    /* world_sz = size*size; */
+    request_tab = Table_new(1024, NULL, NULL);
+
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
         local_comms[i] = NULL;
@@ -219,8 +224,11 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
-    request_list = (rq*) malloc ( sizeof(rq)*size*size );
-    world_sz = size*size;
+
+    /* request_list = (rq*) malloc ( sizeof(rq)*size*size ); */
+    /* world_sz = size*size; */
+    request_tab = Table_new(1024, NULL, NULL);
+
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
         local_comms[i] = NULL;
@@ -536,13 +544,14 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
     ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count, datatype, Isend, t_elapsed, 0);
-    if (rq_index == world_sz){
-        request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz);
-        world_sz = world_sz*world_sz;
-    }
-    request_list[rq_index].req = request;
-    request_list[rq_index].comm = comm;
-    rq_index++;
+    Table_put(request_tab, request, comm);
+    /* if (rq_index == world_sz){ */
+    /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
+    /*     world_sz = world_sz*world_sz; */
+    /* } */
+    /* request_list[rq_index].req = request; */
+    /* request_list[rq_index].comm = comm; */
+    /* rq_index++; */
     return ret;
 }
 
@@ -615,20 +624,14 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count,datatype,Irecv,t_elapsed,0);
-    if (rq_index == world_sz){
-        request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz);
-        world_sz = world_sz*world_sz;
-    }
-    request_list[rq_index].req = request;
-    request_list[rq_index].comm = comm;
-    rq_index++;
-    /* PMPI_Type_size(datatype, &size); */
-    /* if ( flag  ){ */
-    /*     sum = count*size; */
-    /*     communicator->prim_bytes[Irecv] += sum; */
-    /*     communicator->prims[Irecv] += 1; */
-    /*     communicator->msgs += 1; */
+    Table_put(request_tab, request, comm);
+    /* if (rq_index == world_sz){ */
+    /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
+    /*     world_sz = world_sz*world_sz; */
     /* } */
+    /* request_list[rq_index].req = request; */
+    /* request_list[rq_index].comm = comm; */
+    /* rq_index++; */
     return ret;
 }
 
@@ -1109,10 +1112,10 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         tmp++;
     }
     communicator = profile_this(comm, sum, recvtype, Gatherv, t_elapsed, root);
-    if ( root == rank ){
-        communicator->bytes += sum;
-        communicator->prim_bytes[Gatherv] += sum;
-    }
+    /* if ( root == rank ){ */
+    /*     communicator->bytes += sum; */
+    /*     communicator->prim_bytes[Gatherv] += sum; */
+    /* } */
     return ret;
 }
 
@@ -1163,10 +1166,10 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
         tmp++;
     }
     communicator = profile_this(comm, sum, sendtype, Scatterv, t_elapsed, root);
-    if ( rank == root ){
-        communicator->bytes += sum;
-        communicator->prim_bytes[Scatterv] += sum;
-    }
+    /* if ( rank == root ){ */
+    /*     communicator->bytes += sum; */
+    /*     communicator->prim_bytes[Scatterv] += sum; */
+    /* } */
     return ret;
 }
 
@@ -1300,15 +1303,22 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
 {
     int ret;
     double t_elapsed;
-    int i;
+    /* int i; */
+    MPI_Comm comm = NULL;
     t_elapsed = MPI_Wtime();
     ret = PMPI_Wait(request, status);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    for ( i =0; i<rq_index; i++ ){
-        if (  request_list[i].req == request ){
-            profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
-        }
+    comm = Table_remove(request_tab, request);
+    if ( comm == NULL ){
+        fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n");
+        return ret;
     }
+    profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+    /* for ( i =0; i<rq_index; i++ ){ */
+    /*     if (  request_list[i].req == request ){ */
+    /*         profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0); */
+    /*     } */
+    /* } */
     return ret;
 }
 
@@ -1317,25 +1327,28 @@ MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_stat
 {
     int ret;
     double t_elapsed;
-    int i,j;
-    MPI_Request *tmp;
-    int flag = 0;
+    /* int i,j; */
+    /* MPI_Request *tmp; */
+    /* int flag = 0; */
+    MPI_Comm comm;
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    tmp = array_of_requests;
-    for ( j =0; j<count; j++  ){
-        if ( flag )
-            break;
-        for ( i =0; i<rq_index; i++ ){
-            if (  request_list[i].req == tmp  ){
-                profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
-                flag = 1;
-                break;
-            }
-        }
-        tmp++;
-    }
+    comm = Table_remove(request_tab, array_of_requests[0]);
+    profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+    /* tmp = array_of_requests; */
+    /* for ( j =0; j<count; j++  ){ */
+    /*     if ( flag ) */
+    /*         break; */
+    /*     for ( i =0; i<rq_index; i++ ){ */
+    /*         if (  request_list[i].req == tmp  ){ */
+    /*             profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
+    /*             flag = 1; */
+    /*             break; */
+    /*         } */
+    /*     } */
+    /*     tmp++; */
+    /* } */
     return ret;
 }
 
@@ -1641,6 +1654,7 @@ _Finalize()
         free(uprims_bytes);
         free(utime_info);
         fclose(fp);
+        Table_free(&request_tab);
     }
     /* free(request_list); */
     return PMPI_Finalize();
