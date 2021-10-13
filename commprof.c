@@ -1307,6 +1307,9 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     MPI_Comm comm = NULL;
     t_elapsed = MPI_Wtime();
     ret = PMPI_Wait(request, status);
+    if ( *request == MPI_REQUEST_NULL ){
+        return ret;
+    }
     t_elapsed = MPI_Wtime() - t_elapsed;
     comm = Table_remove(request_tab, request);
     if ( comm == NULL ){
@@ -1327,15 +1330,31 @@ MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_stat
 {
     int ret;
     double t_elapsed;
-    /* int i,j; */
+    int i,j,found;
     /* MPI_Request *tmp; */
     /* int flag = 0; */
+    MPI_Comm *comms;
     MPI_Comm comm;
+    comms = (MPI_Comm*) malloc ( sizeof(MPI_Comm)*count );
+
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    comm = Table_remove(request_tab, array_of_requests[0]);
-    profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+    j = 0;
+    memset(comms, 0, sizeof(MPI_Comm)*count);
+    for ( i =0; i<count; i++ ){
+        comm = Table_remove(request_tab, &array_of_requests[i]);
+        found = 0;
+        if ( comm != NULL ){
+            for ( j=0; j<count; j++  ){
+                if ( comm == comms[j] )
+                    found = 1;
+            }
+            if ( !found )
+                profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+        }
+    }
+    free(comms);
     /* tmp = array_of_requests; */
     /* for ( j =0; j<count; j++  ){ */
     /*     if ( flag ) */
