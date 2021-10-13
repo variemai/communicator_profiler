@@ -19,7 +19,7 @@ SHLIB: $(OBJS)
 	$(CC) $(CFLAGS) $(LIBFLAGS) $(OBJS) -o libciface.so
 
 $(MAIN): $(OBJS) main.c
-	$(CC) $(CFLAGS) main.c -o $(MAIN) $(OBJS)
+	mpicc $(CFLAGS) main.c -o $(MAIN) $(OBJS)
 
 LIB: $(OBJS)
 	$(AR) libciface.a $(OBJS)

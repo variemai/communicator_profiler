@@ -293,7 +293,8 @@ F77_MPI_INIT (int *ierr)
 int
 MPI_Init(int *argc, char ***argv)
 {
-    getProcCmdLine (&ac, av);
+    if ( argc != NULL  )
+        getProcCmdLine (&ac, av);
     return _MPI_Init(argc, argv);
 }
 
