@@ -3,10 +3,10 @@
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 <head>
-<!-- 2021-09-16 Thu 14:12 -->
+<!-- 2021-10-15 Fri 00:32 -->
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Documentation: MPI Communicator Profiling Tool</title>
+<title>MPI Communicator Profiling Tool</title>
 <meta name="author" content="Ioannis Vardas" />
 <meta name="generator" content="Org Mode" />
 <style>
@@ -202,68 +202,80 @@ pre.src:hover:before { display: none; }
 </head>
 <body>
 <div id="content" class="content">
-<h1 class="title">Documentation: MPI Communicator Profiling Tool</h1>
+<h1 class="title">MPI Communicator Profiling Tool</h1>
 <div id="table-of-contents" role="doc-toc">
 <h2>Table of Contents</h2>
 <div id="text-table-of-contents" role="doc-toc">
 <ul>
-<li><a href="#orgf08ae4a">Overview</a>
+<li><a href="#org1f099ef">Overview</a>
 <ul>
-<li><a href="#orgf1913ff">Specifications</a></li>
+<li><a href="#org953fa4d">Specifications</a></li>
 </ul>
 </li>
-<li><a href="#org3ae3c48">Installation</a>
+<li><a href="#orge0b835a">Installation</a>
 <ul>
-<li><a href="#org88fc480">Dependencies</a></li>
-<li><a href="#org6bcea69">Compile</a></li>
-<li><a href="#orgb254c2d">Tests</a></li>
+<li><a href="#org687b05c">Dependencies</a></li>
+<li><a href="#org7724104">Compile</a></li>
+<li><a href="#orgdebac7e">Tests</a></li>
 </ul>
 </li>
-<li><a href="#org39c31fd">Usage</a>
+<li><a href="#org585fb94">Usage</a>
 <ul>
-<li><a href="#orgdf10125">Output</a></li>
-</ul>
-</li>
-<li><a href="#org6c4222f">Implementation</a>
+<li><a href="#org2ed840f">Output</a>
 <ul>
-<li><a href="#orgb611acd">Basic idea</a></li>
-<li><a href="#orgb59eec0">Supported Communicator Primitives</a></li>
-<li><a href="#org0bad937">Unsupported Communicator Primitives</a></li>
-<li><a href="#orgc05d227">Communicator Primitives not yet implemented</a></li>
-<li><a href="#org2957e7f">Supported MPI Collective communication Primitives</a></li>
-<li><a href="#orgfa46c1c">Supported MPI Point to Point Primitives</a></li>
-<li><a href="#orga6df653">Communicator creator primitives profiling</a>
-<ul>
-<li><a href="#orgf10dcdf">Profiling MPI_Comm_split</a></li>
-<li><a href="#org08dcd40">Profiling MPI_Cart_create</a></li>
+<li><a href="#org66ca6c8">Header</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li><a href="#org4b3a635">Future Work</a>
+<li><a href="#org9714d01">Implementation</a>
 <ul>
-<li><a href="#orgd449226"><span class="todo TODO">TODO</span> Describe Cart Sub implementations</a></li>
-<li><a href="#orgb58a7fc"><span class="todo TODO">TODO</span> Remove unnecessary parts of code</a></li>
-<li><a href="#org219751f"><span class="todo TODO">TODO</span> Free memory</a></li>
-<li><a href="#orgec0a85f"><span class="todo HOLD">HOLD</span> Keep only the name in the communicator with Comm_set_attr</a></li>
-<li><a href="#org1871f91"><span class="todo TODO">TODO</span> Cleanup code</a></li>
+<li><a href="#org09acddf">Basic idea</a></li>
+<li><a href="#orgd3c7ddb">Supported Communicator Primitives</a></li>
+<li><a href="#org5d60768">Unsupported Communicator Primitives</a></li>
+<li><a href="#orgd52d58f"><span class="todo TODO">TODO</span> Supported Communicator Primitives</a></li>
+<li><a href="#org6e10987"><span class="done DONE">DONE</span> Supported MPI Collective communication Primitives</a></li>
+<li><a href="#org11ebab3">Supported MPI Point to Point Primitives</a></li>
+<li><a href="#orga9f82f3">Other MPI calls</a></li>
+<li><a href="#org488eb53">Communicator creator primitives profiling</a>
+<ul>
+<li><a href="#org0bdd72a">Profiling MPI_Comm_create</a></li>
+<li><a href="#orge018e45">Profiling MPI_Comm_split</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#orgdcd5bde">Contribute</a>
+<ul>
+<li><a href="#org638c8bc">How to add a new primitive for profiling</a></li>
+</ul>
+</li>
+<li><a href="#orga055119">Future Work</a>
+<ul>
+<li><a href="#org137b1e5"><span class="done DONE">DONE</span> Describe Cart Sub implementations</a></li>
+<li><a href="#orgd3cd7bd"><span class="done DONE">DONE</span> Add timing for primitives</a></li>
+<li><a href="#orgd3f874e"><span class="done DONE">DONE</span> Remove unnecessary parts of code</a></li>
+<li><a href="#org737ff12"><span class="todo TODO">TODO</span> Free memory</a></li>
+<li><a href="#orgff203e1"><span class="todo HOLD">HOLD</span> Keep only the name in the communicator with Comm_set_attr</a></li>
+<li><a href="#org9f4b536"><span class="done DONE">DONE</span> Cleanup code</a></li>
+<li><a href="#org3616bcb"><span class="done DONE">DONE</span> How to add a new primitive</a></li>
+<li><a href="#orgedc51b3"><span class="done DONE">DONE</span> Add Recv and Irecv operations</a></li>
 </ul>
 </li>
 </ul>
 </div>
 </div>
 
-
-<div id="outline-container-orgf08ae4a" class="outline-2">
-<h2 id="orgf08ae4a">Overview</h2>
-<div class="outline-text-2" id="text-orgf08ae4a">
+<div id="outline-container-org1f099ef" class="outline-2">
+<h2 id="org1f099ef">Overview</h2>
+<div class="outline-text-2" id="text-org1f099ef">
 <p>
 The main idea of this tool is to provide accurate information about the MPI Communicators via profiling with low overhead.
 </p>
 </div>
-<div id="outline-container-orgf1913ff" class="outline-3">
-<h3 id="orgf1913ff">Specifications</h3>
-<div class="outline-text-3" id="text-orgf1913ff">
+<div id="outline-container-org953fa4d" class="outline-3">
+<h3 id="org953fa4d">Specifications</h3>
+<div class="outline-text-3" id="text-org953fa4d">
 <ol class="org-ol">
 <li>Communicator related information (calls, tree)</li>
 <li>Data traffic (Bytes sent) in every communicator</li>
@@ -272,60 +284,68 @@ The main idea of this tool is to provide accurate information about the MPI Comm
 </div>
 </div>
 </div>
-<div id="outline-container-org3ae3c48" class="outline-2">
-<h2 id="org3ae3c48">Installation</h2>
-<div class="outline-text-2" id="text-org3ae3c48">
+<div id="outline-container-orge0b835a" class="outline-2">
+<h2 id="orge0b835a">Installation</h2>
+<div class="outline-text-2" id="text-orge0b835a">
 </div>
-<div id="outline-container-org88fc480" class="outline-3">
-<h3 id="org88fc480">Dependencies</h3>
-<div class="outline-text-3" id="text-org88fc480">
+<div id="outline-container-org687b05c" class="outline-3">
+<h3 id="org687b05c">Dependencies</h3>
+<div class="outline-text-3" id="text-org687b05c">
 <ol class="org-ol">
 <li>MPI version bla bla bla</li>
 </ol>
 </div>
 </div>
-<div id="outline-container-org6bcea69" class="outline-3">
-<h3 id="org6bcea69">Compile</h3>
-<div class="outline-text-3" id="text-org6bcea69">
+<div id="outline-container-org7724104" class="outline-3">
+<h3 id="org7724104">Compile</h3>
+<div class="outline-text-3" id="text-org7724104">
 <ol class="org-ol">
 <li>Get the tool from here www.bla.org</li>
 <li>Compile with bla</li>
 </ol>
 </div>
 </div>
-<div id="outline-container-orgb254c2d" class="outline-3">
-<h3 id="orgb254c2d">Tests</h3>
-<div class="outline-text-3" id="text-orgb254c2d">
+<div id="outline-container-orgdebac7e" class="outline-3">
+<h3 id="orgdebac7e">Tests</h3>
+<div class="outline-text-3" id="text-orgdebac7e">
 <p>
 Run the tests blablabla
 </p>
 </div>
 </div>
 </div>
-<div id="outline-container-org39c31fd" class="outline-2">
-<h2 id="org39c31fd">Usage</h2>
-<div class="outline-text-2" id="text-org39c31fd">
-<div class="org-src-container">
-<pre class="src src-shell"><span style="color: #FCCE7B;">echo</span> <span style="color: #7bc275;">"Techincal documentation using Emacs &lt;3"</span>
-</pre>
+<div id="outline-container-org585fb94" class="outline-2">
+<h2 id="org585fb94">Usage</h2>
+<div class="outline-text-2" id="text-org585fb94">
 </div>
-</div>
-<div id="outline-container-orgdf10125" class="outline-3">
-<h3 id="orgdf10125">Output</h3>
-<div class="outline-text-3" id="text-orgdf10125">
+<div id="outline-container-org2ed840f" class="outline-3">
+<h3 id="org2ed840f">Output</h3>
+<div class="outline-text-3" id="text-org2ed840f">
 <p>
-Output file name &ldquo;profiler_stats.txt&rdquo;
+Output file name &ldquo;profiler_data.csv&rdquo;. If this file exists it will be overwritten.
 </p>
 </div>
+<div id="outline-container-org66ca6c8" class="outline-4">
+<h4 id="org66ca6c8">Header</h4>
+<div class="outline-text-4" id="text-org66ca6c8">
+<ul class="org-ul">
+<li>MPI Version and MPI Implementation</li>
+<li>Application name and arguments</li>
+<li>Number of processes</li>
+<li>Machine Name of Process 0</li>
+<li>Date of the Run</li>
+</ul>
 </div>
 </div>
-<div id="outline-container-org6c4222f" class="outline-2">
-<h2 id="org6c4222f">Implementation</h2>
-<div class="outline-text-2" id="text-org6c4222f">
 </div>
-<div id="outline-container-orgb611acd" class="outline-3">
-<h3 id="orgb611acd">Basic idea</h3>
-<div class="outline-text-3" id="text-orgb611acd">
+</div>
+<div id="outline-container-org9714d01" class="outline-2">
+<h2 id="org9714d01">Implementation</h2>
+<div class="outline-text-2" id="text-org9714d01">
+</div>
+<div id="outline-container-org09acddf" class="outline-3">
+<h3 id="org09acddf">Basic idea</h3>
+<div class="outline-text-3" id="text-org09acddf">
 <ul class="org-ul">
 <li>Keep data for each communicator using <code>MPI_Comm_set_attr()</code>
 <ul class="org-ul">
@@ -342,9 +362,9 @@ Output file name &ldquo;profiler_stats.txt&rdquo;
 </ul>
 </div>
 </div>
-<div id="outline-container-orgb59eec0" class="outline-3">
-<h3 id="orgb59eec0">Supported Communicator Primitives</h3>
-<div class="outline-text-3" id="text-orgb59eec0">
+<div id="outline-container-orgd3c7ddb" class="outline-3">
+<h3 id="orgd3c7ddb">Supported Communicator Primitives</h3>
+<div class="outline-text-3" id="text-orgd3c7ddb">
 <ul class="org-ul">
 <li>MPI_Comm_split</li>
 <li>MPI_Comm_dup</li>
@@ -354,39 +374,69 @@ Output file name &ldquo;profiler_stats.txt&rdquo;
 </ul>
 </div>
 </div>
-<div id="outline-container-org0bad937" class="outline-3">
-<h3 id="org0bad937">Unsupported Communicator Primitives</h3>
-<div class="outline-text-3" id="text-org0bad937">
+<div id="outline-container-org5d60768" class="outline-3">
+<h3 id="org5d60768">Unsupported Communicator Primitives</h3>
+<div class="outline-text-3" id="text-org5d60768">
 <ul class="org-ul">
 <li>MPI_Comm_create_group</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-orgc05d227" class="outline-3">
-<h3 id="orgc05d227">Communicator Primitives not yet implemented</h3>
-<div class="outline-text-3" id="text-orgc05d227">
+<div id="outline-container-orgd52d58f" class="outline-3">
+<h3 id="orgd52d58f"><span class="todo TODO">TODO</span> Supported Communicator Primitives</h3>
+<div class="outline-text-3" id="text-orgd52d58f">
 <ul class="org-ul">
 <li>MPI_Graph_create</li>
 <li>MPI_Dist_graph_create</li>
 </ul>
 </div>
 </div>
-<div id="outline-container-org2957e7f" class="outline-3">
-<h3 id="org2957e7f">Supported MPI Collective communication Primitives</h3>
+<div id="outline-container-org6e10987" class="outline-3">
+<h3 id="org6e10987"><span class="done DONE">DONE</span> Supported MPI Collective communication Primitives</h3>
+<div class="outline-text-3" id="text-org6e10987">
+<ul class="org-ul">
+<li>MPI_Barrier</li>
+<li>MPI_Ibarrier</li>
+<li>MPI_Gatherv</li>
+<li>MPI_Scatter</li>
+<li>MPI_Scatterv</li>
+</ul>
 </div>
-<div id="outline-container-orgfa46c1c" class="outline-3">
-<h3 id="orgfa46c1c">Supported MPI Point to Point Primitives</h3>
 </div>
-<div id="outline-container-orga6df653" class="outline-3">
-<h3 id="orga6df653">Communicator creator primitives profiling</h3>
-<div class="outline-text-3" id="text-orga6df653">
+<div id="outline-container-org11ebab3" class="outline-3">
+<h3 id="org11ebab3">Supported MPI Point to Point Primitives</h3>
+<div class="outline-text-3" id="text-org11ebab3">
+<ul class="org-ul">
+<li>MPI_Send</li>
+<li>MPI_Isend</li>
+<li>MPI_Recv</li>
+<li>MPI_Irecv</li>
+<li>MPI_Sendrecv</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-orga9f82f3" class="outline-3">
+<h3 id="orga9f82f3">Other MPI calls</h3>
+<div class="outline-text-3" id="text-orga9f82f3">
+<ul class="org-ul">
+<li>MPI_Wait</li>
+<li>MPI_Waitall</li>
+</ul>
+</div>
+</div>
+<div id="outline-container-org488eb53" class="outline-3">
+<h3 id="org488eb53">Communicator creator primitives profiling</h3>
+<div class="outline-text-3" id="text-org488eb53">
 <p>
 The implementations of some of the communicator primitives is also included. I chose to present some of them just to give an idea of how this tool works.
 </p>
 </div>
-<div id="outline-container-orgf10dcdf" class="outline-4">
-<h4 id="orgf10dcdf">Profiling MPI_Comm_split</h4>
-<div class="outline-text-4" id="text-orgf10dcdf">
+<div id="outline-container-org0bdd72a" class="outline-4">
+<h4 id="org0bdd72a">Profiling MPI_Comm_create</h4>
+</div>
+<div id="outline-container-orge018e45" class="outline-4">
+<h4 id="orge018e45">Profiling MPI_Comm_split</h4>
+<div class="outline-text-4" id="text-orge018e45">
 <p>
 Communicator suffix includes two distinct ids:
 </p>
@@ -399,24 +449,30 @@ There are two collective calls of <code>MPI_Allreduce()</code> in order to get t
 </p>
 </div>
 <ul class="org-ul">
-<li><a id="orgd22163b"></a>Code<br />
-<div class="outline-text-5" id="text-orgd22163b">
+<li><a id="org5ed56bd"></a>Code<br />
+<div class="outline-text-5" id="text-org5ed56bd">
 <div class="org-src-container">
-<pre class="src src-c"><span style="color: #62686E;">/*</span>
-<span style="color: #62686E;"> * The naming scheme for the MPI_Comm_split requires two numbers</span>
-<span style="color: #62686E;"> * 1. current number of communicators</span>
-<span style="color: #62686E;"> * 2. a unique id for each new communicator via split</span>
-<span style="color: #62686E;"> * The prefix of this name is always the parent's name</span>
+<pre class="src src-c"><span style="color: #FCCE7B;">int</span>
+<span style="color: #5cEfFF;">MPI_Init</span><span style="color: #51afef;">(</span><span style="color: #FCCE7B;">int</span> *<span style="color: #DFDFDF;">argc</span>, <span style="color: #FCCE7B;">char</span> ***<span style="color: #DFDFDF;">argv</span><span style="color: #51afef;">)</span>
+<span style="color: #51afef;">{</span>
+    <span style="color: #51afef;">if</span> <span style="color: #C57BDB;">(</span> argc != <span style="color: #a991f1;">NULL</span>  <span style="color: #C57BDB;">)</span>
+        getProcCmdLine <span style="color: #C57BDB;">(</span>&amp;ac, av<span style="color: #C57BDB;">)</span>;
+    <span style="color: #51afef;">return</span> _MPI_Init<span style="color: #C57BDB;">(</span>argc, argv<span style="color: #C57BDB;">)</span>;
+<span style="color: #51afef;">}</span>
+
+<span style="color: #62686E;">/*</span>
+<span style="color: #62686E;"> * The naming scheme for the MPI_Comm_create is done by collecting the</span>
+<span style="color: #62686E;"> * maximum number of communicators from all processes and using it as id.</span>
+<span style="color: #62686E;"> * Use parent communicator name as prefix</span>
 <span style="color: #62686E;"> */</span>
 <span style="color: #FCCE7B;">int</span>
-<span style="color: #5cEfFF;">MPI_Comm_split</span><span style="color: #51afef;">(</span><span style="color: #FCCE7B;">MPI_Comm</span> <span style="color: #DFDFDF;">comm</span>, <span style="color: #FCCE7B;">int</span> <span style="color: #DFDFDF;">color</span>, <span style="color: #FCCE7B;">int</span> <span style="color: #DFDFDF;">key</span>, <span style="color: #FCCE7B;">MPI_Comm</span> *<span style="color: #DFDFDF;">newcomm</span><span style="color: #51afef;">)</span>
+<span style="color: #5cEfFF;">MPI_Comm_create</span><span style="color: #51afef;">(</span><span style="color: #FCCE7B;">MPI_Comm</span> <span style="color: #DFDFDF;">comm</span>, <span style="color: #FCCE7B;">MPI_Group</span> <span style="color: #DFDFDF;">group</span>, <span style="color: #FCCE7B;">MPI_Comm</span> *<span style="color: #DFDFDF;">newcomm</span><span style="color: #51afef;">)</span>
 <span style="color: #51afef;">{</span>
-    <span style="color: #FCCE7B;">int</span> <span style="color: #DFDFDF;">ret</span>,<span style="color: #DFDFDF;">comms</span>;
-    <span style="color: #FCCE7B;">prof_attrs</span> *<span style="color: #DFDFDF;">communicator</span>;
+    <span style="color: #FCCE7B;">int</span> <span style="color: #DFDFDF;">ret</span>;
+    <span style="color: #FCCE7B;">int</span> <span style="color: #DFDFDF;">comms</span>;
     <span style="color: #FCCE7B;">char</span> *<span style="color: #DFDFDF;">buf</span>;
-    <span style="color: #FCCE7B;">int</span> <span style="color: #DFDFDF;">rank</span>, <span style="color: #DFDFDF;">min_rank</span>;
-    <span style="color: #62686E;">/* </span><span style="color: #62686E;">Call the actual split</span><span style="color: #62686E;"> */</span>
-    ret = PMPI_Comm_split<span style="color: #C57BDB;">(</span>comm, color, key, newcomm<span style="color: #C57BDB;">)</span>;
+    <span style="color: #FCCE7B;">prof_attrs</span> *<span style="color: #DFDFDF;">communicator</span>;
+    ret = PMPI_Comm_create<span style="color: #C57BDB;">(</span>comm, group, newcomm<span style="color: #C57BDB;">)</span>;
     <span style="color: #62686E;">/*</span>
 <span style="color: #62686E;">     * Synchronize with other processess and get the maximum number</span>
 <span style="color: #62686E;">     * of communicators to use it an id. This must be done in the</span>
@@ -425,61 +481,78 @@ There are two collective calls of <code>MPI_Allreduce()</code> in order to get t
 <span style="color: #62686E;">     */</span>
     PMPI_Allreduce<span style="color: #C57BDB;">(</span>&amp;my_coms, &amp;comms, <span style="color: #e69055; font-weight: bold;">1</span>, <span style="color: #a991f1;">MPI_INT</span>, <span style="color: #a991f1;">MPI_MAX</span>, comm<span style="color: #C57BDB;">)</span>;
     my_coms = comms;
-    PMPI_Comm_rank<span style="color: #C57BDB;">(</span>comm, &amp;rank<span style="color: #C57BDB;">)</span>;
-    <span style="color: #51afef;">if</span> <span style="color: #C57BDB;">(</span> newcomm== <span style="color: #a991f1;">NULL</span> || *newcomm == <span style="color: #a991f1;">MPI_COMM_NULL</span>  <span style="color: #C57BDB;">){</span>
+    <span style="color: #51afef;">if</span> <span style="color: #C57BDB;">(</span> newcomm == <span style="color: #a991f1;">NULL</span> || *newcomm == <span style="color: #a991f1;">MPI_COMM_NULL</span> <span style="color: #C57BDB;">){</span>
         <span style="color: #51afef;">return</span> ret;
     <span style="color: #C57BDB;">}</span>
-    <span style="color: #62686E;">/*</span>
-<span style="color: #62686E;">     * Call Allreduce in the new communicators and get the minimum rank</span>
-<span style="color: #62686E;">     * Note that the rank is the rank from the parent communicator</span>
-<span style="color: #62686E;">     * Every new communicator will have an id based on the minimum rank</span>
-<span style="color: #62686E;">     * of a process in the parent communicator</span>
-<span style="color: #62686E;">     */</span>
-    PMPI_Allreduce<span style="color: #C57BDB;">(</span>&amp;rank, &amp;min_rank, <span style="color: #e69055; font-weight: bold;">1</span>, <span style="color: #a991f1;">MPI_INT</span>, <span style="color: #a991f1;">MPI_MIN</span>, *newcomm<span style="color: #C57BDB;">)</span>;
     <span style="color: #62686E;">/* </span><span style="color: #62686E;">Use the parent's name as a prefix for the newly created communicator</span><span style="color: #62686E;"> */</span>
     communicator = get_comm_parent<span style="color: #C57BDB;">(</span>comm<span style="color: #C57BDB;">)</span>;
-    buf = <span style="color: #C57BDB;">(</span><span style="color: #FCCE7B;">char</span>*<span style="color: #C57BDB;">)</span> malloc <span style="color: #C57BDB;">(</span> <span style="color: #51afef;">sizeof</span><span style="color: #7bc275;">(</span><span style="color: #FCCE7B;">char</span><span style="color: #7bc275;">)</span>*<span style="color: #e69055; font-weight: bold;">16</span><span style="color: #C57BDB;">)</span>;
-    <span style="color: #62686E;">/* </span><span style="color: #62686E;">Suffix of the new communicator with the two ids</span><span style="color: #62686E;"> */</span>
-    sprintf<span style="color: #C57BDB;">(</span>buf,<span style="color: #7bc275;">"_s%d.%d"</span>,my_coms,min_rank<span style="color: #C57BDB;">)</span>;
+    buf = <span style="color: #C57BDB;">(</span><span style="color: #FCCE7B;">char</span>*<span style="color: #C57BDB;">)</span> malloc <span style="color: #C57BDB;">(</span> <span style="color: #51afef;">sizeof</span><span style="color: #7bc275;">(</span><span style="color: #FCCE7B;">char</span><span style="color: #7bc275;">)</span>*<span style="color: #e69055; font-weight: bold;">8</span><span style="color: #C57BDB;">)</span>;
     <span style="color: #62686E;">/* </span><span style="color: #62686E;">Append prefix+suffix and initialize the data for the new communicator</span><span style="color: #62686E;"> */</span>
-    new_comm<span style="color: #C57BDB;">(</span>buf, &amp;communicator, comm, newcomm<span style="color: #C57BDB;">)</span>;
+    sprintf<span style="color: #C57BDB;">(</span>buf,<span style="color: #7bc275;">"_c%d"</span>,my_coms<span style="color: #C57BDB;">)</span>;
+    _new_comm<span style="color: #C57BDB;">(</span>buf, &amp;communicator, comm, newcomm<span style="color: #C57BDB;">)</span>;
     PMPI_Comm_set_attr<span style="color: #C57BDB;">(</span>*newcomm, namekey<span style="color: #7bc275;">()</span>, communicator<span style="color: #C57BDB;">)</span>;
     <span style="color: #51afef;">return</span> ret;
+<span style="color: #51afef;">}</span>
 </pre>
 </div>
 </div>
 </li>
 </ul>
 </div>
-<div id="outline-container-org08dcd40" class="outline-4">
-<h4 id="org08dcd40">Profiling MPI_Cart_create</h4>
+</div>
+</div>
+<div id="outline-container-orgdcd5bde" class="outline-2">
+<h2 id="orgdcd5bde">Contribute</h2>
+<div class="outline-text-2" id="text-orgdcd5bde">
+</div>
+<div id="outline-container-org638c8bc" class="outline-3">
+<h3 id="org638c8bc">How to add a new primitive for profiling</h3>
+<div class="outline-text-3" id="text-org638c8bc">
+<ol class="org-ol">
+<li>Increase the &ldquo;NUM_OF_PRIMS&rdquo; variable in <a href="../utils.c">../utils.c</a> file</li>
+<li>Add the new primitive as enumerated type in <a href="file:///home/vardas/repos/communicator_profiler/utils.c">file:///home/vardas/repos/communicator_profiler/utils.c</a> file</li>
+<li>Make sure that the enumerated type is the same with the char table &ldquo;prim_names&rdquo; in file <a href="file:///home/vardas/repos/communicator_profiler/utils.c">file:///home/vardas/repos/communicator_profiler/utils.c</a></li>
+<li>Write the wrapper code in  <a href="file:///home/vardas/repos/communicator_profiler/commprof.c">file:///home/vardas/repos/communicator_profiler/commprof.c</a> - use the other functions as a template
+<ol class="org-ol">
+<li>Add the Fortran wrapper for intercepting Fortran code this is an issue with OpenMPI</li>
+</ol></li>
+</ol>
 </div>
 </div>
 </div>
-<div id="outline-container-org4b3a635" class="outline-2">
-<h2 id="org4b3a635">Future Work</h2>
-<div class="outline-text-2" id="text-org4b3a635">
+<div id="outline-container-orga055119" class="outline-2">
+<h2 id="orga055119">Future Work</h2>
+<div class="outline-text-2" id="text-orga055119">
 </div>
-<div id="outline-container-orgd449226" class="outline-3">
-<h3 id="orgd449226"><span class="todo TODO">TODO</span> Describe Cart Sub implementations</h3>
+<div id="outline-container-org137b1e5" class="outline-3">
+<h3 id="org137b1e5"><span class="done DONE">DONE</span> Describe Cart Sub implementations</h3>
 </div>
-<div id="outline-container-orgb58a7fc" class="outline-3">
-<h3 id="orgb58a7fc"><span class="todo TODO">TODO</span> Remove unnecessary parts of code</h3>
+<div id="outline-container-orgd3cd7bd" class="outline-3">
+<h3 id="orgd3cd7bd"><span class="done DONE">DONE</span> Add timing for primitives</h3>
 </div>
-<div id="outline-container-org219751f" class="outline-3">
-<h3 id="org219751f"><span class="todo TODO">TODO</span> Free memory</h3>
+<div id="outline-container-orgd3f874e" class="outline-3">
+<h3 id="orgd3f874e"><span class="done DONE">DONE</span> Remove unnecessary parts of code</h3>
 </div>
-<div id="outline-container-orgec0a85f" class="outline-3">
-<h3 id="orgec0a85f"><span class="todo HOLD">HOLD</span> Keep only the name in the communicator with Comm_set_attr</h3>
+<div id="outline-container-org737ff12" class="outline-3">
+<h3 id="org737ff12"><span class="todo TODO">TODO</span> Free memory</h3>
 </div>
-<div id="outline-container-org1871f91" class="outline-3">
-<h3 id="org1871f91"><span class="todo TODO">TODO</span> Cleanup code</h3>
+<div id="outline-container-orgff203e1" class="outline-3">
+<h3 id="orgff203e1"><span class="todo HOLD">HOLD</span> Keep only the name in the communicator with Comm_set_attr</h3>
+</div>
+<div id="outline-container-org9f4b536" class="outline-3">
+<h3 id="org9f4b536"><span class="done DONE">DONE</span> Cleanup code</h3>
+</div>
+<div id="outline-container-org3616bcb" class="outline-3">
+<h3 id="org3616bcb"><span class="done DONE">DONE</span> How to add a new primitive</h3>
+</div>
+<div id="outline-container-orgedc51b3" class="outline-3">
+<h3 id="orgedc51b3"><span class="done DONE">DONE</span> Add Recv and Irecv operations</h3>
 </div>
 </div>
 </div>
 <div id="postamble" class="status">
 <p class="author">Author: Ioannis Vardas</p>
-<p class="date">Created: 2021-09-16 Thu 14:12</p>
+<p class="date">Created: 2021-10-15 Fri 00:32</p>
 </div>
 </body>
 </html>

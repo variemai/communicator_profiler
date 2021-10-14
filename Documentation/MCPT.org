@@ -5,7 +5,6 @@
 #+INCLUDE: code.inc
 #+CALL: init()
 
-
 * Overview
 The main idea of this tool is to provide accurate information about the MPI Communicators via profiling with low overhead.
 ** Specifications
@@ -21,9 +20,6 @@ The main idea of this tool is to provide accurate information about the MPI Comm
 ** Tests
 Run the tests blablabla
 * Usage
-#+begin_src shell
-echo "Techincal documentation using Emacs <3"
-#+end_src
 ** Output
 Output file name "profiler_data.csv". If this file exists it will be overwritten.
 *** Header
@@ -58,6 +54,14 @@ Output file name "profiler_data.csv". If this file exists it will be overwritten
 - MPI_Scatter
 - MPI_Scatterv
 ** Supported MPI Point to Point Primitives
+- MPI_Send
+- MPI_Isend
+- MPI_Recv
+- MPI_Irecv
+- MPI_Sendrecv
+** Other MPI calls
+- MPI_Wait
+- MPI_Waitall
 ** Communicator creator primitives profiling
 The implementations of some of the communicator primitives is also included. I chose to present some of them just to give an idea of how this tool works.
 *** Profiling MPI_Comm_create
@@ -70,14 +74,14 @@ There are two collective calls of ~MPI_Allreduce()~ in order to get the correct 
 #+INCLUDE: "../commprof.c" src c :lines "300-343"
 * Contribute
 ** How to add a new primitive for profiling
-1. Increase the "NUM_OF_PRIMS" variable in [[../utils.h::14]] file
-2. Add the new primitive as enumerated type in [[../utils.c::16]] file
-3. Make sure that the enumerated type is the same with the char table "prim_names" in file [[../utils.c::5]]
-4. Write the wrapper code in [[../commprof.c]] - use the other functions as a template
+1. Increase the "NUM_OF_PRIMS" variable in [[../utils.c][utils.c]] file
+2. Add the new primitive as enumerated type in [[../utils.c][utils.c]] file
+3. Make sure that the enumerated type is the same with the char table "prim_names" in file [[/home/vardas/repos/communicator_profiler/utils.c]]
+4. Write the wrapper code in  [[/home/vardas/repos/communicator_profiler/commprof.c]] - use the other functions as a template
    1. Add the Fortran wrapper for intercepting Fortran code this is an issue with OpenMPI
 * Future Work
 ** DONE Describe Cart Sub implementations
-** TODO Add timing for primitives
+** DONE Add timing for primitives
 ** DONE Remove unnecessary parts of code
 ** TODO Free memory
 ** HOLD Keep only the name in the communicator with Comm_set_attr
