@@ -142,9 +142,9 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
         if ( prim < Sendrecv ){
             communicator->prims[prim] += 1;
             communicator->msgs += 1;
+            communicator->prim_bytes[prim] += sum;
             if ( prim == Send || prim == Isend ){
                 communicator->bytes += sum;
-                communicator->prim_bytes[prim] += sum;
             }
         }
         else{
