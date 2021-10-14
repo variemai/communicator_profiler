@@ -1333,28 +1333,31 @@ MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_stat
     int i,j,found;
     /* MPI_Request *tmp; */
     /* int flag = 0; */
-    MPI_Comm *comms;
+    /* MPI_Comm *comms; */
     MPI_Comm comm;
-    comms = (MPI_Comm*) malloc ( sizeof(MPI_Comm)*count );
+    /* comms = (MPI_Comm*) malloc ( sizeof(MPI_Comm)*count ); */
 
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
     j = 0;
-    memset(comms, 0, sizeof(MPI_Comm)*count);
+    /* memset(comms, 0, sizeof(MPI_Comm)*count); */
     for ( i =0; i<count; i++ ){
         comm = Table_remove(request_tab, &array_of_requests[i]);
-        found = 0;
-        if ( comm != NULL ){
-            for ( j=0; j<count; j++  ){
-                if ( comm == comms[j] )
-                    found = 1;
-            }
-            if ( !found )
-                profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
-        }
+        /* found = 0; */
+        /* if ( comm != NULL ){ */
+        /*     for ( j=0; j<count; j++  ){ */
+        /*         if ( comm == comms[j] ) */
+        /*             found = 1; */
+        /*     } */
+        /*     if ( !found ) */
+        /*         profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
+        /* } */
     }
-    free(comms);
+    if ( comm != NULL ){
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+    }
+    /* free(comms); */
     /* tmp = array_of_requests; */
     /* for ( j =0; j<count; j++  ){ */
     /*     if ( flag ) */
