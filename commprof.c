@@ -177,7 +177,7 @@ _MPI_Init(int *argc, char ***argv){
 
     /* request_list = (rq*) malloc ( sizeof(rq)*size*size ); */
     /* world_sz = size*size; */
-    request_tab = Table_new(1024, NULL, NULL);
+    request_tab = Table_new(127000, NULL, NULL);
 
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
@@ -227,7 +227,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
 
     /* request_list = (rq*) malloc ( sizeof(rq)*size*size ); */
     /* world_sz = size*size; */
-    request_tab = Table_new(1024, NULL, NULL);
+    request_tab = Table_new(127000, NULL, NULL);
 
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
