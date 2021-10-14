@@ -1,4 +1,4 @@
-df<-read.csv("gromacs_64procs.csv",header=TRUE,skip=5)
+df<-read.csv("splatt_128procs_med5tns_v4.csv",header=TRUE,skip=5)
 library(ggplot2)
 p<-ggplot(data=df[df$Send_Calls > 0, ], aes(x=Comm, y=Send_Calls, fill=Comm)) +
   geom_bar(stat="identity")
@@ -31,5 +31,5 @@ g <- ggplot(df2, aes(x = Communicator, y = Call, fill = Time)) +
 #scale_fill_gradient(low="yellow",high="black",space="Lab")
 #scale_fill_gradient(low = "#ff2D00",high = "#ffffff",guide = "colorbar")
 library(svglite)
-ggsave(file="timings_splat.svg", plot=g, width=10, height=8)
+ggsave(file="splatt_128procs.svg", plot=g, width=10, height=8)
 print(g)

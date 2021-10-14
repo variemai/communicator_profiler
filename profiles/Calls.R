@@ -1,4 +1,4 @@
-df<-read.csv("gromacs_64procs.csv",header=TRUE,skip=5)
+df<-read.csv("splatt_128procs_med5tns_v4.csv",header=TRUE,skip=5)
 library(ggplot2)
 p<-ggplot(data=df[df$Send_Calls > 0, ], aes(x=Comm, y=Send_Calls, fill=Comm)) +
   geom_bar(stat="identity")
