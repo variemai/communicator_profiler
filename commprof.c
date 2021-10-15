@@ -177,7 +177,7 @@ _MPI_Init(int *argc, char ***argv){
 
     /* request_list = (rq*) malloc ( sizeof(rq)*size*size ); */
     /* world_sz = size*size; */
-    request_tab = Table_new(127000, NULL, NULL);
+    request_tab = Table_new(1024, NULL, NULL);
 
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
@@ -227,7 +227,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
 
     /* request_list = (rq*) malloc ( sizeof(rq)*size*size ); */
     /* world_sz = size*size; */
-    request_tab = Table_new(127000, NULL, NULL);
+    request_tab = Table_new(1024, NULL, NULL);
 
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
@@ -1305,12 +1305,13 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     double t_elapsed;
     /* int i; */
     MPI_Comm comm = NULL;
+
     t_elapsed = MPI_Wtime();
     ret = PMPI_Wait(request, status);
-    if ( *request == MPI_REQUEST_NULL ){
-        return ret;
-    }
     t_elapsed = MPI_Wtime() - t_elapsed;
+    /* if ( *request == MPI_REQUEST_NULL ){ */
+    /*     return ret; */
+    /* } */
     comm = Table_remove(request_tab, request);
     if ( comm == NULL ){
         fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n");
