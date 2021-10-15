@@ -1,0 +1,2380 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<ipm_job_profile>
+<calltable nsections="1" >
+<section module="MPI" nentries="69" >
+<entry name="MPI_Init" />
+<entry name="MPI_Init_thread" />
+<entry name="MPI_Finalize" />
+<entry name="MPI_Comm_rank" />
+<entry name="MPI_Comm_size" />
+<entry name="MPI_Send" />
+<entry name="MPI_Ssend" />
+<entry name="MPI_Rsend" />
+<entry name="MPI_Bsend" />
+<entry name="MPI_Isend" />
+<entry name="MPI_Issend" />
+<entry name="MPI_Irsend" />
+<entry name="MPI_Ibsend" />
+<entry name="MPI_Recv" />
+<entry name="MPI_Irecv" />
+<entry name="MPI_Sendrecv" />
+<entry name="MPI_Sendrecv_replace" />
+<entry name="MPI_Wait" />
+<entry name="MPI_Waitany" />
+<entry name="MPI_Waitall" />
+<entry name="MPI_Waitsome" />
+<entry name="MPI_Probe" />
+<entry name="MPI_Iprobe" />
+<entry name="MPI_Send_init" />
+<entry name="MPI_Ssend_init" />
+<entry name="MPI_Rsend_init" />
+<entry name="MPI_Bsend_init" />
+<entry name="MPI_Recv_init" />
+<entry name="MPI_Buffer_attach" />
+<entry name="MPI_Buffer_detach" />
+<entry name="MPI_Test" />
+<entry name="MPI_Testany" />
+<entry name="MPI_Testall" />
+<entry name="MPI_Testsome" />
+<entry name="MPI_Start" />
+<entry name="MPI_Startall" />
+<entry name="MPI_Bcast" />
+<entry name="MPI_Reduce" />
+<entry name="MPI_Reduce_scatter" />
+<entry name="MPI_Barrier" />
+<entry name="MPI_Gather" />
+<entry name="MPI_Gatherv" />
+<entry name="MPI_Scatter" />
+<entry name="MPI_Scatterv" />
+<entry name="MPI_Scan" />
+<entry name="MPI_Allgather" />
+<entry name="MPI_Allgatherv" />
+<entry name="MPI_Allreduce" />
+<entry name="MPI_Alltoall" />
+<entry name="MPI_Alltoallv" />
+<entry name="MPI_Comm_group" />
+<entry name="MPI_Comm_compare" />
+<entry name="MPI_Comm_dup" />
+<entry name="MPI_Comm_create" />
+<entry name="MPI_Comm_split" />
+<entry name="MPI_Comm_free" />
+<entry name="MPI_Ibcast" />
+<entry name="MPI_Ireduce" />
+<entry name="MPI_Ireduce_scatter" />
+<entry name="MPI_Igather" />
+<entry name="MPI_Igatherv" />
+<entry name="MPI_Iscatter" />
+<entry name="MPI_Iscatterv" />
+<entry name="MPI_Iscan" />
+<entry name="MPI_Iallgather" />
+<entry name="MPI_Iallgatherv" />
+<entry name="MPI_Iallreduce" />
+<entry name="MPI_Ialltoall" />
+<entry name="MPI_Ialltoallv" />
+</section>
+</calltable>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="0" mpi_size="64" stamp_init="1634339201.097788" stamp_final="1634339211.951851" username="vardas" allocationname="unknown" flags="0" pid="28551" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08541e+01" utime="8.79356e+00" stime="1.04252e+00" mtime="1.57823e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66377f00000000367fe156377fc3" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00540e+01" utime="8.52515e+00" stime="1.00959e+00" mtime="1.57823e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="105783" bytes="5.8207e+08" > 4.4995e-01 </func>
+<func name="MPI_Irecv" count="105783" bytes="5.7175e+08" > 4.6244e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.4068e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 2.1794e-01 </func>
+<func name="MPI_Waitany" count="75075" bytes="0.0000e+00" > 2.9774e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 1.3984e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 2.6941e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 1.9169e-04 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.9829e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.0318e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 5.9388e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="3.0000e+02" > 2.3271e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.6120e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.1287e-05 </func>
+</region>
+</regions>
+<internal rank="0" log_i="1634339211.951851" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="1" mpi_size="64" stamp_init="1634339201.098550" stamp_final="1634339211.951987" username="vardas" allocationname="unknown" flags="0" pid="28552" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08534e+01" utime="8.91001e+00" stime="8.74527e-01" mtime="1.97431e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66e57f00000000e47f8156e57f7a" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00534e+01" utime="8.63345e+00" stime="8.36091e-01" mtime="1.97431e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 5.0068e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="107785" bytes="5.6143e+08" > 4.5649e-01 </func>
+<func name="MPI_Irecv" count="107785" bytes="5.6995e+08" > 4.0349e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0522e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 6.8493e-01 </func>
+<func name="MPI_Waitany" count="77077" bytes="0.0000e+00" > 2.1620e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4986e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.9605e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.4786e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4417e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.8542e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.3981e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.8800e+02" > 2.2505e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7789e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.5817e-05 </func>
+</region>
+</regions>
+<internal rank="1" log_i="1634339211.951987" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="2" mpi_size="64" stamp_init="1634339201.098405" stamp_final="1634339211.951802" username="vardas" allocationname="unknown" flags="0" pid="28553" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08534e+01" utime="8.79607e+00" stime="1.06407e+00" mtime="2.02224e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66d67f00000000d57faa55d67f74" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00541e+01" utime="8.54364e+00" stime="1.01611e+00" mtime="2.02224e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.5730e+08" > 4.6451e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7103e+08" > 4.0320e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0597e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.1161e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.2153e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.6057e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 9.7752e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.4226e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4990e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.9264e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.3957e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.2400e+02" > 2.2468e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8147e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6056e-05 </func>
+</region>
+</regions>
+<internal rank="2" log_i="1634339211.951802" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="3" mpi_size="64" stamp_init="1634339201.098060" stamp_final="1634339211.951809" username="vardas" allocationname="unknown" flags="0" pid="28554" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08537e+01" utime="8.86576e+00" stime="8.97563e-01" mtime="2.01278e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66ee7f00000000ee7ff256ee7f09" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00536e+01" utime="8.58702e+00" stime="8.61091e-01" mtime="2.01278e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 5.9605e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 2.1458e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.8687e+08" > 4.5916e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7968e+08" > 4.3251e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0012e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 6.3739e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.0188e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5151e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.9605e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.5938e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6515e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.7989e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.4825e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="9.6000e+01" > 2.2470e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7527e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 6.9857e-05 </func>
+</region>
+</regions>
+<internal rank="3" log_i="1634339211.951809" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="4" mpi_size="64" stamp_init="1634339201.097824" stamp_final="1634339211.951533" username="vardas" allocationname="unknown" flags="0" pid="28555" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08537e+01" utime="8.86672e+00" stime="9.79140e-01" mtime="1.86519e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66bd7f00000000bc7f1e56bd7f63" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00540e+01" utime="8.61036e+00" stime="9.36775e-01" mtime="1.86519e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 2.1458e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.7455e+08" > 4.4844e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7124e+08" > 4.5238e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0644e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.4236e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.6225e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.6027e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.5974e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.5346e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5419e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.7512e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.4666e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="3.8400e+02" > 2.2398e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8838e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.7009e-05 </func>
+</region>
+</regions>
+<internal rank="4" log_i="1634339211.951533" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="5" mpi_size="64" stamp_init="1634339201.097871" stamp_final="1634339211.951571" username="vardas" allocationname="unknown" flags="0" pid="28556" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08537e+01" utime="8.89135e+00" stime="8.69982e-01" mtime="1.76324e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66fa7e00000000f17ed755fa7efd" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00536e+01" utime="8.62118e+00" stime="8.24967e-01" mtime="1.76324e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.8610e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.6863e+08" > 4.5218e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7667e+08" > 4.0975e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0064e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 4.6871e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.4965e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5094e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.0068e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.4946e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5562e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.6108e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.5507e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.2800e+02" > 2.2357e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8481e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 6.9141e-05 </func>
+</region>
+</regions>
+<internal rank="5" log_i="1634339211.951571" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="6" mpi_size="64" stamp_init="1634339201.098126" stamp_final="1634339211.951969" username="vardas" allocationname="unknown" flags="0" pid="28557" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08538e+01" utime="8.83673e+00" stime="1.01287e+00" mtime="1.60816e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66477f00000000467fd256477f9d" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00540e+01" utime="8.56780e+00" stime="9.81939e-01" mtime="1.60816e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.1458e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.6988e+08" > 4.5058e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7969e+08" > 4.4022e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.3429e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 4.2729e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.6824e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.6224e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 8.1062e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.5249e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5252e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.2738e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.5594e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.2400e+02" > 2.2304e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9220e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 6.6280e-05 </func>
+</region>
+</regions>
+<internal rank="6" log_i="1634339211.951969" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="7" mpi_size="64" stamp_init="1634339201.097872" stamp_final="1634339211.951743" username="vardas" allocationname="unknown" flags="0" pid="28558" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08539e+01" utime="8.79828e+00" stime="9.90055e-01" mtime="1.91148e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66367f00000000357f5e55367f9b" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00535e+01" utime="8.52712e+00" stime="9.45831e-01" mtime="1.91148e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 3.0994e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="6.0529e+08" > 4.5408e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.9651e+08" > 4.0142e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.9738e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 6.2653e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.3840e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5365e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.9605e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.5618e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6301e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.6055e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.6971e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.9200e+02" > 2.2297e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7837e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.7248e-05 </func>
+</region>
+</regions>
+<internal rank="7" log_i="1634339211.951743" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="8" mpi_size="64" stamp_init="1634339201.098109" stamp_final="1634339211.952098" username="vardas" allocationname="unknown" flags="0" pid="28559" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08540e+01" utime="8.84051e+00" stime="9.89043e-01" mtime="1.65455e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66167f00000000167f1d55167fd9" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00539e+01" utime="8.57923e+00" stime="9.48882e-01" mtime="1.65455e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.8610e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="5.7326e+08" > 4.5140e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.6511e+08" > 4.7740e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0267e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 4.1528e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.6334e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4812e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.9073e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.5430e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.3869e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.8659e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.5667e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.8000e+02" > 2.2299e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8004e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.7009e-05 </func>
+</region>
+</regions>
+<internal rank="8" log_i="1634339211.952098" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="9" mpi_size="64" stamp_init="1634339201.097726" stamp_final="1634339211.951145" username="vardas" allocationname="unknown" flags="0" pid="28560" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08534e+01" utime="8.89275e+00" stime="9.05124e-01" mtime="1.96353e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66307f000000002f7fbc55307f84" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00537e+01" utime="8.60234e+00" stime="8.80615e-01" mtime="1.96353e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 2.8610e-06 </func>
+<func name="MPI_Send" count="109787" bytes="5.5138e+08" > 4.5114e-01 </func>
+<func name="MPI_Irecv" count="109787" bytes="5.5664e+08" > 4.0313e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.1978e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 6.9337e-01 </func>
+<func name="MPI_Waitany" count="79079" bytes="0.0000e+00" > 2.0742e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4860e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 7.8678e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.5606e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4632e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.7884e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.6141e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="3.5200e+02" > 2.2298e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8481e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6056e-05 </func>
+</region>
+</regions>
+<internal rank="9" log_i="1634339211.951145" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="10" mpi_size="64" stamp_init="1634339201.097781" stamp_final="1634339211.951866" username="vardas" allocationname="unknown" flags="0" pid="28561" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08541e+01" utime="8.81947e+00" stime="1.00140e+00" mtime="1.52658e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66867f00000000867f9b55867fe0" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00541e+01" utime="8.55060e+00" stime="9.69548e-01" mtime="1.52658e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 4.2915e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 2.1458e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.9037e+08" > 4.5099e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.9041e+08" > 4.5095e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 8.8999e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 3.9940e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.2779e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5890e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.0014e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.7099e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.3988e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.1324e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.5646e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="6.1200e+02" > 2.2299e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9625e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 6.8665e-05 </func>
+</region>
+</regions>
+<internal rank="10" log_i="1634339211.951866" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="11" mpi_size="64" stamp_init="1634339201.097717" stamp_final="1634339211.952010" username="vardas" allocationname="unknown" flags="0" pid="28562" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08543e+01" utime="8.88144e+00" stime="8.87626e-01" mtime="1.96861e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66137f00000000137f9b55137faf" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00536e+01" utime="8.59100e+00" stime="8.62320e-01" mtime="1.96861e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.9978e+08" > 4.5761e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.9718e+08" > 3.9679e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0223e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 6.8029e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.2250e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5053e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 6.9141e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.7278e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.8018e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.7706e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.6563e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.9600e+02" > 2.2298e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7241e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6056e-05 </func>
+</region>
+</regions>
+<internal rank="11" log_i="1634339211.952010" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="12" mpi_size="64" stamp_init="1634339201.098266" stamp_final="1634339211.951602" username="vardas" allocationname="unknown" flags="0" pid="28563" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08533e+01" utime="8.83719e+00" stime="9.82277e-01" mtime="1.85475e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66187f00000000177fe856187f62" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00539e+01" utime="8.56219e+00" stime="9.57998e-01" mtime="1.85475e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 5.2452e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.8423e+08" > 4.4420e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7713e+08" > 5.0856e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0249e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.8199e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.5717e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5985e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.8120e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.6548e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4322e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.2903e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.5300e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="3.2800e+02" > 2.2337e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9339e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6294e-05 </func>
+</region>
+</regions>
+<internal rank="12" log_i="1634339211.951602" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="13" mpi_size="64" stamp_init="1634339201.098023" stamp_final="1634339211.951475" username="vardas" allocationname="unknown" flags="0" pid="28564" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08535e+01" utime="8.85451e+00" stime="9.52634e-01" mtime="2.07657e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66a67f00000000a67f2056a67f02" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00537e+01" utime="8.58314e+00" stime="9.09320e-01" mtime="2.07657e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.5464e+08" > 4.4406e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.6371e+08" > 4.0807e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.2510e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 8.1204e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.9879e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4299e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.9605e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.7287e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4942e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.8829e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.5774e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.8800e+02" > 2.2335e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8505e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.0572e-05 </func>
+</region>
+</regions>
+<internal rank="13" log_i="1634339211.951475" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="14" mpi_size="64" stamp_init="1634339201.098391" stamp_final="1634339211.950973" username="vardas" allocationname="unknown" flags="0" pid="28565" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08526e+01" utime="8.79070e+00" stime="1.03032e+00" mtime="1.31192e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66897f00000000897f6955897f70" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00540e+01" utime="8.51027e+00" stime="1.01123e+00" mtime="1.31192e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 2.8610e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.8226e+08" > 4.4454e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8324e+08" > 4.3054e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.0671e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 2.1549e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.3884e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5713e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.3828e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.7037e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6325e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 1.7977e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.5401e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="6.4800e+02" > 2.2339e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9124e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.0824e-05 </func>
+</region>
+</regions>
+<internal rank="14" log_i="1634339211.950973" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="15" mpi_size="64" stamp_init="1634339201.097787" stamp_final="1634339211.951712" username="vardas" allocationname="unknown" flags="0" pid="28566" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08539e+01" utime="8.83004e+00" stime="9.20477e-01" mtime="1.88070e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66567f00000000557fed55567f37" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00538e+01" utime="8.55106e+00" stime="8.84370e-01" mtime="1.88070e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="6.1258e+08" > 4.4975e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="6.1190e+08" > 4.3292e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0383e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 6.3274e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.1437e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5568e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.9605e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.7716e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5395e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.4756e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.6972e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="6.1600e+02" > 2.2338e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7193e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.5102e-05 </func>
+</region>
+</regions>
+<internal rank="15" log_i="1634339211.951712" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="16" mpi_size="64" stamp_init="1634339201.098259" stamp_final="1634339211.951615" username="vardas" allocationname="unknown" flags="0" pid="28567" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08534e+01" utime="8.79960e+00" stime="1.02410e+00" mtime="1.98112e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66707f000000006f7fc755707fb2" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00539e+01" utime="8.53452e+00" stime="9.90214e-01" mtime="1.98112e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.1458e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.8876e+08" > 4.5784e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7978e+08" > 4.3306e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 8.7726e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.1617e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.9161e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5061e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 2.5034e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.8239e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.7374e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.8293e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.5305e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.6400e+02" > 2.2335e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7313e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.5340e-05 </func>
+</region>
+</regions>
+<internal rank="16" log_i="1634339211.951615" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="17" mpi_size="64" stamp_init="1634339201.098319" stamp_final="1634339211.951599" username="vardas" allocationname="unknown" flags="0" pid="28568" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08533e+01" utime="8.84305e+00" stime="1.00164e+00" mtime="1.75878e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a664c7f000000004c7f1a564c7f3f" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00536e+01" utime="8.55356e+00" stime="9.76469e-01" mtime="1.75878e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 2.8610e-06 </func>
+<func name="MPI_Send" count="109787" bytes="5.6573e+08" > 4.5358e-01 </func>
+<func name="MPI_Irecv" count="109787" bytes="5.7269e+08" > 3.5801e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0560e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.0744e-01 </func>
+<func name="MPI_Waitany" count="79079" bytes="0.0000e+00" > 2.1739e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5158e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 7.8678e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.7089e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.7088e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.5320e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.5692e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.8800e+02" > 2.2332e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7289e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.4148e-05 </func>
+</region>
+</regions>
+<internal rank="17" log_i="1634339211.951599" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="18" mpi_size="64" stamp_init="1634339201.097778" stamp_final="1634339211.951926" username="vardas" allocationname="unknown" flags="0" pid="28569" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08541e+01" utime="8.77237e+00" stime="1.05911e+00" mtime="1.70720e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66d77f00000000d67f4d55d77f75" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00539e+01" utime="8.51033e+00" stime="1.01323e+00" mtime="1.70720e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="109787" bytes="5.5607e+08" > 4.5903e-01 </func>
+<func name="MPI_Irecv" count="109787" bytes="5.5986e+08" > 3.5108e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.3257e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 4.6458e-01 </func>
+<func name="MPI_Waitany" count="79079" bytes="0.0000e+00" > 2.2204e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5555e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.9073e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.7847e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4703e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.3629e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.4841e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.3200e+02" > 2.2372e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8242e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.3910e-05 </func>
+</region>
+</regions>
+<internal rank="18" log_i="1634339211.951926" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="19" mpi_size="64" stamp_init="1634339201.098193" stamp_final="1634339211.951916" username="vardas" allocationname="unknown" flags="0" pid="28570" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08537e+01" utime="8.87763e+00" stime="8.79821e-01" mtime="1.82571e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66cc7f00000000cc7fe355cc7fce" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00535e+01" utime="8.59655e+00" stime="8.45565e-01" mtime="1.82571e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 4.0531e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.8407e+08" > 4.6049e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7128e+08" > 3.8655e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.5439e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 4.9668e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.0083e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4709e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.9605e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.8870e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5562e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.3851e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.3389e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="6.0400e+02" > 2.2610e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7384e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.0333e-05 </func>
+</region>
+</regions>
+<internal rank="19" log_i="1634339211.951916" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="20" mpi_size="64" stamp_init="1634339201.097749" stamp_final="1634339211.951662" username="vardas" allocationname="unknown" flags="0" pid="28571" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08539e+01" utime="8.82167e+00" stime="1.00820e+00" mtime="1.96019e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a662d7f000000002c7fe1552d7f16" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00540e+01" utime="8.54896e+00" stime="9.79594e-01" mtime="1.96019e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 3.0994e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.8086e+08" > 4.4872e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7503e+08" > 4.4519e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.7642e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.1024e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.4923e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5631e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.6212e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.8777e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6039e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.1664e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.2500e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.6000e+02" > 2.2612e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8624e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.8201e-05 </func>
+</region>
+</regions>
+<internal rank="20" log_i="1634339211.951662" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="21" mpi_size="64" stamp_init="1634339201.097708" stamp_final="1634339211.951509" username="vardas" allocationname="unknown" flags="0" pid="28572" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08538e+01" utime="8.82038e+00" stime="9.30169e-01" mtime="1.93090e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66907f000000008f7ff456907f1d" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00537e+01" utime="8.54298e+00" stime="8.92447e-01" mtime="1.93090e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 2.8610e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.6820e+08" > 4.4832e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7406e+08" > 3.8803e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0361e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.6290e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 3.1657e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5254e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.9605e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.8360e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6468e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.7288e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.2948e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.0400e+02" > 2.2609e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8433e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.0333e-05 </func>
+</region>
+</regions>
+<internal rank="21" log_i="1634339211.951509" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="22" mpi_size="64" stamp_init="1634339201.097923" stamp_final="1634339211.951920" username="vardas" allocationname="unknown" flags="0" pid="28573" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08540e+01" utime="8.79695e+00" stime="1.01825e+00" mtime="1.94790e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a669d7f000000009c7fac559d7fa3" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00540e+01" utime="8.52759e+00" stime="9.80716e-01" mtime="1.94790e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.6097e+08" > 4.5285e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7385e+08" > 3.9814e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.2201e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.2928e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.6775e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5046e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.3828e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9910e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6659e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.6842e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.2463e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.6800e+02" > 2.2611e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9077e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.0824e-05 </func>
+</region>
+</regions>
+<internal rank="22" log_i="1634339211.951920" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="23" mpi_size="64" stamp_init="1634339201.098233" stamp_final="1634339211.951755" username="vardas" allocationname="unknown" flags="0" pid="28574" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08535e+01" utime="8.85740e+00" stime="9.19334e-01" mtime="1.71175e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66157f00000000147f3c56157fb2" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00538e+01" utime="8.56960e+00" stime="8.92365e-01" mtime="1.71175e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.9945e+08" > 4.5321e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.9163e+08" > 3.9720e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.4998e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.1871e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.3807e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4070e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 6.1989e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9860e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6206e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.7169e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.3777e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.0400e+02" > 2.2609e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8409e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.0109e-05 </func>
+</region>
+</regions>
+<internal rank="23" log_i="1634339211.951755" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="24" mpi_size="64" stamp_init="1634339201.098384" stamp_final="1634339211.951868" username="vardas" allocationname="unknown" flags="0" pid="28575" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08535e+01" utime="8.84654e+00" stime="9.86703e-01" mtime="2.13085e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66117f00000000117f4956117fb1" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00540e+01" utime="8.57476e+00" stime="9.59026e-01" mtime="2.13085e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.1458e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.7956e+08" > 4.6318e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7432e+08" > 4.1166e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0890e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 8.3707e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.5088e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5596e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.8120e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 6.0189e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4203e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.4649e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.2161e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.5200e+02" > 2.2648e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8385e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.8440e-05 </func>
+</region>
+</regions>
+<internal rank="24" log_i="1634339211.951868" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="25" mpi_size="64" stamp_init="1634339201.097708" stamp_final="1634339211.951124" username="vardas" allocationname="unknown" flags="0" pid="28576" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08534e+01" utime="8.85972e+00" stime="8.98864e-01" mtime="2.32201e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66d97f00000000d87f6656d97f15" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00537e+01" utime="8.58738e+00" stime="8.55849e-01" mtime="2.32201e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 5.0068e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.5356e+08" > 4.5903e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.6286e+08" > 3.5878e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.2311e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 9.5961e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.2898e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4541e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.9605e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 6.0830e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4203e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.4556e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.2625e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.4000e+02" > 2.2646e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8648e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.2956e-05 </func>
+</region>
+</regions>
+<internal rank="25" log_i="1634339211.951124" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="26" mpi_size="64" stamp_init="1634339201.098366" stamp_final="1634339211.951316" username="vardas" allocationname="unknown" flags="0" pid="28577" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08530e+01" utime="8.76979e+00" stime="1.06263e+00" mtime="1.73125e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66577f00000000567f5156577f84" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00543e+01" utime="8.50523e+00" stime="1.02761e+00" mtime="1.73125e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="5.7592e+08" > 4.5500e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8350e+08" > 4.1625e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 8.7280e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.9214e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.3064e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5706e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 9.7752e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9416e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4489e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.2195e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.2113e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="9.7600e+02" > 2.2647e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9959e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6771e-05 </func>
+</region>
+</regions>
+<internal rank="26" log_i="1634339211.951316" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="27" mpi_size="64" stamp_init="1634339201.097820" stamp_final="1634339211.951682" username="vardas" allocationname="unknown" flags="0" pid="28578" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08539e+01" utime="8.87062e+00" stime="9.29921e-01" mtime="1.26537e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66d97f00000000d87fa756d97f8c" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00538e+01" utime="8.58801e+00" stime="8.94343e-01" mtime="1.26537e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="109787" bytes="5.9852e+08" > 4.5354e-01 </func>
+<func name="MPI_Irecv" count="109787" bytes="5.8563e+08" > 3.8733e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 8.9660e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 1.5504e-01 </func>
+<func name="MPI_Waitany" count="79079" bytes="0.0000e+00" > 1.2334e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4964e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 6.6757e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9569e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6897e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.0446e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 1.2957e-02 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.3200e+02" > 2.2648e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7599e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.3195e-05 </func>
+</region>
+</regions>
+<internal rank="27" log_i="1634339211.951682" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="28" mpi_size="64" stamp_init="1634339201.098357" stamp_final="1634339211.951498" username="vardas" allocationname="unknown" flags="0" pid="28579" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08531e+01" utime="8.80735e+00" stime="1.02448e+00" mtime="1.72503e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a661b7f000000001a7f6a561b7fce" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00539e+01" utime="8.54000e+00" stime="9.91351e-01" mtime="1.72503e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.8892e+08" > 4.4580e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8000e+08" > 4.6712e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.1061e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 4.6682e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.4300e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4853e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.2159e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 6.0499e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4274e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.3119e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.8809e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="8.0000e+01" > 2.3074e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8719e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.3910e-05 </func>
+</region>
+</regions>
+<internal rank="28" log_i="1634339211.951498" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="29" mpi_size="64" stamp_init="1634339201.098038" stamp_final="1634339211.951833" username="vardas" allocationname="unknown" flags="0" pid="28580" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08538e+01" utime="8.85209e+00" stime="9.90211e-01" mtime="1.99671e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a669b7f00000000927fc2569b7f28" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00535e+01" utime="8.58210e+00" stime="9.44890e-01" mtime="1.99671e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="5.6273e+08" > 4.4102e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7045e+08" > 3.5151e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.1666e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.2593e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.1952e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5171e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 7.8678e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 6.1495e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5037e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.8213e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 8.3225e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.3200e+02" > 2.3073e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9506e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.3671e-05 </func>
+</region>
+</regions>
+<internal rank="29" log_i="1634339211.951833" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="30" mpi_size="64" stamp_init="1634339201.097732" stamp_final="1634339211.951448" username="vardas" allocationname="unknown" flags="0" pid="28581" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08537e+01" utime="8.83742e+00" stime="9.51176e-01" mtime="1.76779e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66307f000000002f7f7e55307f17" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00541e+01" utime="8.56158e+00" stime="9.26230e-01" mtime="1.76779e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 3.0994e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.6747e+08" > 4.4894e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7485e+08" > 3.6602e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.8131e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 6.0847e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.3611e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5128e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.0014e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 6.5355e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4489e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.4647e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 8.0826e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.2000e+02" > 2.3073e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9077e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6056e-05 </func>
+</region>
+</regions>
+<internal rank="30" log_i="1634339211.951448" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="31" mpi_size="64" stamp_init="1634339201.097807" stamp_final="1634339211.951778" username="vardas" allocationname="unknown" flags="0" pid="28582" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra01</host>
+<perf wtime="1.08540e+01" utime="8.82672e+00" stime="1.00383e+00" mtime="2.02205e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66c87f00000000c87f1255c87f04" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00536e+01" utime="8.54474e+00" stime="9.70549e-01" mtime="2.02205e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="6.0689e+08" > 4.4742e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.9954e+08" > 4.0773e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0028e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.6992e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.0708e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4627e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.7220e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 6.2909e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6682e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.6467e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 9.5472e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.8400e+02" > 2.3076e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8123e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.8440e-05 </func>
+</region>
+</regions>
+<internal rank="31" log_i="1634339211.951778" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="32" mpi_size="64" stamp_init="1634339201.091504" stamp_final="1634339211.951967" username="vardas" allocationname="unknown" flags="0" pid="10049" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08605e+01" utime="8.86318e+00" stime="1.01955e+00" mtime="1.64892e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a661f7f000000001f7f67561f7fd7" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00585e+01" utime="8.59561e+00" stime="9.76726e-01" mtime="1.64892e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 3.0994e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="5.9138e+08" > 4.4400e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8196e+08" > 4.7361e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 8.4682e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 2.7147e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.8754e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.6025e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.8120e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 1.0810e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6420e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.1341e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.8540e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="1.5600e+02" > 2.3079e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7265e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6294e-05 </func>
+</region>
+</regions>
+<internal rank="32" log_i="1634339211.951967" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="33" mpi_size="64" stamp_init="1634339201.091542" stamp_final="1634339211.951925" username="vardas" allocationname="unknown" flags="0" pid="10050" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08604e+01" utime="8.88152e+00" stime="1.02914e+00" mtime="2.15325e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66cb7f00000000cb7fb156cb7fc3" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00580e+01" utime="8.59856e+00" stime="9.91147e-01" mtime="2.15325e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.6809e+08" > 4.5041e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7822e+08" > 4.4318e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.5310e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.9144e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.8175e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5014e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 7.8678e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.4026e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5919e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.9541e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 8.2607e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.1600e+02" > 2.3078e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8958e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.4162e-05 </func>
+</region>
+</regions>
+<internal rank="33" log_i="1634339211.951925" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="34" mpi_size="64" stamp_init="1634339201.091272" stamp_final="1634339211.951393" username="vardas" allocationname="unknown" flags="0" pid="10051" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08601e+01" utime="8.83920e+00" stime="1.05776e+00" mtime="1.89096e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66227f00000000217f2e55227f9d" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00586e+01" utime="8.57493e+00" stime="1.01069e+00" mtime="1.89096e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.5690e+08" > 4.5638e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.6351e+08" > 3.5238e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0806e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.0446e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 3.3866e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5933e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.1921e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.4471e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6349e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.6450e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.7591e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.7200e+02" > 2.3084e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8218e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.8201e-05 </func>
+</region>
+</regions>
+<internal rank="34" log_i="1634339211.951393" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="35" mpi_size="64" stamp_init="1634339201.091772" stamp_final="1634339211.951679" username="vardas" allocationname="unknown" flags="0" pid="10052" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08599e+01" utime="8.88984e+00" stime="1.02960e+00" mtime="1.68073e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a665b7f000000005b7fc4555b7f24" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00580e+01" utime="8.59436e+00" stime="1.00429e+00" mtime="1.68073e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.8610e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.8505e+08" > 4.5210e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.6983e+08" > 4.2669e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.9106e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 3.0965e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.7766e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5211e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 6.9141e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.5079e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.7183e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.0760e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 9.0284e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="7.0400e+02" > 2.3047e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7837e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.0333e-05 </func>
+</region>
+</regions>
+<internal rank="35" log_i="1634339211.951679" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="36" mpi_size="64" stamp_init="1634339201.091510" stamp_final="1634339211.952154" username="vardas" allocationname="unknown" flags="0" pid="10053" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08606e+01" utime="8.85676e+00" stime="1.03779e+00" mtime="1.74732e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66407f000000003f7fa255407f21" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00585e+01" utime="8.58966e+00" stime="9.95190e-01" mtime="1.74732e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Send" count="109787" bytes="5.7880e+08" > 4.5139e-01 </func>
+<func name="MPI_Irecv" count="109787" bytes="5.7075e+08" > 4.7947e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.4724e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.1448e-01 </func>
+<func name="MPI_Waitany" count="79079" bytes="0.0000e+00" > 1.5510e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.6290e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.8120e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.4801e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5395e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.8763e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.7653e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.5600e+02" > 2.3084e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9148e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.1764e-05 </func>
+</region>
+</regions>
+<internal rank="36" log_i="1634339211.952154" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="37" mpi_size="64" stamp_init="1634339201.091739" stamp_final="1634339211.951552" username="vardas" allocationname="unknown" flags="0" pid="10054" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08598e+01" utime="8.85142e+00" stime="1.05169e+00" mtime="1.60280e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66137f00000000127f8556137f5b" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00581e+01" utime="8.55949e+00" stime="1.02346e+00" mtime="1.60280e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 3.0994e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.7295e+08" > 4.5326e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7695e+08" > 4.3305e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0378e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 3.4551e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.5501e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5307e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 6.9141e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.4369e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5061e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.1467e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 8.1635e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="6.0000e+02" > 2.3083e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8910e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.5817e-05 </func>
+</region>
+</regions>
+<internal rank="37" log_i="1634339211.951552" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="38" mpi_size="64" stamp_init="1634339201.091262" stamp_final="1634339211.951994" username="vardas" allocationname="unknown" flags="0" pid="10055" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08607e+01" utime="8.84250e+00" stime="1.01899e+00" mtime="2.02518e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a662e7f000000002e7f2a552e7f6a" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00585e+01" utime="8.57666e+00" stime="9.75328e-01" mtime="2.02518e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="5.6161e+08" > 4.5868e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7532e+08" > 4.2536e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0046e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.9649e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.5435e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.6247e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.5974e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.6229e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6873e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.8169e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.7126e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="7.8400e+02" > 2.3084e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9005e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.5115e-05 </func>
+</region>
+</regions>
+<internal rank="38" log_i="1634339211.951994" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="39" mpi_size="64" stamp_init="1634339201.091547" stamp_final="1634339211.951994" username="vardas" allocationname="unknown" flags="0" pid="10056" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08604e+01" utime="8.86161e+00" stime="1.04826e+00" mtime="2.20962e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66cb7f00000000c27fe056cb7fc5" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00581e+01" utime="8.57727e+00" stime="1.01166e+00" mtime="2.20962e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.1458e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.9675e+08" > 4.6329e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.9336e+08" > 3.8453e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0830e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 9.1147e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.3130e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5234e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.9605e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.6558e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6849e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.7258e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 9.0263e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.9600e+02" > 2.3084e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8624e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.0585e-05 </func>
+</region>
+</regions>
+<internal rank="39" log_i="1634339211.951994" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="40" mpi_size="64" stamp_init="1634339201.091669" stamp_final="1634339211.951868" username="vardas" allocationname="unknown" flags="0" pid="10057" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08602e+01" utime="8.86964e+00" stime="1.03130e+00" mtime="2.06437e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66897f00000000887f4b56897f70" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00586e+01" utime="8.59054e+00" stime="1.00047e+00" mtime="2.06437e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="5.6908e+08" > 4.4346e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7007e+08" > 4.4801e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0724e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.7411e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.6372e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4622e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.2875e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.5857e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6206e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.4778e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.7929e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.7600e+02" > 2.3084e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8290e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.9155e-05 </func>
+</region>
+</regions>
+<internal rank="40" log_i="1634339211.951868" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="41" mpi_size="64" stamp_init="1634339201.091537" stamp_final="1634339211.951889" username="vardas" allocationname="unknown" flags="0" pid="10058" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08604e+01" utime="8.87805e+00" stime="1.04835e+00" mtime="2.18425e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66597f00000000587f3f55597f18" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00581e+01" utime="8.59251e+00" stime="1.01294e+00" mtime="2.18425e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="5.5368e+08" > 4.4618e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.5887e+08" > 3.7765e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.1670e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 8.1194e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.7737e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5084e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 7.8678e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.6119e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4489e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.1866e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 8.2145e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.1200e+02" > 2.3083e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9291e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6771e-05 </func>
+</region>
+</regions>
+<internal rank="41" log_i="1634339211.951889" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="42" mpi_size="64" stamp_init="1634339201.091289" stamp_final="1634339211.951750" username="vardas" allocationname="unknown" flags="0" pid="10059" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08605e+01" utime="8.84189e+00" stime="1.01426e+00" mtime="1.68960e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66a47f00000000a37f3255a47f03" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00587e+01" utime="8.57427e+00" stime="9.71312e-01" mtime="1.68960e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.7975e+08" > 4.4954e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8272e+08" > 4.4362e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 8.8947e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.2906e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.6357e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5967e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.2875e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.6171e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5729e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.1307e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.7369e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="6.9200e+02" > 2.3083e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9744e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.0109e-05 </func>
+</region>
+</regions>
+<internal rank="42" log_i="1634339211.951750" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="43" mpi_size="64" stamp_init="1634339201.091760" stamp_final="1634339211.951556" username="vardas" allocationname="unknown" flags="0" pid="10060" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08598e+01" utime="8.89518e+00" stime="1.02473e+00" mtime="1.58671e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66d17f00000000d07ff156d17ff2" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00583e+01" utime="8.60780e+00" stime="9.92067e-01" mtime="1.58671e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="6.0336e+08" > 4.5096e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.9099e+08" > 3.9821e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0399e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 3.8067e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.5431e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5209e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 6.9141e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.6708e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6325e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.6928e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 8.2593e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.0400e+02" > 2.3120e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.7837e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.7486e-05 </func>
+</region>
+</regions>
+<internal rank="43" log_i="1634339211.951556" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="44" mpi_size="64" stamp_init="1634339201.091646" stamp_final="1634339211.951543" username="vardas" allocationname="unknown" flags="0" pid="10061" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08599e+01" utime="8.85584e+00" stime="1.02981e+00" mtime="1.64645e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66a97f00000000a87fd555a97f20" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00584e+01" utime="8.59156e+00" stime="9.78569e-01" mtime="1.64645e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.1458e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.9198e+08" > 4.4905e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8528e+08" > 4.9516e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.9595e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 3.9092e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.5038e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.6018e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.0729e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.6419e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5633e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.1538e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.4375e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="3.2800e+02" > 2.3121e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8743e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.5354e-05 </func>
+</region>
+</regions>
+<internal rank="44" log_i="1634339211.951543" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="45" mpi_size="64" stamp_init="1634339201.091544" stamp_final="1634339211.951930" username="vardas" allocationname="unknown" flags="0" pid="10062" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08604e+01" utime="8.86884e+00" stime="1.03718e+00" mtime="1.62816e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66bd7f00000000bc7f6a55bd7f2f" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00583e+01" utime="8.58233e+00" stime="1.00296e+00" mtime="1.62816e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 2.1458e-06 </func>
+<func name="MPI_Send" count="109787" bytes="5.7168e+08" > 4.5157e-01 </func>
+<func name="MPI_Irecv" count="109787" bytes="5.7356e+08" > 4.1000e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.1203e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 3.6425e-01 </func>
+<func name="MPI_Waitany" count="79079" bytes="0.0000e+00" > 2.4610e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5404e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 7.8678e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.6705e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6015e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.3296e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.8807e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="8.0800e+02" > 2.3119e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9816e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 6.9141e-05 </func>
+</region>
+</regions>
+<internal rank="45" log_i="1634339211.951930" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="46" mpi_size="64" stamp_init="1634339201.091639" stamp_final="1634339211.951565" username="vardas" allocationname="unknown" flags="0" pid="10063" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08599e+01" utime="8.84043e+00" stime="1.03417e+00" mtime="1.73361e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66627f00000000617f2455627f47" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00588e+01" utime="8.57806e+00" stime="9.83275e-01" mtime="1.73361e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Send" count="109787" bytes="5.6839e+08" > 4.5461e-01 </func>
+<func name="MPI_Irecv" count="109787" bytes="5.7518e+08" > 3.7325e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.8412e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.5877e-01 </func>
+<func name="MPI_Waitany" count="79079" bytes="0.0000e+00" > 1.5983e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5760e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.1921e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.6982e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5896e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.3208e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.5505e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.6400e+02" > 2.3120e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8600e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.0347e-05 </func>
+</region>
+</regions>
+<internal rank="46" log_i="1634339211.951565" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="47" mpi_size="64" stamp_init="1634339201.091671" stamp_final="1634339211.952008" username="vardas" allocationname="unknown" flags="0" pid="10064" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08603e+01" utime="8.86479e+00" stime="1.03075e+00" mtime="2.03593e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a667d7f000000007c7fd9557d7f86" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00581e+01" utime="8.58082e+00" stime="9.94680e-01" mtime="2.03593e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.8610e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="6.0590e+08" > 4.4990e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="6.0104e+08" > 4.4155e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0142e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.5620e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.3401e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5256e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 7.8678e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.8520e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.7135e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.5918e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 9.0873e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.6400e+02" > 2.3119e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8910e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.9155e-05 </func>
+</region>
+</regions>
+<internal rank="47" log_i="1634339211.952008" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="48" mpi_size="64" stamp_init="1634339201.091634" stamp_final="1634339211.951653" username="vardas" allocationname="unknown" flags="0" pid="10065" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08600e+01" utime="8.85544e+00" stime="1.02592e+00" mtime="1.72081e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66e37f00000000e37f4356e37f5b" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00584e+01" utime="8.59312e+00" stime="9.81235e-01" mtime="1.72081e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 3.8147e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.9797e+08" > 4.3847e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.9497e+08" > 4.2364e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.2554e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 3.4063e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.6813e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4988e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 2.0027e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.7650e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6897e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.4165e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.4236e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.0400e+02" > 2.3120e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.6979e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.8201e-05 </func>
+</region>
+</regions>
+<internal rank="48" log_i="1634339211.951653" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="49" mpi_size="64" stamp_init="1634339201.092683" stamp_final="1634339211.951484" username="vardas" allocationname="unknown" flags="0" pid="10066" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08588e+01" utime="8.88194e+00" stime="1.02433e+00" mtime="1.89208e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66b77f00000000b67fd456b77f8f" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00583e+01" utime="8.59983e+00" stime="9.88992e-01" mtime="1.89208e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 3.0994e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.8538e+08" > 4.4204e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8790e+08" > 3.8650e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.8536e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 6.3440e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.1084e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5290e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 6.9141e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.8208e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5538e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.7521e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.4952e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.0000e+02" > 2.3155e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8242e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.9870e-05 </func>
+</region>
+</regions>
+<internal rank="49" log_i="1634339211.951484" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="50" mpi_size="64" stamp_init="1634339201.092087" stamp_final="1634339211.951542" username="vardas" allocationname="unknown" flags="0" pid="10067" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08595e+01" utime="8.82947e+00" stime="1.02597e+00" mtime="1.66791e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a662e7f000000002e7fd2552e7f09" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00587e+01" utime="8.56442e+00" stime="9.86160e-01" mtime="1.66791e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="5.6158e+08" > 4.4894e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.6733e+08" > 3.6749e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0182e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 4.1764e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.2534e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5635e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 9.0599e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.8880e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4775e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.4803e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.0181e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.2400e+02" > 2.3157e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8981e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6294e-05 </func>
+</region>
+</regions>
+<internal rank="50" log_i="1634339211.951542" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="51" mpi_size="64" stamp_init="1634339201.091979" stamp_final="1634339211.952143" username="vardas" allocationname="unknown" flags="0" pid="10068" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08602e+01" utime="8.86620e+00" stime="1.05440e+00" mtime="2.10619e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66ba7f00000000ba7fed55ba7fad" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00580e+01" utime="8.57349e+00" stime="1.02316e+00" mtime="2.10619e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.8186e+08" > 4.4108e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7439e+08" > 3.8074e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.7144e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.5175e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.9963e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5291e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 7.8678e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.8157e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6921e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.8438e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.9381e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.6800e+02" > 2.3156e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8171e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.2970e-05 </func>
+</region>
+</regions>
+<internal rank="51" log_i="1634339211.952143" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="52" mpi_size="64" stamp_init="1634339201.091866" stamp_final="1634339211.951886" username="vardas" allocationname="unknown" flags="0" pid="10069" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08600e+01" utime="8.84490e+00" stime="1.05189e+00" mtime="2.25341e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a662c7f000000002c7f36552c7fee" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00583e+01" utime="8.55770e+00" stime="1.02909e+00" mtime="2.25341e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 3.8147e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="5.8292e+08" > 4.4930e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8715e+08" > 4.4444e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.3753e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.6052e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.9625e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.6119e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.8597e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9671e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5919e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 4.1187e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.0240e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="3.7600e+02" > 2.3156e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 4.0483e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.2254e-05 </func>
+</region>
+</regions>
+<internal rank="52" log_i="1634339211.951886" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="53" mpi_size="64" stamp_init="1634339201.092975" stamp_final="1634339211.951904" username="vardas" allocationname="unknown" flags="0" pid="10070" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08589e+01" utime="8.86223e+00" stime="1.04668e+00" mtime="1.79615e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66e97f00000000e87f8855e97f65" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00582e+01" utime="8.57101e+00" stime="1.01869e+00" mtime="1.79615e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 3.3379e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.8101e+08" > 4.5306e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8623e+08" > 4.1418e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.5620e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.3358e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.3678e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5407e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 7.8678e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9249e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5681e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.4046e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.4561e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="9.2800e+02" > 2.3156e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9983e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6532e-05 </func>
+</region>
+</regions>
+<internal rank="53" log_i="1634339211.951904" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="54" mpi_size="64" stamp_init="1634339201.093199" stamp_final="1634339211.951874" username="vardas" allocationname="unknown" flags="0" pid="10071" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08587e+01" utime="8.88088e+00" stime="9.89065e-01" mtime="1.77109e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66cc7f00000000cb7f1455cc7f2f" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00587e+01" utime="8.60671e+00" stime="9.54236e-01" mtime="1.77109e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="109787" bytes="5.6937e+08" > 4.4912e-01 </func>
+<func name="MPI_Irecv" count="109787" bytes="5.7990e+08" > 3.7910e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.5589e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 4.8752e-01 </func>
+<func name="MPI_Waitany" count="79079" bytes="0.0000e+00" > 2.7315e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5127e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 9.0599e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.8429e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5705e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.3336e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 6.6314e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.0800e+02" > 2.3194e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9291e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.9632e-05 </func>
+</region>
+</regions>
+<internal rank="54" log_i="1634339211.951874" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="55" mpi_size="64" stamp_init="1634339201.092924" stamp_final="1634339211.951587" username="vardas" allocationname="unknown" flags="0" pid="10072" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08587e+01" utime="8.89850e+00" stime="1.00921e+00" mtime="2.09190e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66f97f00000000f97f6f55f97f5b" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00584e+01" utime="8.61157e+00" stime="9.77334e-01" mtime="2.09190e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.9616e+08" > 4.5643e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8945e+08" > 3.6057e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.7146e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 7.1174e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.1709e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5195e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.0068e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9669e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.6468e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.7891e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.9484e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="3.5200e+02" > 2.3192e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8719e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.9393e-05 </func>
+</region>
+</regions>
+<internal rank="55" log_i="1634339211.951587" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="56" mpi_size="64" stamp_init="1634339201.093182" stamp_final="1634339211.951607" username="vardas" allocationname="unknown" flags="0" pid="10073" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08584e+01" utime="8.89107e+00" stime="9.97301e-01" mtime="1.93464e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a669d7f000000009c7f8d559d7fdf" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00587e+01" utime="8.60995e+00" stime="9.69925e-01" mtime="1.93464e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.1458e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.8882e+08" > 4.3229e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7589e+08" > 4.2298e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.1650e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.1451e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.9909e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4696e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.6928e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9123e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.7541e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.5462e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 6.6440e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.4400e+02" > 2.3195e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8648e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.5831e-05 </func>
+</region>
+</regions>
+<internal rank="56" log_i="1634339211.951607" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="57" mpi_size="64" stamp_init="1634339201.092485" stamp_final="1634339211.951831" username="vardas" allocationname="unknown" flags="0" pid="10074" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08593e+01" utime="8.86429e+00" stime="1.06225e+00" mtime="1.77891e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66a57f00000000a47f2355a57f5d" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00581e+01" utime="8.57629e+00" stime="1.03059e+00" mtime="1.77891e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.6585e+08" > 4.3824e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7111e+08" > 4.0320e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.1011e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.6128e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.0407e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5054e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 6.9141e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9526e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4513e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.4301e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.1261e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="5.0000e+02" > 2.3192e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9220e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.6294e-05 </func>
+</region>
+</regions>
+<internal rank="57" log_i="1634339211.951831" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="58" mpi_size="64" stamp_init="1634339201.093171" stamp_final="1634339211.951421" username="vardas" allocationname="unknown" flags="0" pid="10075" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08583e+01" utime="8.86865e+00" stime="1.01345e+00" mtime="1.36525e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66877f00000000877fd455877f93" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00588e+01" utime="8.59213e+00" stime="9.82177e-01" mtime="1.36525e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="110788" bytes="5.9453e+08" > 4.4057e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.9236e+08" > 4.2682e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 8.8778e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 2.0995e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.0452e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5556e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.2875e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9950e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4632e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 1.7760e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 6.2637e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="1.7200e+02" > 2.3229e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 4.0221e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.8440e-05 </func>
+</region>
+</regions>
+<internal rank="58" log_i="1634339211.951421" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="59" mpi_size="64" stamp_init="1634339201.092649" stamp_final="1634339211.951656" username="vardas" allocationname="unknown" flags="0" pid="10076" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08590e+01" utime="8.88211e+00" stime="1.03354e+00" mtime="1.85225e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a665e7f000000005d7ff8555e7fc0" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00581e+01" utime="8.60224e+00" stime="9.93945e-01" mtime="1.85225e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.9460e+08" > 4.4031e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.9430e+08" > 3.8773e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.9225e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 5.3426e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.9790e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5279e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 6.9141e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 6.1109e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.7326e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 3.4933e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.1325e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="2.8800e+02" > 2.3229e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8290e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.2479e-05 </func>
+</region>
+</regions>
+<internal rank="59" log_i="1634339211.951656" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="60" mpi_size="64" stamp_init="1634339201.093183" stamp_final="1634339211.952178" username="vardas" allocationname="unknown" flags="0" pid="10077" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08590e+01" utime="8.81539e+00" stime="1.09914e+00" mtime="1.59081e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a664b7f00000000427f26564b7f8c" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00584e+01" utime="8.54037e+00" stime="1.06304e+00" mtime="1.59081e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 1.1921e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 1.9073e-06 </func>
+<func name="MPI_Send" count="110788" bytes="5.9268e+08" > 4.4166e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.8702e+08" > 4.8274e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.5248e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 2.9080e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 2.4510e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.5599e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.4782e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 5.9741e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4847e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.7441e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 6.2392e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.0400e+02" > 2.3229e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 4.0102e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.9870e-05 </func>
+</region>
+</regions>
+<internal rank="60" log_i="1634339211.952178" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="61" mpi_size="64" stamp_init="1634339201.092670" stamp_final="1634339211.951608" username="vardas" allocationname="unknown" flags="0" pid="10078" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08589e+01" utime="8.86759e+00" stime="1.02494e+00" mtime="2.10818e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66257f00000000257f9256257ff6" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00582e+01" utime="8.58389e+00" stime="9.89394e-01" mtime="2.10818e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 2.8610e-06 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="110788" bytes="5.6576e+08" > 4.4801e-01 </func>
+<func name="MPI_Irecv" count="110788" bytes="5.7643e+08" > 3.8078e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.1089e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 8.5745e-01 </func>
+<func name="MPI_Waitany" count="80080" bytes="0.0000e+00" > 1.8465e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.2462e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 6.9141e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 6.2015e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.5133e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.9030e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 6.3221e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="3.0400e+02" > 2.3268e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 4.0317e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 7.0095e-05 </func>
+</region>
+</regions>
+<internal rank="61" log_i="1634339211.951608" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="62" mpi_size="64" stamp_init="1634339201.091870" stamp_final="1634339211.951928" username="vardas" allocationname="unknown" flags="0" pid="10079" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08601e+01" utime="8.82559e+00" stime="1.06127e+00" mtime="1.64758e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a66347f00000000347f4655347f82" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00586e+01" utime="8.56324e+00" stime="1.01467e+00" mtime="1.64758e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 9.5367e-07 </func>
+<func name="MPI_Send" count="107785" bytes="5.6787e+08" > 4.4169e-01 </func>
+<func name="MPI_Irecv" count="107785" bytes="5.7624e+08" > 3.9018e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 9.3906e-03 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 4.4458e-01 </func>
+<func name="MPI_Waitany" count="77077" bytes="0.0000e+00" > 2.0052e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.6555e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 1.0014e-05 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 6.5162e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.4990e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.2962e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 6.1018e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.6800e+02" > 2.3265e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.9983e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.4400e-05 </func>
+</region>
+</regions>
+<internal rank="62" log_i="1634339211.951928" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+<task ipm_version="2.0.6" cookie="nocookie" mpi_rank="63" mpi_size="64" stamp_init="1634339201.092922" stamp_final="1634339211.951583" username="vardas" allocationname="unknown" flags="0" pid="10080" >
+<job nhosts="2" ntasks="64" start="1634339201" final="1634339211" cookie="nocookie" code="unknown" >1518280</job>
+<host mach_name="x86_64" mach_info="x86_64_Linux" >hydra02</host>
+<perf wtime="1.08587e+01" utime="8.84094e+00" stime="1.00723e+00" mtime="1.58698e+00" gflop="0.00000e+00" gbyte="8.88824e-02" omp_num_threads="1"></perf>
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<switch bytes_tx="0.00000e+00" bytes_rx="0.00000e+00" ></switch>
+<cmdline realpath="/home/staff/vardas/sources/lammps-stable_29Oct2020/src/lmp_mpi" md5sum="cac72a661c7e000000001b7ea1551c7efd" >/home/staff/vardas/sources/lammps-stable_29Oct2020/src/./lmp_mpi -in in.rhodo </cmdline>
+<regions n="1" >
+<region label="ipm_noregion" nexits="1" wtime="1.00583e+01" utime="8.55403e+00" stime="9.75332e-01" mtime="1.58698e+00" id="0">
+<modules nmod="1">
+<module name="MPI" time="1.57823e+00" ></module>
+</modules>
+<func name="MPI_Init" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Finalize" count="1" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_rank" count="24" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Comm_size" count="17" bytes="0.0000e+00" > 0.0000e+00 </func>
+<func name="MPI_Send" count="105783" bytes="5.9780e+08" > 4.4032e-01 </func>
+<func name="MPI_Irecv" count="105783" bytes="5.9222e+08" > 3.9923e-02 </func>
+<func name="MPI_Sendrecv" count="1332" bytes="5.3280e+03" > 1.0009e-02 </func>
+<func name="MPI_Wait" count="30708" bytes="0.0000e+00" > 3.5537e-01 </func>
+<func name="MPI_Waitany" count="75075" bytes="0.0000e+00" > 1.6977e-01 </func>
+<func name="MPI_Bcast" count="843" bytes="8.8721e+06" > 3.4778e-02 </func>
+<func name="MPI_Reduce" count="3" bytes="2.4000e+01" > 5.9605e-06 </func>
+<func name="MPI_Barrier" count="6" bytes="0.0000e+00" > 6.3198e-03 </func>
+<func name="MPI_Allgather" count="14" bytes="4.4800e+02" > 4.7684e-04 </func>
+<func name="MPI_Allreduce" count="7366" bytes="2.5523e+05" > 2.8928e-01 </func>
+<func name="MPI_Alltoall" count="14" bytes="5.6000e+01" > 7.6017e-03 </func>
+<func name="MPI_Alltoallv" count="14" bytes="4.3200e+02" > 2.3265e-01 </func>
+<func name="MPI_Comm_dup" count="7" bytes="0.0000e+00" > 3.8505e-04 </func>
+<func name="MPI_Comm_free" count="8" bytes="0.0000e+00" > 8.2254e-05 </func>
+</region>
+</regions>
+<internal rank="63" log_i="1634339211.951583" log_t="1.6343e+09" report_delta="-1.0000e+00" fname="./vardas.1634339201.97788.ipm.xml" logrank="0" ></internal>
+</task>
+</ipm_job_profile>
