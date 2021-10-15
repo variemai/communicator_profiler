@@ -1,4 +1,4 @@
-df<-read.csv("splatt_128procs_med5tns.csv",header=TRUE,skip=5)
+df<-read.csv("splatt_256procs_med5tns.csv",header=TRUE,skip=5)
 library(ggplot2)
 
 #g<-ggplot(data=df, aes(x=dose, y=len, fill=supp)) +
