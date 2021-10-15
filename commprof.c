@@ -149,7 +149,6 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
         }
         else{
             PMPI_Comm_rank(comm, &rank);
-            communicator->time_info[prim] += t_elapsed;
             if ( rank == root ){
                 if ( prim != Allgatherv ){
                     communicator->bytes += sum;
