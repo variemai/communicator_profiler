@@ -47,18 +47,51 @@ Output file name "profiler_data.csv". If this file exists it will be overwritten
 ** TODO Supported Communicator Primitives
 - MPI_Graph_create
 - MPI_Dist_graph_create
-** DONE Supported MPI Collective communication Primitives
+- MPI_Comm_idup
+** Supported MPI Collective communication Primitives
 - MPI_Barrier
 - MPI_Ibarrier
+- MPI_Gather
 - MPI_Gatherv
 - MPI_Scatter
 - MPI_Scatterv
+- MPI_Bcast
+- MPI_Allreduce
+- MPI_Allgather
+- MPI_Allgatherv
+- MPI_Alltoall
+- MPI_Alltoallv
+- MPI_Scan
+- MPI_Exscan
+- MPI_Scatter
+- MPI_Scaterrv
+** TODO Supported MPI Collective communication Primitives
+- MPI_Reduce_scater
+- MPI_Iallreduce
+- MPI_Ibcast
+- MPI_Ialltoall
+- MPI_Iscatter
+- MPI_Ibarrier
+- MPI_Neighbor_allgather
+- MPI_Neighbor_allgatherv
+- MPI_Neighbor_alltoall
+- MPI_Neighbor_alltoallv
+- MPI_Neighbor_alltoallw
+- MPI_Ineighbor_allgather
+- MPI_Ineighbor_allgatherv
+- MPI_Ineighbor_alltoall
+- MPI_Ineighbor_alltoallv
+- MPI_Ineighbor_alltoallw
 ** Supported MPI Point to Point Primitives
 - MPI_Send
 - MPI_Isend
 - MPI_Recv
 - MPI_Irecv
 - MPI_Sendrecv
+** TODO Supported MPI Point to Point Primitives
+- MPI_Ssend
+- MPI_Ssend_init
+- MPI_Issend
 ** Other MPI calls
 - MPI_Wait
 - MPI_Waitall

@@ -1603,12 +1603,14 @@ _Finalize()
         }
         fprintf(fp, "'\n");
         fprintf(fp, "#'Num of REAL comms'='%d'\n",num_of_comms);
-        /* time(&t); */
-        /* char *tmp = ctime(&t); */
-        /* char *date = (char*) malloc ( strlen(tmp)-1 ); */
-        /* strncpy(date, tmp, strlen(tmp)-1); */
-        /* fprintf(fp, "#'Date'='%s'\n",date); */
+        long t;
+        time(&t);
+        char *tmp = ctime(&t);
+        char *date = (char*) malloc ( strlen(tmp)-1 );
+        strncpy(date, tmp, strlen(tmp)-1);
+        fprintf(fp, "#'Date'='%s'\n",date);
         fprintf(fp, "Comm,Size,Calls,");
+        free(date);
         for (k = 0; k<NUM_OF_PRIMS; k++){
             fprintf(fp, "%s_Calls,",prim_names[k]);
             fprintf(fp, "%s_AvgMsgSize,",prim_names[k]);
