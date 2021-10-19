@@ -544,7 +544,7 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
     ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count, datatype, Isend, t_elapsed, 0);
-    Table_put(request_tab, request, comm);
+    Table_put(request_tab, *request, comm);
     /* if (rq_index == world_sz){ */
     /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
     /*     world_sz = world_sz*world_sz; */
@@ -624,7 +624,7 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count,datatype,Irecv,t_elapsed,0);
-    Table_put(request_tab, request, comm);
+    Table_put(request_tab, *request, comm);
     /* if (rq_index == world_sz){ */
     /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
     /*     world_sz = world_sz*world_sz; */
@@ -1306,15 +1306,16 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     /* int i; */
     MPI_Comm comm = NULL;
 
+    comm = Table_remove(request_tab, *request);
     t_elapsed = MPI_Wtime();
     ret = PMPI_Wait(request, status);
     t_elapsed = MPI_Wtime() - t_elapsed;
     /* if ( *request == MPI_REQUEST_NULL ){ */
     /*     return ret; */
     /* } */
-    comm = Table_remove(request_tab, request);
+    /* comm = Table_remove(request_tab, *request); */
     if ( comm == NULL ){
-        /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
+        fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n");
         return ret;
     }
     profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
@@ -1344,23 +1345,25 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
 {
     int ret;
     double t_elapsed;
-    int i,j;
+    int i;
     /* MPI_Request *tmp; */
     /* int flag = 0; */
     /* MPI_Comm *comms; */
     MPI_Comm comm;
     /* comms = (MPI_Comm*) malloc ( sizeof(MPI_Comm)*count ); */
 
+    comm = Table_remove(request_tab, array_of_requests[0]);
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    j = 0;
     /* memset(comms, 0, sizeof(MPI_Comm)*count); */
-    comm = Table_remove(request_tab, array_of_requests[0]);
     if ( comm != NULL ){
         profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
     }
-    for ( i =0; i<count; i++ ){
+    else{
+        fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n");
+    }
+    for ( i =1; i<count; i++ ){
         comm = Table_remove(request_tab, array_of_requests[i]);
         /* found = 0; */
         /* if ( comm != NULL ){ */
