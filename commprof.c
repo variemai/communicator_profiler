@@ -1314,7 +1314,7 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     /* } */
     comm = Table_remove(request_tab, request);
     if ( comm == NULL ){
-        fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n");
+        /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
         return ret;
     }
     profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
