@@ -1394,7 +1394,8 @@ F77_MPI_WAITALL(int  * count, MPI_Fint  *array_of_requests,
            array_of_requests[i] = MPI_Request_c2f(c_requests[i]);
        }
    }
-   free( array_of_requests );
+   free( c_requests );
+
 }
 
 
