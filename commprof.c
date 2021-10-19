@@ -1356,12 +1356,12 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     t_elapsed = MPI_Wtime() - t_elapsed;
     j = 0;
     /* memset(comms, 0, sizeof(MPI_Comm)*count); */
-    comm = Table_remove(request_tab, &array_of_requests[0]);
+    comm = Table_remove(request_tab, array_of_requests[0]);
     if ( comm != NULL ){
         profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
     }
     for ( i =0; i<count; i++ ){
-        comm = Table_remove(request_tab, &array_of_requests[i]);
+        comm = Table_remove(request_tab, array_of_requests[i]);
         /* found = 0; */
         /* if ( comm != NULL ){ */
         /*     for ( j=0; j<count; j++  ){ */
