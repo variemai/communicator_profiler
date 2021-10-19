@@ -1326,8 +1326,21 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     return ret;
 }
 
+
+void
+F77_MPI_WAIT(MPI_Fint  *request, MPI_Status  *status , MPI_Fint *ierr)
+{
+   int ret;
+   MPI_Request c_request;
+   c_request = MPI_Request_f2c(*request);
+   ret = MPI_Wait(&c_request, status);
+   *ierr = ret;
+}
+
+
 int
-MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_statuses[])
+MPI_Waitall(int count, MPI_Request array_of_requests[],
+            MPI_Status array_of_statuses[])
 {
     int ret;
     double t_elapsed;
@@ -1361,6 +1374,29 @@ MPI_Waitall(int count, MPI_Request array_of_requests[], MPI_Status array_of_stat
     }
     return ret;
 }
+
+
+void
+F77_MPI_WAITALL(int  * count, MPI_Fint  *array_of_requests,
+                MPI_Status  *array_of_statuses , MPI_Fint *ierr)
+{
+
+   int ret,i;
+   MPI_Request *c_requests;
+   c_requests = (MPI_Request*) malloc (sizeof(MPI_Request)*(*count));
+   for ( i =0; i<*count; i++ ){
+       c_requests[i] = MPI_Request_f2c(array_of_requests[i]);
+   }
+   ret = MPI_Waitall(*count, c_requests, array_of_statuses);
+   *ierr = ret;
+   if ( ret == MPI_SUCCESS ){
+       for ( i =0; i<*count; i++ ){
+           array_of_requests[i] = MPI_Request_c2f(c_requests[i]);
+       }
+   }
+   free( array_of_requests );
+}
+
 
 int
 MPI_Comm_free(MPI_Comm *comm)
