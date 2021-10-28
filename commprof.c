@@ -1538,7 +1538,7 @@ _Finalize()
         for ( i = 0; i<total*NUM_OF_PRIMS; i++)
             utime_info[i] = 0.0;
 
-        num_of_comms = 1;
+        num_of_comms = 0;
         j = 0;
         for ( i=0; i<total; i++ ){
             /* Build the global communicator tree */
