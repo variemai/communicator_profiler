@@ -157,6 +157,9 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
             /* } */
         }
     }
+    else{
+        fprintf(stderr, "MCPT: empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
+    }
     /* *id = i; */
     return communicator;
 }
