@@ -893,7 +893,6 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
               MPI_Comm comm)
 {
     int ret,sum,sum_max;
-    prof_attrs  *communicator;
     const int * tmp;
     double t_elapsed;
     sum = 0;
@@ -909,7 +908,7 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
         tmp++;
     }
     PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm);
-    communicator = profile_this(comm,sum_max,sendtype,Alltoallv,t_elapsed,0);
+    profile_this(comm,sum_max,sendtype,Alltoallv,t_elapsed,0);
     return ret;
 }
 
@@ -941,7 +940,6 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                MPI_Datatype recvtype, MPI_Comm comm)
 {
     int ret;
-    prof_attrs  *communicator;
     int sum, max_sum;
     double t_elapsed;
 
@@ -955,7 +953,7 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     PMPI_Reduce(&sum, &max_sum, 1, MPI_INT, MPI_MAX, 0, comm);
 
     /* Only process rank 0 will record this number to communicator data */
-    communicator = profile_this(comm,sum,sendtype,Allgatherv,t_elapsed,0);
+    profile_this(comm,sum,sendtype,Allgatherv,t_elapsed,0);
 
     return ret;
 }
@@ -1060,7 +1058,6 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
     int ret,sum,max_sum;
-    prof_attrs  *communicator;
     double t_elapsed;
 
     t_elapsed = MPI_Wtime();
@@ -1069,7 +1066,7 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     t_elapsed = MPI_Wtime() - t_elapsed;
     sum = sendcount;
     PMPI_Reduce(&sum, &max_sum, 1, MPI_INT, MPI_MAX, 0, comm);
-    communicator = profile_this(comm, max_sum, sendtype, Gatherv, t_elapsed, root);
+    profile_this(comm, max_sum, sendtype, Gatherv, t_elapsed, root);
     return ret;
 }
 
@@ -1102,7 +1099,6 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
 {
 
     int ret,rank;
-    prof_attrs  *communicator;
     uint64_t sum;
     double t_elapsed;
     const int *tmp;
@@ -1119,7 +1115,7 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
         sum += *tmp;
         tmp++;
     }
-    communicator = profile_this(comm, sum, sendtype, Scatterv, t_elapsed, root);
+    profile_this(comm, sum, sendtype, Scatterv, t_elapsed, root);
     /* if ( rank == root ){ */
     /*     communicator->bytes += sum; */
     /*     communicator->prim_bytes[Scatterv] += sum; */
