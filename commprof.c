@@ -149,12 +149,12 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
         }
         else{
             PMPI_Comm_rank(comm, &rank);
-            /* if ( rank == root ){ */
+            if ( rank == root ){
                 communicator->bytes += sum;
                 communicator->prim_bytes[prim] += sum;
                 communicator->prims[prim] += 1;
                 communicator->msgs += 1;
-            /* } */
+            }
         }
     }
     else{
@@ -1605,7 +1605,7 @@ _Finalize()
         free(date);
         for (k = 0; k<NUM_OF_PRIMS; k++){
             fprintf(fp, "%s_Calls,",prim_names[k]);
-            fprintf(fp, "%s_AvgMsgSize,",prim_names[k]);
+            fprintf(fp, "%s_Volume,",prim_names[k]);
             if ( k == NUM_OF_PRIMS -1 )
                 fprintf(fp, "%s_Time",prim_names[k]);
             else
