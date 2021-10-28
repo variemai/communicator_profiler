@@ -24,7 +24,7 @@ char *av[MAX_ARGS];
 /* int rq_index = 0; */
 /* int world_sz; */
 Table_T request_tab;
-
+/* Table_T comm_tab; */
 
 static int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
@@ -108,6 +108,7 @@ _new_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
     }
     local_comms[local_cid] = *communicator;
     communicators[my_coms] = *newcomm;
+    /* Table_put(comm_tab, (*communicator)->name, *communicator); */
     my_coms++;
     local_cid++;
     return;
@@ -117,21 +118,22 @@ _new_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
 prof_attrs*
 profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
              double t_elapsed,int root){
-    int i,size,flag;
+    int size,flag;
     prof_attrs *communicator;
     uint64_t sum = 0;
     int rank;
 
     flag = 0;
-    for ( i=0; i< my_coms; i++){
-        if ( comm == communicators[i] )
-            break;
-    }
+    /* for ( i=0; i< my_coms; i++){ */
+    /*     if ( comm == communicators[i] ) */
+    /*         break; */
+    /* } */
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
-    for ( i =0; i< local_cid; i++ ){
-        if ( strcmp(communicator->name, local_comms[i]->name) == 0 )
-            break;
-    }
+    /* Table_get(comm_tab, communicator->name); */
+    /* for ( i =0; i< local_cid; i++ ){ */
+    /*     if ( strcmp(communicator->name, local_comms[i]->name) == 0 ) */
+    /*         break; */
+    /* } */
     size = 0;
     if ( datatype != MPI_DATATYPE_NULL ){
         PMPI_Type_size(datatype, &size);
@@ -179,6 +181,7 @@ _MPI_Init(int *argc, char ***argv){
     /* request_list = (rq*) malloc ( sizeof(rq)*size*size ); */
     /* world_sz = size*size; */
     request_tab = Table_new(1024, NULL, NULL);
+    /* comm_tab = Table_new(256, NULL, NULL); */
 
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
@@ -226,6 +229,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    /* comm_tab = Table_new(256, NULL, NULL); */
 
     /* request_list = (rq*) malloc ( sizeof(rq)*size*size ); */
     /* world_sz = size*size; */
