@@ -149,12 +149,12 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
         }
         else{
             PMPI_Comm_rank(comm, &rank);
-            if ( rank == root ){
+            /* if ( rank == root ){ */
                 communicator->bytes += sum;
                 communicator->prim_bytes[prim] += sum;
                 communicator->prims[prim] += 1;
                 communicator->msgs += 1;
-            }
+            /* } */
         }
     }
     /* *id = i; */
