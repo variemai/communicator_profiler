@@ -23,7 +23,7 @@ char *av[MAX_ARGS];
 /* rq* request_list = NULL; */
 /* int rq_index = 0; */
 /* int world_sz; */
-/* Table_T request_tab; */
+Table_T request_tab;
 /* Table_T comm_tab; */
 
 static int
@@ -182,9 +182,8 @@ _MPI_Init(int *argc, char ***argv){
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
 
-    /* request_list = (rq*) malloc ( sizeof(rq)*size*size ); */
     /* world_sz = size*size; */
-    /* request_tab = Table_new(1024, NULL, NULL); */
+    request_tab = Table_new(1024, NULL, NULL);
     /* comm_tab = Table_new(256, NULL, NULL); */
 
     for ( i =0 ; i<size*4; i++ ){
@@ -235,9 +234,8 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
     /* comm_tab = Table_new(256, NULL, NULL); */
 
-    /* request_list = (rq*) malloc ( sizeof(rq)*size*size ); */
     /* world_sz = size*size; */
-    /* request_tab = Table_new(1024, NULL, NULL); */
+    request_tab = Table_new(1024, NULL, NULL);
 
     for ( i =0 ; i<size*4; i++ ){
         communicators[i] = MPI_COMM_NULL;
@@ -555,7 +553,7 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
     ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count, datatype, Isend, t_elapsed, 0);
-    /* Table_put(request_tab, *request, comm); */
+    Table_put(request_tab, request, comm);
     /* if (rq_index == world_sz){ */
     /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
     /*     world_sz = world_sz*world_sz; */
@@ -635,7 +633,7 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count,datatype,Irecv,t_elapsed,0);
-    /* Table_put(request_tab, *request, comm); */
+    Table_put(request_tab, request, comm);
     /* if (rq_index == world_sz){ */
     /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
     /*     world_sz = world_sz*world_sz; */
@@ -1275,9 +1273,10 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     /* if ( *request == MPI_REQUEST_NULL ){ */
     /*     return ret; */
     /* } */
-    /* comm = Table_remove(request_tab, *request); */
+    /* comm = Table_remove(request_tab, request); */
+    comm = Table_get(request_tab, request);
     if ( comm == NULL ){
-        fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n");
+        /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
         return ret;
     }
     profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
@@ -1307,24 +1306,27 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
 {
     int ret;
     double t_elapsed;
-    /* int i; */
-    /* MPI_Request *tmp; */
+    MPI_Comm comm = NULL;
     /* int flag = 0; */
-    /* MPI_Comm *comms; */
-    /* MPI_Comm comm; */
     /* comms = (MPI_Comm*) malloc ( sizeof(MPI_Comm)*count ); */
+    /* j = 0; */
     /* for ( i = 0; i<count; i++ ){ */
-    /*     comm = Table_remove(request_tab, array_of_requests[i]); */
-    /*     if ( comm != NULL ){ */
-    /*         break; */
-    /*     } */
+    /*     comms[j] = Table_remove(request_tab, array_of_requests[i]); */
+    /*     j++; */
     /* } */
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
+    comm = Table_get(request_tab, &array_of_requests[0]);
+    if ( comm == NULL ){
+        /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
+        return ret;
+    }
+    profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+
     /* memset(comms, 0, sizeof(MPI_Comm)*count); */
     /* if ( comm != NULL ){ */
-    profile_this(MPI_COMM_WORLD, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+    /*     profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
     /* } */
     /* else{ */
     /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */

@@ -143,9 +143,9 @@ void *Table_remove(T table, const void *key) {
     struct binding **pp;
 
     assert(table);
-    /* assert(key); */
-    if ( !key )
-        return NULL;
+    assert(key);
+    /* if ( !key ) */
+    /*     return NULL; */
     table->timestamp++;
     i = (*table->hash)(key)%table->size;
     for (pp = &table->buckets[i]; *pp; pp = &(*pp)->link)
