@@ -141,23 +141,27 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
     if ( flag ){
         sum = count * size;
         communicator->time_info[prim] += t_elapsed;
-        if ( prim < Sendrecv ){
-            communicator->prims[prim] += 1;
-            communicator->msgs += 1;
-            communicator->prim_bytes[prim] += sum;
-            /* if ( prim == Send || prim == Isend ){ */
-                communicator->bytes += sum;
-            /* } */
-        }
-        else{
-            /* PMPI_Comm_rank(comm, &rank); */
-            /* if ( rank == root ){ */
-                communicator->bytes += sum;
-                communicator->prim_bytes[prim] += sum;
-                communicator->prims[prim] += 1;
-                communicator->msgs += 1;
-            /* } */
-        }
+        communicator->bytes += sum;
+        communicator->prim_bytes[prim] += sum;
+        communicator->prims[prim] += 1;
+        communicator->msgs += 1;
+        /* if ( prim < Sendrecv ){ */
+        /*     communicator->prims[prim] += 1; */
+        /*     communicator->msgs += 1; */
+        /*     communicator->prim_bytes[prim] += sum; */
+        /*     if ( prim == Send || prim == Isend ){ */
+        /*         communicator->bytes += sum; */
+        /*     } */
+        /* } */
+        /* else{ */
+        /*     PMPI_Comm_rank(comm, &rank); */
+        /*     if ( rank == root ){ */
+        /*         communicator->bytes += sum; */
+        /*         communicator->prim_bytes[prim] += sum; */
+        /*         communicator->prims[prim] += 1; */
+        /*         communicator->msgs += 1; */
+        /*     } */
+        /* } */
     }
     /* else{ */
     /*     fprintf(stderr, "MCPT: empty flag when profiling %s - this might be a bug\n",prim_names[prim]); */
