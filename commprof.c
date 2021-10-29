@@ -1314,7 +1314,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     MPI_Comm comm;
     /* comms = (MPI_Comm*) malloc ( sizeof(MPI_Comm)*count ); */
     for ( i = 0; i<count; i++ ){
-        comm = Table_remove(request_tab, &array_of_requests[i]);
+        comm = Table_remove(request_tab, array_of_requests[i]);
         if ( comm != NULL ){
             break;
         }
