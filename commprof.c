@@ -1313,17 +1313,22 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     /* MPI_Comm *comms; */
     MPI_Comm comm;
     /* comms = (MPI_Comm*) malloc ( sizeof(MPI_Comm)*count ); */
-    comm = Table_remove(request_tab, array_of_requests[0]);
+    for ( i = 0; i<count; i++ ){
+        comm = Table_remove(request_tab, array_of_requests[i]);
+        if ( comm != NULL ){
+            break;
+        }
+    }
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
     /* memset(comms, 0, sizeof(MPI_Comm)*count); */
-    if ( comm != NULL ){
-        profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
-    }
-    else{
-        fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n");
-    }
+    /* if ( comm != NULL ){ */
+    /*     profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
+    /* } */
+    /* else{ */
+    /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
+    /* } */
     /* for ( i =1; i<count; i++ ){ */
     /*     if ( array_of_requests[i] != NULL ) */
     /*         comm = Table_remove(request_tab, array_of_requests[i]); */
