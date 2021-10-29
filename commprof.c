@@ -1323,9 +1323,9 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     else{
         fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n");
     }
-    for ( i =1; i<count; i++ ){
-        if ( array_of_requests[i] != NULL )
-            comm = Table_remove(request_tab, array_of_requests[i]);
+    /* for ( i =1; i<count; i++ ){ */
+    /*     if ( array_of_requests[i] != NULL ) */
+    /*         comm = Table_remove(request_tab, array_of_requests[i]); */
         /* found = 0; */
         /* if ( comm != NULL ){ */
         /*     for ( j=0; j<count; j++  ){ */
@@ -1335,7 +1335,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
         /*     if ( !found ) */
         /*         profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
         /* } */
-    }
+    /* } */
     return ret;
 }
 
