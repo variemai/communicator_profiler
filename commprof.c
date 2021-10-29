@@ -271,6 +271,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     communicators[0] = MPI_COMM_WORLD;
+    MPI_Barrier(MPI_COMM_WORLD);
     return ret;
 }
 
