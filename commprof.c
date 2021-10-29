@@ -555,7 +555,7 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
     ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count, datatype, Isend, t_elapsed, 0);
-    Table_put(request_tab, *request, comm);
+    Table_put(request_tab, request, comm);
     /* if (rq_index == world_sz){ */
     /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
     /*     world_sz = world_sz*world_sz; */
@@ -635,7 +635,7 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count,datatype,Irecv,t_elapsed,0);
-    Table_put(request_tab, *request, comm);
+    Table_put(request_tab, request, comm);
     /* if (rq_index == world_sz){ */
     /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
     /*     world_sz = world_sz*world_sz; */
@@ -1268,7 +1268,7 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     /* int i; */
     MPI_Comm comm = NULL;
 
-    comm = Table_remove(request_tab, *request);
+    comm = Table_remove(request_tab, request);
     t_elapsed = MPI_Wtime();
     ret = PMPI_Wait(request, status);
     t_elapsed = MPI_Wtime() - t_elapsed;
@@ -1314,7 +1314,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     MPI_Comm comm;
     /* comms = (MPI_Comm*) malloc ( sizeof(MPI_Comm)*count ); */
     for ( i = 0; i<count; i++ ){
-        comm = Table_remove(request_tab, array_of_requests[i]);
+        comm = Table_remove(request_tab, &array_of_requests[i]);
         if ( comm != NULL ){
             break;
         }
