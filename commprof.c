@@ -121,7 +121,7 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
     int size,flag;
     prof_attrs *communicator;
     uint64_t sum = 0;
-    int rank;
+    /* int rank; */
 
     flag = 0;
     /* for ( i=0; i< my_coms; i++){ */
@@ -145,23 +145,23 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
             communicator->prims[prim] += 1;
             communicator->msgs += 1;
             communicator->prim_bytes[prim] += sum;
-            if ( prim == Send || prim == Isend ){
+            /* if ( prim == Send || prim == Isend ){ */
                 communicator->bytes += sum;
-            }
+            /* } */
         }
         else{
-            PMPI_Comm_rank(comm, &rank);
-            if ( rank == root ){
+            /* PMPI_Comm_rank(comm, &rank); */
+            /* if ( rank == root ){ */
                 communicator->bytes += sum;
                 communicator->prim_bytes[prim] += sum;
                 communicator->prims[prim] += 1;
                 communicator->msgs += 1;
-            }
+            /* } */
         }
     }
-    else{
-        fprintf(stderr, "MCPT: empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
-    }
+    /* else{ */
+    /*     fprintf(stderr, "MCPT: empty flag when profiling %s - this might be a bug\n",prim_names[prim]); */
+    /* } */
     /* *id = i; */
     return communicator;
 }
