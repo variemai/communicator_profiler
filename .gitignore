@@ -63,3 +63,4 @@ Paper.pdf
 test/*.csv
 profiles/*.R*
 .Rproj.user
+.ccls-cache/
