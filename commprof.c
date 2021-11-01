@@ -405,7 +405,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     communicator = get_comm_parent(comm);
     buf = (char*) malloc ( sizeof(char)*16);
     /* Suffix of the new communicator with the two ids */
-    sprintf(buf,"_s%d.%d",my_coms,min_rank);
+    sprintf(buf,"_s%d.%d",comms,min_rank);
     /* Append prefix+suffix and initialize the data for the new communicator */
     _new_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
@@ -510,16 +510,8 @@ MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
         return ret;
     }
     PMPI_Allreduce(&my_rank, &min_rank, 1, MPI_INT , MPI_MIN, *new_comm);
+    my_coms = id;
     communicator = get_comm_parent(comm);
-    /* memset(dims, 0, sizeof(int)*MAX_DIMS); */
-    /* PMPI_Cartdim_get(*new_comm, dims); */
-    /* newcoms = 1; */
-    /* for ( i =0; i<MAX_DIMS; i++ ){ */
-    /*     if ( dims[i] != 0 ){ */
-    /*         newcoms = newcoms*dims[i]; */
-    /*     } */
-    /* } */
-    /* buffer = strdup(communicator->name); */
     buf = (char*) malloc ( sizeof(char)*16);
     sprintf(buf,"_b%d.%d",id,min_rank);
     _new_comm(buf, &communicator, comm, new_comm);
@@ -540,6 +532,31 @@ F77_MPI_CART_SUB(MPI_Fint  * comm, const int  *remain_dims,
     *comm_new = MPI_Comm_c2f(c_comm_new);
     *ierr = rc;
     return;
+}
+
+int
+MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
+                    MPI_Comm *newcomm){
+    int ret,comms;
+    prof_attrs *communicator;
+    char *buf;
+    int rank, min_rank;
+
+    ret = PMPI_Comm_split_type(comm, split_type, key, info, newcomm);
+
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
+    my_coms = comms;
+    PMPI_Comm_rank(comm, &rank);
+    if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
+        return ret;
+    }
+    PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
+    communicator = get_comm_parent(comm);
+    buf = (char*) malloc ( sizeof(char)*16);
+    sprintf(buf,"_t%d.%d",comms,min_rank);
+    _new_comm(buf, &communicator, comm, newcomm);
+    PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
+    return ret;
 }
 
 
@@ -1266,25 +1283,15 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     /* int i; */
     MPI_Comm comm = NULL;
 
-    /* comm = Table_remove(request_tab, request); */
     t_elapsed = MPI_Wtime();
     ret = PMPI_Wait(request, status);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    /* if ( *request == MPI_REQUEST_NULL ){ */
-    /*     return ret; */
-    /* } */
-    /* comm = Table_remove(request_tab, request); */
     comm = Table_get(request_tab, request);
     if ( comm == NULL ){
         /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
         return ret;
     }
     profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
-    /* for ( i =0; i<rq_index; i++ ){ */
-    /*     if (  request_list[i].req == request ){ */
-    /*         profile_this(request_list[i].comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0); */
-    /*     } */
-    /* } */
     return ret;
 }
 
@@ -1307,13 +1314,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     int ret;
     double t_elapsed;
     MPI_Comm comm = NULL;
-    /* int flag = 0; */
-    /* comms = (MPI_Comm*) malloc ( sizeof(MPI_Comm)*count ); */
-    /* j = 0; */
-    /* for ( i = 0; i<count; i++ ){ */
-    /*     comms[j] = Table_remove(request_tab, array_of_requests[i]); */
-    /*     j++; */
-    /* } */
+
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
@@ -1324,27 +1325,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     }
     profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
 
-    /* memset(comms, 0, sizeof(MPI_Comm)*count); */
-    /* if ( comm != NULL ){ */
-    /*     profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
-    /* } */
-    /* else{ */
-    /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-    /* } */
-    /* for ( i =1; i<count; i++ ){ */
-    /*     if ( array_of_requests[i] != NULL ) */
-    /*         comm = Table_remove(request_tab, array_of_requests[i]); */
-        /* found = 0; */
-        /* if ( comm != NULL ){ */
-        /*     for ( j=0; j<count; j++  ){ */
-        /*         if ( comm == comms[j] ) */
-        /*             found = 1; */
-        /*     } */
-        /*     if ( !found ) */
-        /*         profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
-        /* } */
-    /* } */
-    return ret;
+        return ret;
 }
 
 
