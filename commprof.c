@@ -629,15 +629,6 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
     ret = PMPI_Send(buf, count, datatype, dest, tag, comm);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count, datatype, Send, t_elapsed, 0);
-    /* communicator = profile_this(comm, &flag,&i); */
-    /* PMPI_Type_size(datatype, &size); */
-    /* if ( flag ){ */
-    /*     sum = count*size; */
-    /*     communicator->bytes += sum; */
-    /*     communicator->prim_bytes[Send] += sum; */
-    /*     communicator->msgs += 1; */
-    /*     communicator->prims[Send] += 1; */
-    /* } */
     return ret;
 }
 
@@ -667,13 +658,6 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count,datatype,Irecv,t_elapsed,0);
     Table_put(request_tab, request, comm);
-    /* if (rq_index == world_sz){ */
-    /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
-    /*     world_sz = world_sz*world_sz; */
-    /* } */
-    /* request_list[rq_index].req = request; */
-    /* request_list[rq_index].comm = comm; */
-    /* rq_index++; */
     return ret;
 }
 
@@ -1367,6 +1351,47 @@ F77_MPI_WAITALL(int  * count, MPI_Fint  *array_of_requests,
 
 }
 
+int
+MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int *recvcounts,
+                   MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+    int ret,sum,rank;
+    const int *cnt;
+    double t_elapsed;
+
+    sum = 0;
+    cnt = recvcounts;
+    t_elapsed = MPI_Wtime();
+    ret = PMPI_Reduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm);
+    t_elapsed = MPI_Wtick() - t_elapsed;
+    PMPI_Comm_rank(comm, &rank);
+    while(cnt){
+        sum += *cnt;
+    }
+    sum += recvcounts[rank];
+    profile_this(comm, sum, datatype, Reduce_scatter, t_elapsed, 0);
+    return ret;
+
+}
+
+void F77_MPI_REDUCE_SCATTER(const void  *sendbuf, void  *recvbuf, const int *recvcnts,
+                            MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm,
+                            MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_datatype;
+    MPI_Op c_op;
+    MPI_Comm c_comm;
+
+    c_datatype = MPI_Type_f2c(*datatype);
+    c_op = MPI_Op_f2c(*op);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Reduce_scatter(sendbuf, recvbuf, recvcnts, c_datatype, c_op, c_comm);
+    *ierr = (MPI_Fint)ret;
+    return;
+
+}
 
 int
 MPI_Comm_free(MPI_Comm *comm)
@@ -1625,15 +1650,6 @@ _Finalize()
             else
                 fprintf(fp, "%s_Time,",prim_names[k]);
         }
-        /* for (k = 0; k<NUM_OF_PRIMS; k++){ */
-        /*     fprintf(fp, "%s_AvgMsgSize,",prim_names[k]); */
-        /* } */
-        /* for (k = 0; k<NUM_OF_PRIMS; k++){ */
-        /*     if ( k == NUM_OF_PRIMS -1 ) */
-        /*         fprintf(fp, "%s_Time",prim_names[k]); */
-        /*     else */
-        /*         fprintf(fp, "%s_Time,",prim_names[k]); */
-        /* } */
         fprintf(fp,"\n");
         for ( i =0; i<num_of_comms; i++ ){
             /* if ( strcmp(unames[i], "NULL") !=0 ){ */
@@ -1663,7 +1679,7 @@ _Finalize()
         free(uprims_bytes);
         free(utime_info);
         fclose(fp);
-        /* Table_free(&request_tab); */
+        Table_free(&request_tab);
     }
     /* free(request_list); */
     return PMPI_Finalize();
