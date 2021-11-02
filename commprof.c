@@ -534,6 +534,7 @@ F77_MPI_CART_SUB(MPI_Fint  * comm, const int  *remain_dims,
     return;
 }
 
+
 int
 MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
                     MPI_Comm *newcomm){
@@ -559,6 +560,21 @@ MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
     return ret;
 }
 
+void
+F77_MPI_COMM_SPLIT_TYPE(MPI_Fint  * comm, int  * split_type, int  * key,
+                        MPI_Fint *info, MPI_Fint  *newcomm , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Comm c_comm,c_comm_out;
+    MPI_Info c_info;
+    c_info = PMPI_Info_f2c(*info);
+    c_comm = PMPI_Comm_f2c(*comm);
+    ret = MPI_Comm_split_type(c_comm, *split_type, *key, c_info,&c_comm_out);
+    *ierr = ret;
+    if ( ret == MPI_SUCCESS )
+        *newcomm = MPI_Comm_c2f(c_comm_out);
+    return;
+}
 
 int
 MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,

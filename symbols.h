@@ -38,6 +38,7 @@
 #define F77_MPI_COMM_SET_ERRHANDLER mpi_comm_set_errhandler_
 #define F77_MPI_COMM_SIZE mpi_comm_size_
 #define F77_MPI_COMM_SPLIT mpi_comm_split_
+#define F77_MPI_COMM_SPLIT_TYPE mpi_comm_split_type
 #define F77_MPI_COMM_TEST_INTER mpi_comm_test_inter_
 #define F77_MPI_COMPARE_AND_SWAP mpi_compare_and_swap_
 #define F77_MPI_DIMS_CREATE mpi_dims_create_
