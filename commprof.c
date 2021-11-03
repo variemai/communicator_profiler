@@ -1600,7 +1600,12 @@ _Finalize()
                     usizes[i]=sizes[j];
                     for ( k =0; k<NUM_OF_PRIMS; k++){
                         uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
-                        uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
+                        //uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
+                        if ( k >= Sendrecv ){
+                            if ( uprims_bytes[i*NUM_OF_PRIMS+k] <  prims_bytes[j*NUM_OF_PRIMS+k] ){
+                                uprims_bytes[i*NUM_OF_PRIMS+k] = prims_bytes[j*NUM_OF_PRIMS+k];
+                            }
+                        }
                         if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
                             utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
                         }
