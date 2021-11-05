@@ -217,7 +217,7 @@ _MPI_Init(int *argc, char ***argv){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     communicators[0] = MPI_COMM_WORLD;
-    MPI_Barrier(MPI_COMM_WORLD);
+    PMPI_Barrier(MPI_COMM_WORLD);
     return ret;
 }
 
@@ -269,7 +269,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     communicators[0] = MPI_COMM_WORLD;
-    MPI_Barrier(MPI_COMM_WORLD);
+    PMPI_Barrier(MPI_COMM_WORLD);
     return ret;
 }
 
@@ -841,7 +841,45 @@ F77_MPI_ALLREDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
     return;
 }
 
+int
+MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
+               MPI_Datatype datatype, MPI_Op op, MPI_Comm comm,
+               MPI_Request *request)
+{
+    int ret;
+    double t_elapsed;
 
+    t_elapsed =  MPI_Wtime();
+    ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
+    t_elapsed = MPI_Wtime() - t_elapsed;
+
+    profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
+    return ret;
+}
+
+
+void
+F77_MPI_IALLREDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
+                   MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm,
+                   MPI_Fint  *request , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_datatype;
+    MPI_Op c_op;
+    MPI_Comm c_comm;
+    MPI_Request c_request;
+
+    c_datatype = MPI_Type_f2c(*datatype);
+    c_op = MPI_Op_f2c(*op);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Iallreduce(sendbuf, recvbuf, *count, c_datatype, c_op, c_comm, &c_request);
+
+    *ierr = ret;
+    if ( ret == MPI_SUCCESS )
+        *request = MPI_Request_c2f(c_request);
+    return;
+}
 
 int
 MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
@@ -920,7 +958,7 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
               const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
               MPI_Comm comm)
 {
-    int ret,sum,sum_max;
+    int ret,sum;
     const int * tmp;
     double t_elapsed;
     sum = 0;
@@ -968,7 +1006,7 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                MPI_Datatype recvtype, MPI_Comm comm)
 {
     int ret;
-    int sum, max_sum;
+    int sum;
     double t_elapsed;
 
     t_elapsed = MPI_Wtime();
@@ -1085,7 +1123,7 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             void *recvbuf, const int *recvcounts, const int *displs,
             MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
-    int ret,sum,max_sum;
+    int ret,sum;
     double t_elapsed;
 
     t_elapsed = MPI_Wtime();

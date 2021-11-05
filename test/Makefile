@@ -18,5 +18,6 @@ all:
 	mpicc -g -L$(LIBPATH) tuwqsort.c -o tuwqsort.out  -lmcpt
 	mpicc -g -L$(LIBPATH) wait.c -o wait.out  -lmcpt
 	mpicc -g -L$(LIBPATH) waitall.c -o waitall.out  -lmcpt
+	mpicc -g -L$(LIBPATH) sendrecv.c -o sendrecv.out  -lmcpt
 
 # end
