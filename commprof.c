@@ -391,10 +391,10 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
      */
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
-    PMPI_Comm_rank(comm, &rank);
     if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
         return ret;
     }
+    PMPI_Comm_rank(comm, &rank);
     /*
      * Get the minimum rank. Note that the rank is the rank from the parent
      * communicator. Every new communicator will have an id based on the
@@ -505,10 +505,10 @@ MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
     int id,min_rank;
     ret = PMPI_Cart_sub(comm, remain_dims, new_comm);
     PMPI_Allreduce(&my_coms, &id, 1, MPI_INT, MPI_MAX, comm);
-    PMPI_Comm_rank(comm, &my_rank);
     if ( new_comm == NULL || *new_comm == MPI_COMM_NULL ){
         return ret;
     }
+    PMPI_Comm_rank(comm, &my_rank);
     PMPI_Allreduce(&my_rank, &min_rank, 1, MPI_INT , MPI_MIN, *new_comm);
     my_coms = id;
     communicator = get_comm_parent(comm);
