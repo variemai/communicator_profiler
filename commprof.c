@@ -958,7 +958,7 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
               const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
               MPI_Comm comm)
 {
-    int ret,sum;
+    int ret,sum,sum_max;
     const int * tmp;
     double t_elapsed;
     sum = 0;
@@ -973,8 +973,8 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
         sum += *tmp;
         tmp++;
     }
-    /* PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm); */
-    profile_this(comm,sum,sendtype,Alltoallv,t_elapsed,0);
+    PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm);
+    profile_this(comm,sum_max,sendtype,Alltoallv,t_elapsed,0);
     return ret;
 }
 
@@ -1007,6 +1007,7 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 {
     int ret;
     int sum;
+    const int *tmp;
     double t_elapsed;
 
     t_elapsed = MPI_Wtime();
@@ -1014,12 +1015,14 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                           displs, recvtype, comm);
     t_elapsed = MPI_Wtime() - t_elapsed;
 
-    sum = sendcount;
-    /* Only process rank 0 will know the max */
-    /* PMPI_Reduce(&sum, &max_sum, 1, MPI_INT, MPI_MAX, 0, comm); */
+    sum = 0;
+    tmp = recvcounts;
+    while(tmp){
+        sum += *tmp;
+        tmp++;
+    }
 
-    /* Only process rank 0 will record this number to communicator data */
-    profile_this(comm,sum,sendtype,Allgatherv,t_elapsed,0);
+    profile_this(comm,sum,recvtype,Allgatherv,t_elapsed,0);
 
     return ret;
 }
@@ -1124,15 +1127,22 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
     int ret,sum;
+    const int *tmp;
     double t_elapsed;
 
     t_elapsed = MPI_Wtime();
     ret = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
                        recvtype, root, comm);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    sum = sendcount;
+
+    sum = 0;
+    tmp = recvcounts;
+    while(tmp){
+        sum += *tmp;
+        tmp++;
+    }
     /* PMPI_Reduce(&sum, &max_sum, 1, MPI_INT, MPI_MAX, 0, comm); */
-    profile_this(comm, sum, sendtype, Gatherv, t_elapsed, root);
+    profile_this(comm, sum, recvtype, Gatherv, t_elapsed, root);
     return ret;
 }
 
