@@ -84,7 +84,9 @@ void* Table_get(T table, const void* key){
     int i;
     struct binding *p = NULL;
     assert(table);
-    assert(key);
+    if ( !key )
+        return NULL;
+    /* assert(key); */
     i = (*table->hash)(key)%table->size;
     for ( p = table->buckets[i]; p; p = p->link ){
         if ( ( *table->cmp )(key,p->key) == 0 ){
