@@ -446,6 +446,7 @@ MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
     return ret;
 }
 
+
 void
 F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
 {
@@ -459,6 +460,29 @@ F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
     return;
 }
 
+/* idup is supposed to be non-blocking but we make blocking calls in the wrapper */
+int
+MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
+{
+
+    int ret,comms;
+    prof_attrs *communicator;
+    char *buf;
+    ret = PMPI_Comm_idup(comm, newcomm, request);
+    Table_put(request_tab, request, comm);
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
+    my_coms = comms;
+    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
+        return ret;
+    communicator = get_comm_parent(comm);
+    buf = (char*) malloc ( sizeof(char)*8);
+    sprintf(buf,"_i%d",my_coms);
+    _new_comm(buf, &communicator, comm, newcomm);
+    PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
+    return ret;
+}
+
+/* TODO idup wrapper F77 */
 
 int
 MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
@@ -787,6 +811,7 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
     ret = PMPI_Ibcast(buffer, count, datatype, root, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
 
+    Table_put(request_tab, request, comm);
     profile_this(comm,count,datatype,Ibcast,t_elapsed,root);
     return ret;
 }
@@ -853,6 +878,7 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
     ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
 
+    Table_put(request_tab, request, comm);
     profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
     return ret;
 }
