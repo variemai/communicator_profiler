@@ -1,5 +1,5 @@
 EXECS=exec
-CFLAGS = -g -Wall -fno-inline -O3
+CFLAGS = -Wall -fno-inline -O3 -flto=auto
 SRCS = arith.c except.c assert.c memchk.c stack.c queue.c list.c atom.c table.c
 OBJS = $(SRCS:.c=.o)
 MAIN=exec
