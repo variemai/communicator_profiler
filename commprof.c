@@ -391,11 +391,9 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
      */
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
-    /* if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){ */
-    /*     return ret; */
-    /* } */
-    if ( ret != MPI_SUCCESS )
+    if ( newcomm== NULL || *newcomm == MPI_COMM_NULL  ){
         return ret;
+    }
     PMPI_Comm_rank(comm, &rank);
     /*
      * Get the minimum rank. Note that the rank is the rank from the parent
