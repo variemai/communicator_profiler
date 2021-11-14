@@ -31,7 +31,7 @@ int main (int argc, char *argv[]){
             MPI_Recv(buffer, 64, MPI_BYTE, rank-1, 0, splitcomm, MPI_STATUS_IGNORE);
         }
 
-        MPI_Comm_split(splitcomm, color, rank / 2, &subcomm);//s1
+        MPI_Comm_split(splitcomm, color, rank / 2, &subcomm);//s1.0_s2.0
         MPI_Comm_rank(subcomm, &rank);
         if ( color == 0 ){ //s1_0 parent: s0_0
             /* MPI_Comm_free(&splitcomm); */
@@ -44,11 +44,11 @@ int main (int argc, char *argv[]){
                 printf("Process %d recvd %d bytes in subcomm color: %d\n",rank,8,color);
             }
         }
-        else{ //s1_1 parent: s0_0
+        else{ //s1.0_s2.1
             color = rank % 2;
-            MPI_Comm_split(subcomm, color, rank / 2, &leafcomm); //s2
+            MPI_Comm_split(subcomm, color, rank / 2, &leafcomm);
             MPI_Comm_rank(leafcomm, &rank);
-            if ( rank < 1 )
+            if ( rank < 1 ) //s1.0_s2.1_s3.0 and s1.0_s2.1_s3.1
                 MPI_Send(buffer,4,MPI_BYTE,rank+1,0,leafcomm);
             else
                 MPI_Recv(buffer, 4, MPI_BYTE, rank-1, 0, leafcomm, MPI_STATUS_IGNORE);

@@ -55,21 +55,21 @@ namekey()
 prof_attrs*
 get_comm_parent(MPI_Comm comm)
 {
-    int i,flag;
+    int flag;
     prof_attrs *communicator, *com_info;
     communicator = (prof_attrs*) calloc(1,sizeof(prof_attrs));
     if ( comm != MPI_COMM_WORLD ){
-        for ( i = 0; i<my_coms; i++ ){
-            if ( comm  == communicators[i] )
-                break;
-        }
-        if ( i == my_coms ){
-            fprintf(stderr, "Error: could not find the parent of communicator.\n");
-            mcpt_abort("File:%s line:%d Aborting\n",__FILE__,__LINE__);
+    /*     for ( i = 0; i<my_coms; i++ ){ */
+    /*         if ( comm  == communicators[i] ) */
+    /*             break; */
+    /*     } */
+    /*     if ( i == my_coms ){ */
+    /*         fprintf(stderr, "Error: could not find the parent of communicator.\n"); */
+    /*         mcpt_abort("File:%s line:%d Aborting\n",__FILE__,__LINE__); */
 
-        }
-        else{
-            PMPI_Comm_get_attr(communicators[i], namekey(), &com_info, &flag);
+    /*     } */
+    /*     else{ */
+            PMPI_Comm_get_attr(comm, namekey(), &com_info, &flag);
             if ( flag ){
                 strcpy(communicator->name, com_info->name);
             }
@@ -77,7 +77,7 @@ get_comm_parent(MPI_Comm comm)
                 mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",
                            __FILE__,__LINE__);
             }
-        }
+        /* } */
     }
     else{
         strcpy(communicator->name, "W");
