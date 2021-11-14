@@ -53,7 +53,7 @@ namekey()
  * communicator's name prefix to it
  */
 prof_attrs*
-get_comm_parent(MPI_Comm comm)
+get_comm_name(MPI_Comm comm)
 {
     int flag;
     prof_attrs *communicator, *com_info;
@@ -87,7 +87,7 @@ get_comm_parent(MPI_Comm comm)
 
 
 void
-_new_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm){
+init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm){
     size_t length;
     int comm_size,i;
     if ( buf == NULL || communicator == NULL ||
@@ -340,11 +340,11 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
         return ret;
     }
     /* Use the parent's name as a prefix for the newly created communicator */
-    communicator = get_comm_parent(comm);
+    communicator = get_comm_name(comm);
     buf = (char*) malloc ( sizeof(char)*8);
     /* Append prefix+suffix and initialize the data for the new communicator */
     sprintf(buf,"_c%d",my_coms);
-    _new_comm(buf, &communicator, comm, newcomm);
+    init_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -402,12 +402,12 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
      */
     PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
     /* Use the parent's name as a prefix for the newly created communicator */
-    communicator = get_comm_parent(comm);
+    communicator = get_comm_name(comm);
     buf = (char*) malloc ( sizeof(char)*16);
     /* Suffix of the new communicator with the two ids */
     sprintf(buf,"_s%d.%d",comms,min_rank);
     /* Append prefix+suffix and initialize the data for the new communicator */
-    _new_comm(buf, &communicator, comm, newcomm);
+    init_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -438,10 +438,10 @@ MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
     my_coms = comms;
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
-    communicator = get_comm_parent(comm);
+    communicator = get_comm_name(comm);
     buf = (char*) malloc ( sizeof(char)*8);
     sprintf(buf,"_d%d",my_coms);
-    _new_comm(buf, &communicator, comm, newcomm);
+    init_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -474,10 +474,10 @@ MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
     my_coms = comms;
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
-    communicator = get_comm_parent(comm);
+    communicator = get_comm_name(comm);
     buf = (char*) malloc ( sizeof(char)*8);
     sprintf(buf,"_i%d",my_coms);
-    _new_comm(buf, &communicator, comm, newcomm);
+    init_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -495,10 +495,10 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, old_comm);
     my_coms = comms;
     /* Should we have an if condition here to check if comm_cart is null? */
-    communicator = get_comm_parent(old_comm);
+    communicator = get_comm_name(old_comm);
     buf = (char*)malloc(8*sizeof(char));
     sprintf(buf,"_a%d",my_coms);
-    _new_comm(buf, &communicator, old_comm, comm_cart);
+    init_comm(buf, &communicator, old_comm, comm_cart);
     PMPI_Comm_set_attr(*comm_cart, namekey(), communicator);
     return ret;
 }
@@ -535,10 +535,10 @@ MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
     PMPI_Comm_rank(comm, &my_rank);
     PMPI_Allreduce(&my_rank, &min_rank, 1, MPI_INT , MPI_MIN, *new_comm);
     my_coms = id;
-    communicator = get_comm_parent(comm);
+    communicator = get_comm_name(comm);
     buf = (char*) malloc ( sizeof(char)*16);
     sprintf(buf,"_b%d.%d",id,min_rank);
-    _new_comm(buf, &communicator, comm, new_comm);
+    init_comm(buf, &communicator, comm, new_comm);
     PMPI_Comm_set_attr(*new_comm, namekey(), communicator);
     return ret;
 }
@@ -576,10 +576,10 @@ MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
         return ret;
     }
     PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
-    communicator = get_comm_parent(comm);
+    communicator = get_comm_name(comm);
     buf = (char*) malloc ( sizeof(char)*16);
     sprintf(buf,"_t%d.%d",comms,min_rank);
-    _new_comm(buf, &communicator, comm, newcomm);
+    init_comm(buf, &communicator, comm, newcomm);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
