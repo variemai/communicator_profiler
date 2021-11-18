@@ -558,6 +558,52 @@ F77_MPI_CART_SUB(MPI_Fint  * comm, const int  *remain_dims,
     return;
 }
 
+int
+MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
+                 const int *edges, int reorder, MPI_Comm *comm_graph)
+{
+    int ret,comms;
+    prof_attrs *communicator;
+    char *buf;
+
+    ret = PMPI_Graph_create(comm_old, nnodes, index, edges, reorder, comm_graph);
+
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm_old);
+    my_coms = comms;
+
+    communicator = get_comm_name(comm_old);
+    buf = (char*)malloc(8*sizeof(char));
+    sprintf(buf,"_r%d",my_coms);
+    init_comm(buf, &communicator, comm_old, comm_graph);
+
+    PMPI_Comm_set_attr(*comm_graph, namekey(), communicator);
+
+    return ret;
+}
+
+int
+MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int *nodes,
+                      const int *degrees, const int *targets,
+                      const int *weights, MPI_Info info, int reorder,
+                      MPI_Comm *newcomm)
+{
+    int ret,comms;
+    prof_attrs *communicator;
+    char *buf;
+    ret = PMPI_Dist_graph_create(comm_old, n, nodes, degrees, targets, weights, info, reorder, newcomm);
+
+    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm_old);
+    my_coms = comms;
+
+    communicator = get_comm_name(comm_old);
+    buf = (char*)malloc(8*sizeof(char));
+    sprintf(buf,"_g%d",my_coms);
+    init_comm(buf, &communicator, comm_old, newcomm);
+
+    PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
+    return ret;
+}
+
 
 int
 MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
