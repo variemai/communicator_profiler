@@ -581,6 +581,29 @@ MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
     return ret;
 }
 
+
+void
+F77_MPI_GRAPH_CREATE(MPI_Fint  * comm_old, int  * nnodes, const int  *index,
+                     const int  *edges, int  * reorder, MPI_Fint  *comm_graph,
+                     MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Comm c_comm_old;
+    MPI_Comm c_comm_graph;
+
+    c_comm_old = MPI_Comm_f2c(*comm_old);
+
+    ret = MPI_Graph_create(c_comm_old, *nnodes, index, edges, *reorder, &c_comm_graph);
+
+    *ierr = (MPI_Fint)ret;
+    if ( ret == MPI_SUCCESS ) {
+        *comm_graph = MPI_Comm_c2f(c_comm_graph);
+    }
+    return;
+
+}
+
+
 int
 MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int *nodes,
                       const int *degrees, const int *targets,
