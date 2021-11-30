@@ -1605,8 +1605,17 @@ _Finalize()
 
     array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
     recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
+/* typedef struct profiler_attributes{ */
+/*     char name[NAMELEN]; */
+/*     uint64_t bytes; */
+/*     uint64_t msgs; */
+/*     int size; */
+/*     uint32_t prims[NUM_OF_PRIMS]; */
+/*     uint64_t prim_bytes[NUM_OF_PRIMS]; */
+/*     double time_info[NUM_OF_PRIMS]; */
+/* }prof_attrs; */
 
-    MPI_Datatype types[7] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT32_T, MPI_INT,
+    MPI_Datatype types[7] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT64_T, MPI_INT,
     MPI_UINT32_T, MPI_UINT64_T, MPI_DOUBLE };
     int blocklen[7] = {NAMELEN,1,1,1,NUM_OF_PRIMS,NUM_OF_PRIMS,NUM_OF_PRIMS};
     MPI_Aint displacements[7];
