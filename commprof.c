@@ -138,13 +138,15 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
     if ( datatype != MPI_DATATYPE_NULL ){
         PMPI_Type_size(datatype, &size);
     }
-    communicator->time_info[prim] += t_elapsed;
-    communicator->prims[prim] += 1;
-    communicator->msgs += 1;
     if ( flag ){
-        sum = count * size;
-        communicator->bytes += sum;
-        communicator->prim_bytes[prim] += sum;
+        communicator->time_info[prim] += t_elapsed;
+        communicator->prims[prim] += 1;
+        communicator->msgs += 1;
+        if ( size > 0 ){
+            sum = count * size;
+            communicator->bytes += sum;
+            communicator->prim_bytes[prim] += sum;
+        }
         /* if ( prim < Sendrecv ){ */
         /*     communicator->prims[prim] += 1; */
         /*     communicator->msgs += 1; */
@@ -1065,9 +1067,11 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
 
     tmp = sendcounts;
     while ( tmp ){
-        sum += *tmp;
+        if ( *tmp > 0 )
+            sum += *tmp;
         tmp++;
     }
+    sum_max = 0;
     PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm);
     profile_this(comm,sum_max,sendtype,Alltoallv,t_elapsed,0);
     return ret;
