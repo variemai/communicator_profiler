@@ -1720,7 +1720,7 @@ _Finalize()
 
 
         memset(ubytes, 0, sizeof(uint64_t )*total);
-        memset(umsgs, 0, sizeof(uint32_t )*total);
+        memset(umsgs, 0, sizeof(uint64_t )*total);
         memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS);
         memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS);
         memset(usizes, 0, sizeof(int)*total);
