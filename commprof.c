@@ -1074,8 +1074,8 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
         if ( sendcounts[i] > 0 )
             sum+=sendcounts[i];
     }
-    PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm);
-    profile_this(comm,sum_max,sendtype,Alltoallv,t_elapsed,0);
+    /* PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm); */
+    profile_this(comm,sum,sendtype,Alltoallv,t_elapsed,0);
     return ret;
 }
 
