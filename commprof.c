@@ -1054,7 +1054,7 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
               const int *recvcounts, const int *rdispls, MPI_Datatype recvtype,
               MPI_Comm comm)
 {
-    int ret,sum,sum_max;
+    int ret,sum,sum_max,i,sz;
     const int * tmp;
     double t_elapsed;
     sum = 0;
@@ -1064,11 +1064,15 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
                          rdispls, recvtype, comm);
     t_elapsed = MPI_Wtime() - t_elapsed;
 
-    tmp = sendcounts;
-    while ( tmp ){
-        if ( *tmp > 0 )
-            sum += *tmp;
-        tmp++;
+    /* tmp = sendcounts; */
+    /* while ( tmp ){ */
+    /*     if ( *tmp > 0 ) */
+    /*         sum += *tmp; */
+    /*     tmp++; */
+    /* } */
+    MPI_Comm_size(comm, &sz);
+    for ( i=0; i<sz; i++ ){
+        sum+=sendcounts[i];
     }
     PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm);
     profile_this(comm,sum_max,sendtype,Alltoallv,t_elapsed,0);
