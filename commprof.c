@@ -1055,7 +1055,6 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
               MPI_Comm comm)
 {
     int ret,sum,sum_max,i,sz;
-    const int * tmp;
     double t_elapsed;
     sum = 0;
 
@@ -1072,7 +1071,8 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
     /* } */
     MPI_Comm_size(comm, &sz);
     for ( i=0; i<sz; i++ ){
-        sum+=sendcounts[i];
+        if ( sendcounts[i] > 0 )
+            sum+=sendcounts[i];
     }
     PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm);
     profile_this(comm,sum_max,sendtype,Alltoallv,t_elapsed,0);
