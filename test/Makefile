@@ -18,5 +18,6 @@ all:
 	$(CC) -g -L$(LIBPATH) wait.c -o wait.out  -lmcpt
 	$(CC) -g -L$(LIBPATH) waitall.c -o waitall.out  -lmcpt
 	$(CC) -g -L$(LIBPATH) sendrecv.c -o sendrecv.out  -lmcpt
+	$(CC) -g -L$(LIBPATH) barrier.c -o barrier.out  -lmcpt
 
 # end

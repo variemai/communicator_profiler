@@ -1404,7 +1404,7 @@ MPI_Barrier ( MPI_Comm comm )
 
     t_elapsed = MPI_Wtime();
     ret = PMPI_Barrier(comm);
-    t_elapsed = MPI_Wtime()-MPI_Wtime();
+    t_elapsed = MPI_Wtime()-t_elapsed;
 
     profile_this(comm,0,MPI_DATATYPE_NULL,Barrier,t_elapsed,0);
     return ret;
@@ -1653,10 +1653,12 @@ _Finalize()
             array[i].bytes = local_comms[i]->bytes;
             array[i].msgs= local_comms[i]->msgs;
             array[i].size = local_comms[i]->size;
+            /* printf("%s: %lu, %lu, %d, ",local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs,local_comms[i]->size); */
             for ( k=0; k<NUM_OF_PRIMS; k++ ){
                 array[i].prims[k] = local_comms[i]->prims[k];
                 array[i].prim_bytes[k] =local_comms[i]->prim_bytes[k];
                 array[i].time_info[k] = local_comms[i]->time_info[k];
+                /* printf("%lf, ", local_comms[i]->time_info[k]); */
             }
         }
         else{
@@ -1756,14 +1758,17 @@ _Finalize()
                     umsgs[i]+= msgs[j];
                     usizes[i]=sizes[j];
                     for ( k =0; k<NUM_OF_PRIMS; k++){
-                        uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
                         if ( k >= Sendrecv ){
                             if ( uprims_bytes[i*NUM_OF_PRIMS+k] <  prims_bytes[j*NUM_OF_PRIMS+k] ){
                                 uprims_bytes[i*NUM_OF_PRIMS+k] = prims_bytes[j*NUM_OF_PRIMS+k];
                             }
+                            if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){
+                                uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k];
+                            }
                         }
                         else{
                             uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
+                            uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
                         }
                         if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
                             utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
@@ -1798,14 +1803,14 @@ _Finalize()
         }
         fprintf(fp, "'\n");
         fprintf(fp, "#'Num of REAL comms'='%d'\n",num_of_comms);
-        long t;
-        time(&t);
-        char *tmp = ctime(&t);
-        char *date = (char*) malloc ( strlen(tmp)-1 );
-        strncpy(date, tmp, strlen(tmp)-1);
-        fprintf(fp, "#'Date'='%s'\n",date);
+        /* long t; */
+        /* time(&t); */
+        /* char *tmp = ctime(&t); */
+        /* char *date = (char*) malloc ( strlen(tmp)-1 ); */
+        /* strncpy(date, tmp, strlen(tmp)-1); */
+        /* fprintf(fp, "#'Date'='%s'\n",date); */
         fprintf(fp, "Comm,Size,Calls,");
-        free(date);
+        /* free(date); */
         for (k = 0; k<NUM_OF_PRIMS; k++){
             fprintf(fp, "%s_Calls,",prim_names[k]);
             fprintf(fp, "%s_Volume,",prim_names[k]);
