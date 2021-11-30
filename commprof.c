@@ -138,13 +138,13 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
     if ( datatype != MPI_DATATYPE_NULL ){
         PMPI_Type_size(datatype, &size);
     }
+    communicator->time_info[prim] += t_elapsed;
+    communicator->prims[prim] += 1;
+    communicator->msgs += 1;
     if ( flag ){
         sum = count * size;
-        communicator->time_info[prim] += t_elapsed;
         communicator->bytes += sum;
         communicator->prim_bytes[prim] += sum;
-        communicator->prims[prim] += 1;
-        communicator->msgs += 1;
         /* if ( prim < Sendrecv ){ */
         /*     communicator->prims[prim] += 1; */
         /*     communicator->msgs += 1; */
@@ -163,9 +163,9 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
         /*     } */
         /* } */
     }
-    /* else{ */
-    /*     fprintf(stderr, "MCPT: empty flag when profiling %s - this might be a bug\n",prim_names[prim]); */
-    /* } */
+    else{
+        fprintf(stderr, "MCPT: empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
+    }
     /* *id = i; */
     return communicator;
 }
