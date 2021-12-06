@@ -213,11 +213,13 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     int ret,rank,size;
     int i,rc;
     prof_attrs *communicator;
+    char *dname;
     ret = PMPI_Init_thread(argc, argv, required, provided);
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+
     /* comm_tab = Table_new(256, NULL, NULL); */
 
     /* world_sz = size*size; */
@@ -235,7 +237,11 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
         fflush(stdout);
     }
     /* Debuggin file please remove when running */
-    dbg_file = fopen("MCPT_%d\n","w");
+    dname = (char*) malloc (32);
+    sprintf(dname, "MCPT_%d", rank);
+    dbg_file = fopen(dname,"w");
+    /********************************************/
+
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
     if ( communicator == NULL ){
         mcpt_abort("malloc failed at line %s\n",__LINE__);
@@ -256,6 +262,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
+    free(dname);
     communicators[0] = MPI_COMM_WORLD;
     PMPI_Barrier(MPI_COMM_WORLD);
     return ret;
