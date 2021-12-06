@@ -144,9 +144,12 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
         communicator->time_info[prim] += t_elapsed;
         communicator->prims[prim] += 1;
         communicator->msgs += 1;
-            sum = count * size;
-            communicator->bytes += sum;
-            communicator->prim_bytes[prim] += sum;
+        sum = count * size;
+        communicator->bytes += sum;
+        communicator->prim_bytes[prim] += sum;
+        if ( prim == Alltoall || prim == Bcast ){
+            fprintf(dbg_file, "%lf %ld\n",t_elapsed,sum);
+        }
     }
     else{
         fprintf(stderr, "MCPT: empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
@@ -182,7 +185,7 @@ _MPI_Init(int *argc, char ***argv){
         fflush(stdout);
     }
     /* Debuggin file please remove when running */
-    dbg_file = fopen("MCPT_%d\n","w");
+    /* dbg_file = fopen("MCPT_%d\n","w"); */
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
     if ( communicator == NULL ){
         mcpt_abort("malloc failed at line %s\n",__LINE__);
@@ -1018,7 +1021,7 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                          recvtype, comm);
 
     t_elapsed = MPI_Wtime() - t_elapsed;
-    fprintf(dbg_file, "%lf\n",t_elapsed);
+    /* fprintf(dbg_file, "%lf\n",t_elapsed); */
     profile_this(comm,sendcount,sendtype,Alltoall,t_elapsed,0);
     return ret;
 }
