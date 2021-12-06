@@ -25,6 +25,7 @@ char *av[MAX_ARGS];
 /* int rq_index = 0; */
 /* int world_sz; */
 Table_T request_tab;
+FILE *dbg_file;
 /* Table_T comm_tab; */
 
 static int
@@ -146,28 +147,10 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
             sum = count * size;
             communicator->bytes += sum;
             communicator->prim_bytes[prim] += sum;
-        /* if ( prim < Sendrecv ){ */
-        /*     communicator->prims[prim] += 1; */
-        /*     communicator->msgs += 1; */
-        /*     communicator->prim_bytes[prim] += sum; */
-        /*     if ( prim == Send || prim == Isend ){ */
-        /*         communicator->bytes += sum; */
-        /*     } */
-        /* } */
-        /* else{ */
-        /*     PMPI_Comm_rank(comm, &rank); */
-        /*     if ( rank == root ){ */
-        /*         communicator->bytes += sum; */
-        /*         communicator->prim_bytes[prim] += sum; */
-        /*         communicator->prims[prim] += 1; */
-        /*         communicator->msgs += 1; */
-        /*     } */
-        /* } */
     }
     else{
         fprintf(stderr, "MCPT: empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
     }
-    /* *id = i; */
     return communicator;
 }
 
@@ -198,6 +181,8 @@ _MPI_Init(int *argc, char ***argv){
  %s\n",appname);
         fflush(stdout);
     }
+    /* Debuggin file please remove when running */
+    dbg_file = fopen("MCPT_%d\n","w");
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
     if ( communicator == NULL ){
         mcpt_abort("malloc failed at line %s\n",__LINE__);
@@ -249,6 +234,8 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
  application %s\n",appname);
         fflush(stdout);
     }
+    /* Debuggin file please remove when running */
+    dbg_file = fopen("MCPT_%d\n","w");
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
     if ( communicator == NULL ){
         mcpt_abort("malloc failed at line %s\n",__LINE__);
@@ -1024,6 +1011,7 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                          recvtype, comm);
 
     t_elapsed = MPI_Wtime() - t_elapsed;
+    fprintf(dbg_file, "%lf\n",t_elapsed);
     profile_this(comm,sendcount,sendtype,Alltoall,t_elapsed,0);
     return ret;
 }
@@ -1851,6 +1839,7 @@ _Finalize()
         fclose(fp);
         Table_free(&request_tab);
     }
+    fclose(dbg_file);
     /* free(request_list); */
     return PMPI_Finalize();
 }
