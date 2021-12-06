@@ -147,7 +147,7 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
         sum = count * size;
         communicator->bytes += sum;
         communicator->prim_bytes[prim] += sum;
-        if ( prim == Alltoall || prim == Bcast ){
+        if ( prim == Bcast ){
             fprintf(dbg_file, "%lf %ld\n",t_elapsed,sum);
         }
     }
