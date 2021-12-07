@@ -1554,6 +1554,7 @@ MPI_Comm_free(MPI_Comm *comm)
         if ( i == local_cid  )
             mcpt_abort("Comm_free on wrong communicator\n");
         local_comms[i] = (prof_attrs*) malloc (sizeof(prof_attrs));
+        /* memcpy(local_comms[i], com_info, sizeof(prof_attrs)); */
         /* We can use memcpy here */
         local_comms[i]->bytes = com_info->bytes;
         local_comms[i]->msgs = com_info->msgs;
@@ -1648,6 +1649,7 @@ _Finalize()
         if ( local_comms[i] != NULL ){
 
             /* We can use memcpy here */
+            /* memcpy(&array[i], local_comms[i], sizeof(prof_attrs)); */
             strcpy(array[i].name, local_comms[i]->name);
             array[i].bytes = local_comms[i]->bytes;
             array[i].msgs= local_comms[i]->msgs;
@@ -1662,6 +1664,7 @@ _Finalize()
         }
         else{
             strcpy(array[i].name, "NULL");
+            /* memset(&array[i], 0, sizeof(prof_attrs)); */
             array[i].msgs = 0;
             array[i].bytes = 0;
             array[i].size = 0;
