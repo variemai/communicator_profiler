@@ -25,7 +25,7 @@ char *av[MAX_ARGS];
 /* int rq_index = 0; */
 /* int world_sz; */
 Table_T request_tab;
-FILE *dbg_file;
+/* FILE *dbg_file; */
 /* Table_T comm_tab; */
 
 static int
@@ -147,9 +147,9 @@ profile_this(MPI_Comm comm, int count,MPI_Datatype datatype,int prim,
         sum = count * size;
         communicator->bytes += sum;
         communicator->prim_bytes[prim] += sum;
-        if ( prim == Bcast ){
-            fprintf(dbg_file, "%lf %ld\n",t_elapsed,sum);
-        }
+        /* if ( prim == Bcast ){ */
+        /*     fprintf(dbg_file, "%lf %ld\n",t_elapsed,sum); */
+        /* } */
     }
     else{
         fprintf(stderr, "MCPT: empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
@@ -216,7 +216,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     int ret,rank,size;
     int i,rc;
     prof_attrs *communicator;
-    char *dname;
+    /* char *dname; */
     ret = PMPI_Init_thread(argc, argv, required, provided);
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -240,9 +240,9 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
         fflush(stdout);
     }
     /* Debuggin file please remove when running */
-    dname = (char*) malloc (32);
-    sprintf(dname, "MCPT_%d", rank);
-    dbg_file = fopen(dname,"w");
+    /* dname = (char*) malloc (32); */
+    /* sprintf(dname, "MCPT_%d", rank); */
+    /* dbg_file = fopen(dname,"w"); */
     /********************************************/
 
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
@@ -265,7 +265,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
-    free(dname);
+    /* free(dname); */
     communicators[0] = MPI_COMM_WORLD;
     PMPI_Barrier(MPI_COMM_WORLD);
     return ret;
@@ -1852,7 +1852,7 @@ _Finalize()
         fclose(fp);
         Table_free(&request_tab);
     }
-    fclose(dbg_file);
+    /* fclose(dbg_file); */
     /* free(request_list); */
     return PMPI_Finalize();
 }
