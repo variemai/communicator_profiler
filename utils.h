@@ -11,7 +11,7 @@
 #include <string.h>
 #define NAMELEN 256
 #define PRIMLEN 16
-#define NUM_OF_PRIMS 30
+#define NUM_OF_PRIMS 31
 
 enum primitives{
 Send,           /* DO NOT ANYHTING BEFORE THIS */
@@ -31,6 +31,7 @@ Allgather,
 Allgatherv,
 Alltoall,
 Alltoallv,
+Alltoallw,
 Reduce,
 Gather,
 Gatherv,
