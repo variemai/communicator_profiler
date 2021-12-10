@@ -136,7 +136,6 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
     /*     if ( strcmp(communicator->name, local_comms[i]->name) == 0 ) */
     /*         break; */
     /* } */
-    size = 0;
     if ( datatype != MPI_DATATYPE_NULL ){
         PMPI_Type_size(datatype, &size);
         sum = count * size;
@@ -1824,9 +1823,8 @@ _Finalize()
                     for ( k =0; k<NUM_OF_PRIMS; k++){
                         if ( k >= Sendrecv ){
                             /* acculumate the bytes instead of taking the max after talks with jesper */
-                            if ( uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k] ){
-                                uprims_bytes[i*NUM_OF_PRIMS+k] = prims_bytes[j*NUM_OF_PRIMS+k];
-                            }
+                            uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k];
+
                             if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){
                                 uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k];
                             }
