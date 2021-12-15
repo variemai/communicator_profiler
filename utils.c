@@ -20,6 +20,7 @@ const char prim_names[][NUM_OF_PRIMS]={
 "Allgatherv",
 "Alltoall",
 "Alltoallv",
+"Alltoallw",
 "Reduce",
 "Gather",
 "Gatherv",
