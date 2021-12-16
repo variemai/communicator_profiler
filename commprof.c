@@ -8,7 +8,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <unistd.h>
-#include "symbols.h"
+/* #include "symbols.h" */
 #include "table.h"
 #include <inttypes.h>
 #define MAX_ARGS 1024
