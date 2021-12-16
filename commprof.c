@@ -8,9 +8,14 @@
 #include <ctype.h>
 #include <time.h>
 #include <unistd.h>
-/* #include "symbols.h" */
+
+#ifdef MPICH_API_PUBLIC
+#include "symbols.h"
+#endif
+
 #include "table.h"
 #include <inttypes.h>
+
 #define MAX_ARGS 1024
 #define MAX_DIMS 8
 
