@@ -19,7 +19,7 @@
 #define MAX_ARGS 1024
 #define MAX_DIMS 8
 
-MPI_Comm *communicators = NULL;
+/* MPI_Comm *communicators = NULL; */
 prof_attrs **local_data = NULL;
 prof_attrs **local_comms = NULL;
 int local_cid= 0;
@@ -64,7 +64,7 @@ get_comm_name(MPI_Comm comm)
 {
     int flag;
     prof_attrs *communicator, *com_info;
-    communicator = (prof_attrs*) calloc(1,sizeof(prof_attrs));
+    communicator = (prof_attrs*) malloc(sizeof(prof_attrs));
     if ( comm != MPI_COMM_WORLD ){
     /*     for ( i = 0; i<my_coms; i++ ){ */
     /*         if ( comm  == communicators[i] ) */
@@ -114,7 +114,7 @@ init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
         (*communicator)->time_info[i] = 0.0;
     }
     local_comms[local_cid] = *communicator;
-    communicators[my_coms] = *newcomm;
+    /* communicators[my_coms] = *newcomm; */
     /* Table_put(comm_tab, (*communicator)->name, *communicator); */
     my_coms++;
     local_cid++;
@@ -173,17 +173,17 @@ _MPI_Init(int *argc, char ***argv){
     ret = PMPI_Init(argc, argv);
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
-    communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
+    /* communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4); */
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
 
     /* world_sz = size*size; */
     request_tab = Table_new(1024, NULL, NULL);
     /* comm_tab = Table_new(256, NULL, NULL); */
 
-    for ( i =0 ; i<size*4; i++ ){
-        communicators[i] = MPI_COMM_NULL;
-        local_comms[i] = NULL;
-    }
+    /* for ( i =0 ; i<size*4; i++ ){ */
+    /*     communicators[i] = MPI_COMM_NULL; */
+    /*     local_comms[i] = NULL; */
+    /* } */
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
@@ -212,7 +212,7 @@ _MPI_Init(int *argc, char ***argv){
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
-    communicators[0] = MPI_COMM_WORLD;
+    /* communicators[0] = MPI_COMM_WORLD; */
     /* PMPI_Barrier(MPI_COMM_WORLD); */
     return ret;
 }
@@ -227,7 +227,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     ret = PMPI_Init_thread(argc, argv, required, provided);
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
-    communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4);
+    /* communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4); */
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
 
     /* comm_tab = Table_new(256, NULL, NULL); */
@@ -235,10 +235,10 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     /* world_sz = size*size; */
     request_tab = Table_new(1024, NULL, NULL);
 
-    for ( i =0 ; i<size*4; i++ ){
-        communicators[i] = MPI_COMM_NULL;
-        local_comms[i] = NULL;
-    }
+    /* for ( i =0 ; i<size*4; i++ ){ */
+    /*     communicators[i] = MPI_COMM_NULL; */
+    /*     local_comms[i] = NULL; */
+    /* } */
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
@@ -273,7 +273,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     /* free(dname); */
-    communicators[0] = MPI_COMM_WORLD;
+    /* communicators[0] = MPI_COMM_WORLD; */
     /* PMPI_Barrier(MPI_COMM_WORLD); */
     return ret;
 }
@@ -350,6 +350,7 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     /* Append prefix+suffix and initialize the data for the new communicator */
     sprintf(buf,"_c%d",my_coms);
     init_comm(buf, &communicator, comm, newcomm);
+    free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -413,6 +414,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     sprintf(buf,"_s%d.%d",comms,min_rank);
     /* Append prefix+suffix and initialize the data for the new communicator */
     init_comm(buf, &communicator, comm, newcomm);
+    free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -447,6 +449,7 @@ MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
     buf = (char*) malloc ( sizeof(char)*8);
     sprintf(buf,"_d%d",my_coms);
     init_comm(buf, &communicator, comm, newcomm);
+    free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -474,7 +477,11 @@ MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
     prof_attrs *communicator;
     char *buf;
     ret = PMPI_Comm_idup(comm, newcomm, request);
+#ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
+#else
+    Table_put(request_tab, request, &comm);
+#endif
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
@@ -483,6 +490,8 @@ MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
     buf = (char*) malloc ( sizeof(char)*8);
     sprintf(buf,"_i%d",my_coms);
     init_comm(buf, &communicator, comm, newcomm);
+
+    free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -504,6 +513,7 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
     buf = (char*)malloc(8*sizeof(char));
     sprintf(buf,"_a%d",my_coms);
     init_comm(buf, &communicator, old_comm, comm_cart);
+    free(buf);
     PMPI_Comm_set_attr(*comm_cart, namekey(), communicator);
     return ret;
 }
@@ -580,6 +590,7 @@ MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
     buf = (char*)malloc(8*sizeof(char));
     sprintf(buf,"_r%d",my_coms);
     init_comm(buf, &communicator, comm_old, comm_graph);
+    free(buf);
 
     PMPI_Comm_set_attr(*comm_graph, namekey(), communicator);
 
@@ -627,6 +638,7 @@ MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int *nodes,
     buf = (char*)malloc(8*sizeof(char));
     sprintf(buf,"_g%d",my_coms);
     init_comm(buf, &communicator, comm_old, newcomm);
+    free(buf);
 
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
@@ -654,6 +666,7 @@ MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
     buf = (char*) malloc ( sizeof(char)*16);
     sprintf(buf,"_t%d.%d",comms,min_rank);
     init_comm(buf, &communicator, comm, newcomm);
+    free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
@@ -684,7 +697,11 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
     ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count, datatype, Isend, t_elapsed, 0);
+#ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
+#else
+    Table_put(request_tab, request, &comm);
+#endif
     /* if (rq_index == world_sz){ */
     /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
     /*     world_sz = world_sz*world_sz; */
@@ -755,7 +772,11 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
     profile_this(comm, count,datatype,Irecv,t_elapsed,0);
+#ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
+#else
+    Table_put(request_tab, request, &comm);
+#endif
     return ret;
 }
 
@@ -905,7 +926,11 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
     else {
         sum = count;
     }
+#ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
+#else
+    Table_put(request_tab, request, &comm);
+#endif
     profile_this(comm,sum,datatype,Ibcast,t_elapsed,root);
     return ret;
 }
@@ -971,8 +996,12 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
     t_elapsed =  MPI_Wtime();
     ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
     t_elapsed = MPI_Wtime() - t_elapsed;
-
+#ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
+#else
+    Table_put(request_tab, request, &comm);
+#endif
+
     profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
     return ret;
 }
@@ -1500,7 +1529,12 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     int ret;
     double t_elapsed;
     /* int i; */
+
+#ifndef MPICH_API_PUBLIC
     MPI_Comm comm = NULL;
+#else
+    MPI_Comm *comm = NULL;
+#endif
 
     t_elapsed = MPI_Wtime();
     ret = PMPI_Wait(request, status);
@@ -1510,7 +1544,11 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
         /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
         return ret;
     }
-    profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+#ifndef MPICH_API_PUBLIC
+    profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+#else
+    profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+#endif
     return ret;
 }
 
@@ -1532,7 +1570,11 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
 {
     int ret;
     double t_elapsed;
+#ifndef MPICH_API_PUBLIC
     MPI_Comm comm = NULL;
+#else
+    MPI_Comm *comm = NULL;
+#endif
 
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
@@ -1542,9 +1584,13 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
         /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
         return ret;
     }
+#ifndef MPICH_API_PUBLIC
     profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+#else
+    profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+#endif
 
-        return ret;
+    return ret;
 }
 
 
@@ -1923,7 +1969,17 @@ _Finalize()
         free(utime_info);
         fclose(fp);
     }
+
     Table_free(&request_tab);
+
+    /* for ( i = 0; i < num_of_comms; i++ ){ */
+    /*     if ( local_comms[i] != NULL ){ */
+    /*         free(local_comms[i]); */
+    /*     } */
+
+    /* } */
+    /* free(array); */
+    /* free(recv_buffer); */
     /* fclose(dbg_file); */
     /* free(request_list); */
     return PMPI_Finalize();
