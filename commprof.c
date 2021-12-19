@@ -1819,7 +1819,23 @@ _Finalize()
                                        NUM_OF_PRIMS );
 
         j = 0;
+        int r =-1;
+        FILE *fpp = fopen("per_process_data.csv", "w");
+
+        fprintf(fpp, "Rank,Comm,Size,Calls,");
+        for (k = 0; k<NUM_OF_PRIMS; k++){
+            fprintf(fpp, "%s_Calls,",prim_names[k]);
+            fprintf(fpp, "%s_Volume,",prim_names[k]);
+            if ( k == NUM_OF_PRIMS -1 )
+                fprintf(fpp, "%s_Time",prim_names[k]);
+            else
+                fprintf(fpp, "%s_Time,",prim_names[k]);
+        }
+        fprintf(fpp,"\n");
         for ( i =0; i<size*num_of_comms; i++ ){
+            if ( i % num_of_comms == 0 ){
+                r++;
+            }
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
                 unames[j] = strdup("NULL");
                 /* Use memcpy instead of loop */
@@ -1827,15 +1843,27 @@ _Finalize()
                 bytes[j] = recv_buffer[i].bytes;
                 msgs[j] = recv_buffer[i].msgs;
                 sizes[j] = recv_buffer[i].size;
+                fprintf(fpp, "%d,%s,%ld,%ld,%d",r,names[j],bytes[j],msgs[j],sizes[j]);
                 /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
                 for ( k =0; k<NUM_OF_PRIMS; k++){
                     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
                     prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k];
                     time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k];
+                    fprintf(fpp, "%u,",prims[j*NUM_OF_PRIMS+k]);
+                    if ( prims[j*NUM_OF_PRIMS+k] > 0 )
+                        fprintf(fpp, "%" PRIu64 ",",prims_bytes[j*NUM_OF_PRIMS+k]);
+                    else
+                        fprintf(fpp, "0.0,");
+                    if ( k == NUM_OF_PRIMS-1 )
+                        fprintf(fpp, "%lf",time_info[j*NUM_OF_PRIMS+k]);
+                    else
+                        fprintf(fpp, "%lf,",time_info[j*NUM_OF_PRIMS+k]);
                 }
+                fprintf(fpp,"\n");
                 j++;
             }
         }
+        fclose(fpp);
         total = j;
 
         ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total);
