@@ -22,7 +22,7 @@ SHARED=-shared
 #all:
 #	@echo PATH IS  $(LIBPATH)
 
-all: default $(DSTRUCTF) tests
+all: default $(DSTRUCTF)
 	@echo MCPT compiled
 
 default: libciface
@@ -32,7 +32,7 @@ default: libciface
 libciface: $(DSTRUCTF)
 	$(MAKE) -C $<
 
-tests: test
+tests: test default
 	$(MAKE) -C $<
 
 #$(OBJS): $(SRCS)
