@@ -480,7 +480,7 @@ MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
 #ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
 #else
-    Table_put(request_tab, request, &comm);
+    Table_put(request_tab, request, comm);
 #endif
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
@@ -700,7 +700,7 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
 #ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
 #else
-    Table_put(request_tab, request, &comm);
+    Table_put(request_tab, request, comm);
 #endif
     /* if (rq_index == world_sz){ */
     /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
@@ -775,7 +775,7 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
 #ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
 #else
-    Table_put(request_tab, request, &comm);
+    Table_put(request_tab, request, comm);
 #endif
     return ret;
 }
@@ -929,7 +929,7 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
 #ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
 #else
-    Table_put(request_tab, request, &comm);
+    Table_put(request_tab, request, comm);
 #endif
     profile_this(comm,sum,datatype,Ibcast,t_elapsed,root);
     return ret;
@@ -999,7 +999,7 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
 #ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
 #else
-    Table_put(request_tab, request, &comm);
+    Table_put(request_tab, request, comm);
 #endif
 
     profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
