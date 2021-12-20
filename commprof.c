@@ -2012,6 +2012,7 @@ _Finalize()
         fclose(fp);
     }
 
+    PMPI_Type_free(&profiler_data);
     Table_free(&request_tab);
 
     /* for ( i = 0; i < num_of_comms; i++ ){ */
