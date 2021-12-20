@@ -1589,15 +1589,21 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    comm = Table_get(request_tab, &array_of_requests[0]);
-    if ( comm == NULL ){
-        /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-        return ret;
-    }
+    /* comm = Table_get(request_tab, &array_of_requests[0]); */
+    /* if ( comm == NULL ){ */
+    /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
+    /*     return ret; */
+    /* } */
 #ifndef MPICH_API_PUBLIC
     profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
 #else
-    profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+    int i;
+    for ( i =0; i<count; i++ ){
+        comm = Table_get(request_tab, &array_of_requests[i]);
+        if ( comm != NULL ){
+            profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+        }
+    }
 #endif
 
     return ret;
