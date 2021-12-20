@@ -1823,7 +1823,7 @@ _Finalize()
         int r =-1;
         int p = 0;
         FILE *fpp = NULL;
-        if ( env_var  && (strcpy(env_var, "p") == 0 )){
+        if ( env_var  && (strcmp(env_var, "p") == 0 )){
             p = 1;
             fpp = fopen("per_process_data.csv", "w");
             fprintf(fpp, "Rank,Comm,Size,Calls,");
@@ -1873,7 +1873,10 @@ _Finalize()
                 j++;
             }
         }
-        fclose(fpp);
+        if( p ){
+            fclose(fpp);
+            printf("Per process data file: per_process_data.csv\n");
+        }
 
         total = j;
 
@@ -1996,7 +1999,7 @@ _Finalize()
                 fprintf(fp,"\n");
             /* } */
         }
-        printf("MCPT File Written: profiler_data.csv\n");
+        printf("MCPT File: profiler_data.csv\n");
         for ( i =0; i<total; i++ ){
             free(unames[i]);
         }
