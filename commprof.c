@@ -1578,7 +1578,7 @@ int
 MPI_Waitall(int count, MPI_Request array_of_requests[],
             MPI_Status array_of_statuses[])
 {
-    int ret;
+    int ret,i;
     double t_elapsed;
 #ifndef MPICH_API_PUBLIC
     MPI_Comm comm = NULL;
@@ -1595,9 +1595,15 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     /*     return ret; */
     /* } */
 #ifndef MPICH_API_PUBLIC
-    profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+    /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
+    for ( i =0; i<count; i++ ){
+        comm = Table_get(request_tab, &array_of_requests[i]);
+        if ( comm != NULL ){
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+        }
+    }
+
 #else
-    int i;
     for ( i =0; i<count; i++ ){
         comm = Table_get(request_tab, &array_of_requests[i]);
         if ( comm != NULL ){
