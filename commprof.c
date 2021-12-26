@@ -1601,6 +1601,9 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
         if ( comm != NULL ){
             profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
         }
+        else{
+            fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n");
+        }
     }
 
 #else
@@ -1954,10 +1957,10 @@ _Finalize()
                             uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
                             uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
                         }
+                        /* DO NOT accumulate timing info take MAX */
                         if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
                             utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
                         }
-                        /* DO NOT accumulate timing info take MAX */
                     }
                 }
             }
