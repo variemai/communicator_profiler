@@ -9,7 +9,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef MPICH_API_PUBLIC
+#ifndef MPICH_API_PUBLIC
 #include "symbols.h"
 #endif
 
