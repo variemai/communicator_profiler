@@ -9,7 +9,7 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef MPICH_API_PUBLIC
+#ifndef MPICH_API_PUBLIC
 #include "symbols.h"
 #endif
 
@@ -1579,7 +1579,7 @@ int
 MPI_Waitall(int count, MPI_Request array_of_requests[],
             MPI_Status array_of_statuses[])
 {
-    int ret;
+    int ret,i;
     double t_elapsed;
 #ifndef MPICH_API_PUBLIC
     MPI_Comm comm = NULL;
@@ -1590,15 +1590,30 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     t_elapsed = MPI_Wtime();
     ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
     t_elapsed = MPI_Wtime() - t_elapsed;
-    comm = Table_get(request_tab, &array_of_requests[0]);
-    if ( comm == NULL ){
-        /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-        return ret;
-    }
+    /* comm = Table_get(request_tab, &array_of_requests[0]); */
+    /* if ( comm == NULL ){ */
+    /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
+    /*     return ret; */
+    /* } */
 #ifndef MPICH_API_PUBLIC
-    profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+    /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
+    for ( i =0; i<count; i++ ){
+        comm = Table_get(request_tab, &array_of_requests[i]);
+        if ( comm != NULL ){
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+        }
+        else{
+            /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
+        }
+    }
+
 #else
-    profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+    for ( i =0; i<count; i++ ){
+        comm = Table_get(request_tab, &array_of_requests[i]);
+        if ( comm != NULL ){
+            profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+        }
+    }
 #endif
 
     return ret;
@@ -1943,10 +1958,10 @@ _Finalize()
                             uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
                             uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
                         }
+                        /* DO NOT accumulate timing info take MAX */
                         if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
                             utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
                         }
-                        /* DO NOT accumulate timing info take MAX */
                     }
                 }
             }
