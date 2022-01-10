@@ -1602,9 +1602,9 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
         if ( comm != NULL ){
             profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
         }
-        else{
-            /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-        }
+        /* else{ */
+        /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
+        /* } */
     }
 
 #else
