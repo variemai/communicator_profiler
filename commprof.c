@@ -126,10 +126,11 @@ prof_attrs*
 profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
              double t_elapsed,int root){
     int size,flag;
-    prof_attrs *communicator;
+    prof_attrs *communicator = NULL;
     int64_t sum = 0;
     /* int rank; */
-
+    if ( comm == MPI_COMM_NULL  )
+        return communicator;
     flag = 0;
     /* for ( i=0; i< my_coms; i++){ */
     /*     if ( comm == communicators[i] ) */
@@ -1555,9 +1556,9 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
         return ret;
     }
 #ifndef MPICH_API_PUBLIC
-    profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+    profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
 #else
-    profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+    profile_this(*comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
 #endif
     return ret;
 }
