@@ -1733,7 +1733,7 @@ _Finalize()
     FILE *fp;
     prof_attrs *array;
     int rank,size;
-    int i,j,k,found;
+    int i,j,k,found,len;
     prof_attrs *recv_buffer;
     prof_attrs dummy;
     char **names, **unames;
@@ -1745,6 +1745,8 @@ _Finalize()
     /* time_t t; */
     int *sizes,*usizes;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
+    char proc_name[MPI_MAX_PROCESSOR_NAME];
+    char *proc_names,*ptr;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -1827,6 +1829,13 @@ _Finalize()
     /*         fflush(stdout); */
     /*     } */
     /* } */
+    MPI_Get_processor_name(proc_name, &len);
+
+    if ( rank == 0 )
+        proc_names = (char*) malloc ( sizeof (char)*MPI_MAX_PROCESSOR_NAME*size);
+
+    MPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
+
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
 
@@ -1852,6 +1861,18 @@ _Finalize()
         if ( env_var  && (strcmp(env_var, "p") == 0 )){
             p = 1;
             fpp = fopen("per_process_data.csv", "w");
+            ptr = proc_names;
+            fprintf(fpp,"#Mapping: ");
+            for ( i =0; i<size; i++ ){
+                if ( ptr != NULL ){
+                    snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, ptr);
+                }
+                if ( i != size-1 )
+                   fprintf(fpp, "%d %s,",i,proc_name);
+                else
+                   fprintf(fpp, "%d %s\n",i,proc_name);
+                ptr+=MPI_MAX_PROCESSOR_NAME;
+            }
             fprintf(fpp, "Rank,Comm,Size,Calls,");
             for (k = 0; k<NUM_OF_PRIMS; k++){
                 fprintf(fpp, "%s_Calls,",prim_names[k]);
