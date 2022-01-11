@@ -1829,15 +1829,12 @@ _Finalize()
     /*         fflush(stdout); */
     /*     } */
     /* } */
-    char *env_var = getenv("MCPT");
-    if (  strcmp(env_var, "p") == 0){
-        MPI_Get_processor_name(proc_name, &len);
+    MPI_Get_processor_name(proc_name, &len);
 
-        if ( rank == 0 )
-            proc_names = (char*) malloc ( sizeof (char)*MPI_MAX_PROCESSOR_NAME*size);
+    if ( rank == 0 )
+        proc_names = (char*) malloc ( sizeof (char)*MPI_MAX_PROCESSOR_NAME*size);
 
-        PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
-    }
+    PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
 
@@ -1859,6 +1856,7 @@ _Finalize()
         int r =-1;
         int p = 0;
         FILE *fpp = NULL;
+        char *env_var = getenv("MCPT");
         if ( env_var  && (strcmp(env_var, "p") == 0 )){
             p = 1;
             fpp = fopen("per_process_data.csv", "w");
