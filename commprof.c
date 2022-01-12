@@ -2030,7 +2030,7 @@ _Finalize()
         fprintf(fp,"\n");
         for ( i =0; i<num_of_comms; i++ ){
             /* if ( strcmp(unames[i], "NULL") !=0 ){ */
-                fprintf(fp,"%s,%d,%" PRIu64 ",",unames[i],usizes[i],umsgs[i]);
+                fprintf(fp,"%s(%d),%d,%" PRIu64 ",",unames[i],usizes[i],usizes[i],umsgs[i]);
                 for ( k =0; k<NUM_OF_PRIMS; k++ ){
                     fprintf(fp, "%u,",uprims[i*NUM_OF_PRIMS+k]);
                     if ( uprims[i*NUM_OF_PRIMS+k] > 0 )
