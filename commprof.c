@@ -20,6 +20,7 @@
 #define MAX_DIMS 8
 
 /* MPI_Comm *communicators = NULL; */
+int prof_enabled = 1;
 prof_attrs **local_data = NULL;
 prof_attrs **local_comms = NULL;
 int local_cid= 0;
@@ -165,6 +166,27 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
     return communicator;
 }
 
+int
+MPI_Pcontrol(const int level, ...)
+{
+
+    int mpi_errno = MPI_SUCCESS;
+    va_list list;
+
+    /* ... body of routine ...  */
+
+    va_start(list, level);
+    va_end(list);
+
+    if ( level == 1)
+        prof_enabled = 1;
+    else if ( level == 0 )
+        prof_enabled = 0;
+    else
+        printf("MPICP: MPI_Pcontrol called with invalid value: %d\nProfiling enabled = %d\n",level,prof_enabled);
+    /* ... end of body of routine ... */
+    return mpi_errno;
+}
 
 int
 _MPI_Init(int *argc, char ***argv){
@@ -696,17 +718,24 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
 {
     int ret;
     double t_elapsed;
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
-    t_elapsed = MPI_Wtime() - t_elapsed;
-    profile_this(comm, count, datatype, Isend, t_elapsed, 0);
+    if ( prof_enabled  == 1){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+
+        profile_this(comm, count, datatype, Isend, t_elapsed, 0);
+
 #ifndef MPICH_API_PUBLIC
-    Table_put(request_tab, request, comm);
+        Table_put(request_tab, request, comm);
 #else
-    MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-    *com = comm;
-    Table_put(request_tab, request, com);
+        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
+        *com = comm;
+        Table_put(request_tab, request, com);
 #endif
+    }
+    else{
+        ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
+    }
     /* if (rq_index == world_sz){ */
     /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
     /*     world_sz = world_sz*world_sz; */
@@ -742,13 +771,16 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
          int dest,int tag, MPI_Comm comm)
 {
     int ret;
-    /* int size,flag,i; */
-    /* unsigned long long  sum = 0; */
     double t_elapsed = 0.0;
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Send(buf, count, datatype, dest, tag, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
-    profile_this(comm, count, datatype, Send, t_elapsed, 0);
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Send(buf, count, datatype, dest, tag, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm, count, datatype, Send, t_elapsed, 0);
+    }
+    else{
+        ret = PMPI_Send(buf, count, datatype, dest, tag, comm);
+    }
     return ret;
 }
 
@@ -773,17 +805,22 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
 
     int ret;
     double t_elapsed;
-    t_elapsed =  MPI_Wtime();
-    ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
-    t_elapsed = MPI_Wtime() - t_elapsed;
-    profile_this(comm, count,datatype,Irecv,t_elapsed,0);
+    if ( prof_enabled == 1 ){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm, count,datatype,Irecv,t_elapsed,0);
 #ifndef MPICH_API_PUBLIC
-    Table_put(request_tab, request, comm);
+        Table_put(request_tab, request, comm);
 #else
-    MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-    *com = comm;
-    Table_put(request_tab, request, com);
+        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
+        *com = comm;
+        Table_put(request_tab, request, com);
 #endif
+    }
+    else{
+        ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
+    }
     return ret;
 }
 
@@ -812,10 +849,15 @@ MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
 {
     int ret;
     double t_elapsed;
-    t_elapsed =  MPI_Wtime();
-    ret = PMPI_Recv(buf,count,datatype,source,tag,comm,status);
-    t_elapsed = MPI_Wtime() - t_elapsed;
-    profile_this(comm,count,datatype,Recv,t_elapsed,0);
+    if ( prof_enabled == 1){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Recv(buf,count,datatype,source,tag,comm,status);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,count,datatype,Recv,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Recv(buf,count,datatype,source,tag,comm,status);
+    }
     return ret;
 }
 
@@ -844,15 +886,21 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     double t_elapsed;
     int64_t sum;
 
-    t_elapsed =  MPI_Wtime();
-    ret = PMPI_Sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
-                        recvcount, recvtype, source, recvtag, comm, status);
-    t_elapsed = MPI_Wtime() - t_elapsed;
+    if ( prof_enabled == 1){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
+                            recvcount, recvtype, source, recvtag, comm, status);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    sum = sendcount;
-    sum = sum | 0x1;
-    sum = sum>>1;
-    profile_this(comm,sum,sendtype,Sendrecv,t_elapsed,source);
+        sum = sendcount;
+        sum = sum | 0x1;
+        sum = sum>>1;
+        profile_this(comm,sum,sendtype,Sendrecv,t_elapsed,source);
+    }
+    else{
+        ret = PMPI_Sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
+                        recvcount, recvtype, source, recvtag, comm, status);
+    }
 
     return ret;
 }
@@ -885,17 +933,22 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
     int ret,rank,sum;
     double t_elapsed;
 
-    t_elapsed =  MPI_Wtime();
-    ret = PMPI_Bcast(buffer, count, datatype, root, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
-    PMPI_Comm_rank(comm, &rank);
-    if ( rank == root ){
-        sum = 0;
+    if ( prof_enabled == 1 ){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Bcast(buffer, count, datatype, root, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        PMPI_Comm_rank(comm, &rank);
+        if ( rank == root ){
+            sum = 0;
+        }
+        else {
+            sum = count;
+        }
+        profile_this(comm,sum,datatype,Bcast,t_elapsed,root);
     }
-    else {
-        sum = count;
+    else{
+        ret = PMPI_Bcast(buffer, count, datatype, root, comm);
     }
-    profile_this(comm,sum,datatype,Bcast,t_elapsed,root);
     return ret;
 
 }
@@ -921,26 +974,31 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
 {
     int ret,rank,sum;
     double t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Ibcast(buffer, count, datatype, root, comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    t_elapsed =  MPI_Wtime();
-    ret = PMPI_Ibcast(buffer, count, datatype, root, comm, request);
-    t_elapsed = MPI_Wtime() - t_elapsed;
-
-    PMPI_Comm_rank(comm, &rank);
-    if ( rank == root ){
-        sum = 0;
-    }
-    else {
-        sum = count;
-    }
+        PMPI_Comm_rank(comm, &rank);
+        if ( rank == root ){
+            sum = 0;
+        }
+        else {
+            sum = count;
+        }
 #ifndef MPICH_API_PUBLIC
-    Table_put(request_tab, request, comm);
+        Table_put(request_tab, request, comm);
 #else
-    MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-    *com = comm;
-    Table_put(request_tab, request, com);
+        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
+        *com = comm;
+        Table_put(request_tab, request, com);
 #endif
-    profile_this(comm,sum,datatype,Ibcast,t_elapsed,root);
+        profile_this(comm,sum,datatype,Ibcast,t_elapsed,root);
+    }
+    else{
+
+        ret = PMPI_Ibcast(buffer, count, datatype, root, comm, request);
+    }
     return ret;
 }
 
@@ -966,12 +1024,16 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
 {
     int ret;
     double t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    t_elapsed =  MPI_Wtime();
-    ret = PMPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
-
-    profile_this(comm,count,datatype,Allreduce,t_elapsed,0);
+        profile_this(comm,count,datatype,Allreduce,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Allreduce(sendbuf, recvbuf, count, datatype, op, comm);
+    }
     return ret;
 }
 
@@ -1001,19 +1063,23 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
 {
     int ret;
     double t_elapsed;
-
-    t_elapsed =  MPI_Wtime();
-    ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
-    t_elapsed = MPI_Wtime() - t_elapsed;
+    if (prof_enabled == 1){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 #ifndef MPICH_API_PUBLIC
-    Table_put(request_tab, request, comm);
+        Table_put(request_tab, request, comm);
 #else
-    MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-    *com = comm;
-    Table_put(request_tab, request, com);
+        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
+        *com = comm;
+        Table_put(request_tab, request, com);
 #endif
 
-    profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
+        profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
+    }
+    else{
+        ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
+    }
     return ret;
 }
 
@@ -1048,12 +1114,18 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int ret;
     double t_elapsed;
 
-    t_elapsed =  MPI_Wtime();
-    ret = PMPI_Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-                         recvtype, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                             recvtype, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    profile_this(comm,recvcount,recvtype,Allgather,t_elapsed,0);
+        profile_this(comm,recvcount,recvtype,Allgather,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                             recvtype, comm);
+    }
     return ret;
 }
 
@@ -1083,13 +1155,18 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int ret;
     double t_elapsed;
 
-    t_elapsed =  MPI_Wtime();
-    ret = PMPI_Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-                         recvtype, comm);
+    if ( prof_enabled == 1 ){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                            recvtype, comm);
 
-    t_elapsed = MPI_Wtime() - t_elapsed;
-    /* fprintf(dbg_file, "%lf\n",t_elapsed); */
-    profile_this(comm,sendcount,sendtype,Alltoall,t_elapsed,0);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,sendcount,sendtype,Alltoall,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                            recvtype, comm);
+    }
     return ret;
 }
 
@@ -1123,18 +1200,24 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
     double t_elapsed;
     sum = 0;
     t_elapsed = MPI_Wtime();
-    ret = PMPI_Alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts,
-                         rdispls, recvtype, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
+    if ( prof_enabled == 1 ){
+        ret = PMPI_Alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts,
+                             rdispls, recvtype, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    MPI_Comm_size(comm, &sz);
-    for ( i=0; i<sz; i++ ){
-        if ( sendcounts[i] > 0 )
-            sum+=sendcounts[i];
+        MPI_Comm_size(comm, &sz);
+        for ( i=0; i<sz; i++ ){
+            if ( sendcounts[i] > 0 )
+                sum+=sendcounts[i];
+        }
+        /* We won't need this reduce just sum all in the end */
+        /* PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm); */
+        profile_this(comm,sum,sendtype,Alltoallv,t_elapsed,0);
     }
-    /* We won't need this reduce just sum all in the end */
-    /* PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm); */
-    profile_this(comm,sum,sendtype,Alltoallv,t_elapsed,0);
+    else{
+        ret = PMPI_Alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts,
+                             rdispls, recvtype, comm);
+    }
     return ret;
 }
 
@@ -1166,23 +1249,30 @@ MPI_Alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls,
 {
     int ret,sum,i,sz,type_sz;
     double t_elapsed;
-    sum = 0;
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
+    if ( prof_enabled == 1 ){
+        sum = 0;
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    MPI_Comm_size(comm, &sz);
-    for ( i=0; i<sz; i++ ){
-        if ( sendcounts[i] > 0 ){
-            PMPI_Type_size(sendtypes[i], &type_sz);
-            sum+=(sendcounts[i]*type_sz);
+        MPI_Comm_size(comm, &sz);
+        for ( i=0; i<sz; i++ ){
+            if ( sendcounts[i] > 0 ){
+                PMPI_Type_size(sendtypes[i], &type_sz);
+                sum+=(sendcounts[i]*type_sz);
+            }
         }
+        /* We won't need this reduce just sum all in the end */
+        /* PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm); */
+        profile_this(comm,sum,MPI_DATATYPE_NULL,Alltoallw,t_elapsed,0);
     }
-    /* We won't need this reduce just sum all in the end */
-    /* PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm); */
-    profile_this(comm,sum,MPI_DATATYPE_NULL,Alltoallw,t_elapsed,0);
+    else{
+        ret = PMPI_Alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm);
+    }
     return ret;
 }
+
+/* TODO F77 Wrapper Alltoallw */
 
 int
 MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
@@ -1191,26 +1281,30 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 {
     int ret,sum,i,sz;
     double t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts,
+                              displs, recvtype, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts,
-                          displs, recvtype, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
+        sum = 0;
+        /* tmp = recvcounts; */
+        /* while(tmp){ */
+        /*     sum += *tmp; */
+        /*     tmp++; */
+        /* } */
+        MPI_Comm_size(comm, &sz);
+        for ( i=0; i<sz; i++ ){
+            if( recvcounts[i] > 0 )
+                sum+=recvcounts[i];
+        }
 
-    sum = 0;
-    /* tmp = recvcounts; */
-    /* while(tmp){ */
-    /*     sum += *tmp; */
-    /*     tmp++; */
-    /* } */
-    MPI_Comm_size(comm, &sz);
-    for ( i=0; i<sz; i++ ){
-        if( recvcounts[i] > 0 )
-            sum+=recvcounts[i];
+        profile_this(comm,sum,recvtype,Allgatherv,t_elapsed,0);
     }
-
-    profile_this(comm,sum,recvtype,Allgatherv,t_elapsed,0);
-
+    else{
+        ret = PMPI_Allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts,
+                              displs, recvtype, comm);
+    }
     return ret;
 }
 
@@ -1242,12 +1336,17 @@ MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
     int ret;
     double t_elapsed;
 
-    t_elapsed = MPI_Wtime();
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
 
-    ret = PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
+        ret = PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    profile_this(comm,count,datatype,Reduce,t_elapsed,root);
+        profile_this(comm,count,datatype,Reduce,t_elapsed,root);
+    }
+    else{
+        ret = PMPI_Reduce(sendbuf, recvbuf, count, datatype, op, root, comm);
+    }
     return ret;
 }
 
@@ -1278,11 +1377,16 @@ MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
     int ret;
     double t_elapsed;
 
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
 
-    t_elapsed = MPI_Wtime() - t_elapsed;
-    profile_this(comm,sendcount,sendtype,Gather,t_elapsed,root);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,sendcount,sendtype,Gather,t_elapsed,root);
+    }
+    else{
+        ret = PMPI_Gather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm);
+    }
     return ret;
 
 }
@@ -1316,32 +1420,38 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int ret,sum,rank;
     const int *tmp;
     double t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
+                           recvtype, root, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
-                       recvtype, root, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
+        sum = 0;
+        /* tmp = recvcounts; */
+        /* while(tmp){ */
+        /*     sum += *tmp; */
+        /*     tmp++; */
+        /* } */
+        /* PMPI_Reduce(&sum, &max_sum, 1, MPI_INT, MPI_MAX, 0, comm); */
 
-    sum = 0;
-    /* tmp = recvcounts; */
-    /* while(tmp){ */
-    /*     sum += *tmp; */
-    /*     tmp++; */
-    /* } */
-    /* PMPI_Reduce(&sum, &max_sum, 1, MPI_INT, MPI_MAX, 0, comm); */
-
-    PMPI_Comm_rank(comm, &rank);
-    if ( rank == root ){
-        tmp = recvcounts;
-        while ( tmp ){
-            sum += *tmp;
-            tmp++;
+        PMPI_Comm_rank(comm, &rank);
+        if ( rank == root ){
+            tmp = recvcounts;
+            while ( tmp ){
+                sum += *tmp;
+                tmp++;
+            }
         }
+        else{
+            sum = 0;
+        }
+        profile_this(comm, sum, recvtype, Gatherv, t_elapsed, root);
     }
     else{
-        sum = 0;
+        ret = PMPI_Gatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
+                           recvtype, root, comm);
     }
-    profile_this(comm, sum, recvtype, Gatherv, t_elapsed, root);
+
     return ret;
 }
 
@@ -1377,25 +1487,30 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
     uint64_t sum;
     double t_elapsed;
     const int *tmp;
+    if ( prof_enabled == 1 ){
+        sum = 0;
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
+                            recvtype, root, comm);
 
-    sum = 0;
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
-                        recvtype, root, comm);
-
-    t_elapsed = MPI_Wtime() - t_elapsed;
-    PMPI_Comm_rank(comm, &rank);
-    if ( rank == root ){
-        tmp = sendcounts;
-        while ( tmp ){
-            sum += *tmp;
-            tmp++;
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        PMPI_Comm_rank(comm, &rank);
+        if ( rank == root ){
+            tmp = sendcounts;
+            while ( tmp ){
+                sum += *tmp;
+                tmp++;
+            }
         }
+        else{
+            sum = 0;
+        }
+        profile_this(comm, sum, sendtype, Scatterv, t_elapsed, root);
     }
     else{
-        sum = 0;
+        ret = PMPI_Scatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
+                            recvtype, root, comm);
     }
-    profile_this(comm, sum, sendtype, Scatterv, t_elapsed, root);
     /* if ( rank == root ){ */
     /*     communicator->bytes += sum; */
     /*     communicator->prim_bytes[Scatterv] += sum; */
@@ -1432,19 +1547,25 @@ MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     int ret,rank,sum;
     double t_elapsed;
 
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
-                       recvtype, root, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                           recvtype, root, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    PMPI_Comm_rank(comm, &rank);
-    if ( rank == root ){
-        sum = sendcount;
+        PMPI_Comm_rank(comm, &rank);
+        if ( rank == root ){
+            sum = sendcount;
+        }
+        else{
+            sum = 0;
+        }
+        profile_this(comm, sum, sendtype, Scatter, t_elapsed, root);
     }
     else{
-        sum = 0;
+        ret = PMPI_Scatter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
+                           recvtype, root, comm);
     }
-    profile_this(comm, sum, sendtype, Scatter, t_elapsed, root);
     return ret;
 }
 
@@ -1477,11 +1598,16 @@ MPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
     int ret;
     double t_elapsed;
 
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Scan(sendbuf, recvbuf, count, datatype, op, comm);
-    t_elapsed = MPI_Wtime() - t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Scan(sendbuf, recvbuf, count, datatype, op, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
 
-    profile_this(comm,count,datatype,Scan,t_elapsed,0);
+        profile_this(comm,count,datatype,Scan,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Scan(sendbuf, recvbuf, count, datatype, op, comm);
+    }
     return ret;
 
 }
@@ -1513,11 +1639,16 @@ MPI_Barrier ( MPI_Comm comm )
     int ret;
     double t_elapsed;
 
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Barrier(comm);
-    t_elapsed = MPI_Wtime()-t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Barrier(comm);
+        t_elapsed = MPI_Wtime()-t_elapsed;
 
-    profile_this(comm,0,MPI_DATATYPE_NULL,Barrier,t_elapsed,0);
+        profile_this(comm,0,MPI_DATATYPE_NULL,Barrier,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Barrier(comm);
+    }
     return ret;
 }
 
@@ -1546,20 +1677,24 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
 #else
     MPI_Comm *comm = NULL;
 #endif
-
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Wait(request, status);
-    t_elapsed = MPI_Wtime() - t_elapsed;
-    comm = Table_get(request_tab, request);
-    if ( comm == NULL ){
-        /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
-        return ret;
-    }
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Wait(request, status);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        comm = Table_get(request_tab, request);
+        if ( comm == NULL ){
+            /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
+            return ret;
+        }
 #ifndef MPICH_API_PUBLIC
-    profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
 #else
-    profile_this(*comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+        profile_this(*comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
 #endif
+    }
+    else{
+        ret = PMPI_Wait(request, status);
+    }
     return ret;
 }
 
@@ -1587,35 +1722,38 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     MPI_Comm *comm = NULL;
 #endif
 
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
-    t_elapsed = MPI_Wtime() - t_elapsed;
-    /* comm = Table_get(request_tab, &array_of_requests[0]); */
-    /* if ( comm == NULL ){ */
-    /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-    /*     return ret; */
-    /* } */
-#ifndef MPICH_API_PUBLIC
-    /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
-    for ( i =0; i<count; i++ ){
-        comm = Table_get(request_tab, &array_of_requests[i]);
-        if ( comm != NULL ){
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
-        }
-        /* else{ */
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        /* comm = Table_get(request_tab, &array_of_requests[0]); */
+        /* if ( comm == NULL ){ */
         /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
+        /*     return ret; */
         /* } */
-    }
-
-#else
-    for ( i =0; i<count; i++ ){
-        comm = Table_get(request_tab, &array_of_requests[i]);
-        if ( comm != NULL ){
-            profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+#ifndef MPICH_API_PUBLIC
+        /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
+        for ( i =0; i<count; i++ ){
+            comm = Table_get(request_tab, &array_of_requests[i]);
+            if ( comm != NULL ){
+                profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+            }
+            /* else{ */
+            /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
+            /* } */
         }
-    }
+#else
+        for ( i =0; i<count; i++ ){
+            comm = Table_get(request_tab, &array_of_requests[i]);
+            if ( comm != NULL ){
+                profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+            }
+        }
 #endif
-
+    }
+    else{
+        ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
+    }
     return ret;
 }
 
@@ -1639,6 +1777,198 @@ F77_MPI_WAITALL(int  * count, MPI_Fint  *array_of_requests,
        }
    }
    free( c_requests );
+}
+
+int
+MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *status)
+{
+    int ret,i;
+    double t_elapsed;
+#ifndef MPICH_API_PUBLIC
+    MPI_Comm comm = NULL;
+#else
+    MPI_Comm *comm = NULL;
+#endif
+
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Waitany(count, array_of_requests,index,status);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        /* comm = Table_get(request_tab, &array_of_requests[0]); */
+        /* if ( comm == NULL ){ */
+        /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
+        /*     return ret; */
+        /* } */
+#ifndef MPICH_API_PUBLIC
+        /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
+        for ( i =0; i<count; i++ ){
+            comm = Table_get(request_tab, &array_of_requests[i]);
+            if ( comm != NULL ){
+                profile_this(comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
+                break;
+            }
+        }
+
+#else
+        for ( i =0; i<count; i++ ){
+            comm = Table_get(request_tab, &array_of_requests[i]);
+            if ( comm != NULL ){
+                profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
+                break;
+            }
+        }
+#endif
+    }
+    else{
+        ret = PMPI_Waitany(count, array_of_requests,index,status);
+    }
+    return ret;
+}
+
+void
+F77_MPI_WAITANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
+                MPI_Status  *status , MPI_Fint *ierr)
+{
+    int ret,i;
+    MPI_Request *c_array_of_requests;
+    c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
+    assert(c_array_of_requests);
+    for (i = 0; i < *count; i++) {
+        c_array_of_requests[i] = MPI_Request_f2c(array_of_requests[i]);
+    }
+
+    ret = MPI_Waitany(*count, c_array_of_requests, index, status);
+
+    *ierr = (MPI_Fint)ret;
+    if ( ret == MPI_SUCCESS ) {
+        array_of_requests[*index] = MPI_Request_c2f(c_array_of_requests[*index]);
+        if ( *index >= 0 ) (*index)++;
+    }
+    free(c_array_of_requests);
+    return;
+
+}
+
+int
+MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
+{
+
+    int ret;
+    double t_elapsed;
+    /* int i; */
+
+#ifndef MPICH_API_PUBLIC
+    MPI_Comm comm = NULL;
+#else
+    MPI_Comm *comm = NULL;
+#endif
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Test(request,flag,status);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        comm = Table_get(request_tab, request);
+        if ( comm == NULL ){
+            /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
+            return ret;
+        }
+#ifndef MPICH_API_PUBLIC
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Test, t_elapsed, 0);
+#else
+        profile_this(*comm, 0, MPI_DATATYPE_NULL, Test, t_elapsed, 0);
+#endif
+    }
+    else{
+        ret = PMPI_Test(request,flag,status);
+    }
+    return ret;
+}
+
+
+void
+F77_MPI_TEST(MPI_Fint  *request, int  *flag, MPI_Status  *status , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Request c_request;
+
+    c_request = MPI_Request_f2c(*request);
+    ret = MPI_Test(&c_request,flag,status);
+    *ierr = (MPI_Fint)ret;
+    if ( ret == MPI_SUCCESS ) {
+        *request = MPI_Request_c2f(c_request);
+    }
+    return;
+}
+
+int
+MPI_Testany(int count, MPI_Request *array_of_requests, int *index, int *flag, MPI_Status *status)
+{
+    int ret,i;
+    double t_elapsed;
+#ifndef MPICH_API_PUBLIC
+    MPI_Comm comm = NULL;
+#else
+    MPI_Comm *comm = NULL;
+#endif
+
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Testany(count, array_of_requests, index, flag, status);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        /* comm = Table_get(request_tab, &array_of_requests[0]); */
+        /* if ( comm == NULL ){ */
+        /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
+        /*     return ret; */
+        /* } */
+#ifndef MPICH_API_PUBLIC
+        /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
+        for ( i =0; i<count; i++ ){
+            comm = Table_get(request_tab, &array_of_requests[i]);
+            if ( comm != NULL ){
+                profile_this(comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
+                break;
+            }
+        }
+
+#else
+        for ( i =0; i<count; i++ ){
+            comm = Table_get(request_tab, &array_of_requests[i]);
+            if ( comm != NULL ){
+                profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
+                break;
+            }
+        }
+#endif
+    }
+    else{
+        ret = PMPI_Testany(count, array_of_requests, index, flag, status);
+    }
+    return ret;
+
+}
+
+
+void
+F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
+                int  *flag, MPI_Status  *status , MPI_Fint *ierr)
+{
+
+    int ret,i;
+    MPI_Request *c_array_of_requests;
+    c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
+    assert(c_array_of_requests != NULL);
+    for (i = 0; i < *count; i++) {
+        c_array_of_requests[i] = MPI_Request_f2c(array_of_requests[i]);
+    }
+
+    ret = MPI_Testany(*count, c_array_of_requests, index, flag, status);
+
+    *ierr = (MPI_Fint)ret;
+    if ( ret == MPI_SUCCESS ) {
+        array_of_requests[*index] = MPI_Request_c2f(c_array_of_requests[*index]);
+        if ( *index >= 0 ) (*index)++;
+    }
+    free(c_array_of_requests);
+    return;
 
 }
 
@@ -1650,17 +1980,22 @@ MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int *recvcounts,
     const int *cnt;
     double t_elapsed;
 
-    sum = 0;
-    cnt = recvcounts;
-    t_elapsed = MPI_Wtime();
-    ret = PMPI_Reduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm);
-    t_elapsed = MPI_Wtick() - t_elapsed;
-    PMPI_Comm_rank(comm, &rank);
-    while(cnt){
-        sum += *cnt;
+    if ( prof_enabled == 1 ){
+        sum = 0;
+        cnt = recvcounts;
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Reduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm);
+        t_elapsed = MPI_Wtick() - t_elapsed;
+        PMPI_Comm_rank(comm, &rank);
+        while(cnt){
+            sum += *cnt;
+        }
+        sum += recvcounts[rank];
+        profile_this(comm, sum, datatype, Reduce_scatter, t_elapsed, 0);
     }
-    sum += recvcounts[rank];
-    profile_this(comm, sum, datatype, Reduce_scatter, t_elapsed, 0);
+    else{
+        ret = PMPI_Reduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm);
+    }
     return ret;
 
 }

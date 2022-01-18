@@ -11,18 +11,23 @@
 #include <string.h>
 #define NAMELEN 256
 #define PRIMLEN 16
-#define NUM_OF_PRIMS 31
+#define NUM_OF_PRIMS 36
 
 enum primitives{
 Send,           /* DO NOT ANYHTING BEFORE THIS */
 Recv,
 Isend,
 Irecv,
+Ssend,
+Issend,
+Probe,
+Iprobe,
 Waitall,
 Wait,
 Waitany,
 Test,
 Testany,
+Testall,
 Sendrecv,
 Bcast,
 Barrier,

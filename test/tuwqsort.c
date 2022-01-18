@@ -1437,7 +1437,7 @@ int main(int argc, char *argv[])
   int inputtype, weak;
 
   MPI_Init(&argc,&argv);
-
+  MPI_Pcontrol(0);
   MPI_Comm_size(MPI_COMM_WORLD,&size);
   MPI_Comm_rank(MPI_COMM_WORLD,&rank);
 
@@ -1563,7 +1563,7 @@ int main(int argc, char *argv[])
   double seqtime, partime[REPEAT];
 
   MPI_Barrier(MPI_COMM_WORLD);
-
+  MPI_Pcontrol(1);
   if (rank==0) {
     fprintf(stdout,
 	    "#%s(p=%d, n=%d, np=%d, r=%ld, s=%ld, type=%d, %d repetitions):\n",
