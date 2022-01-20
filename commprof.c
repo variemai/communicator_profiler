@@ -348,8 +348,18 @@ F77_MPI_INIT (int *ierr)
 int
 MPI_Init(int *argc, char ***argv)
 {
-    if ( argc != NULL  )
-        getProcCmdLine (&ac, av);
+    /* if ( argc != NULL  ) */
+    /*     getProcCmdLine (&ac, av); */
+    int i;
+    ac = 0;
+    *av = NULL;
+    if ( argc != NULL && *argc > 0 ){
+        for ( i = 0; i<*argc; i++ ){
+            av[i]=strdup(*argv[i]);
+            ac++;
+        }
+    }
+
     return _MPI_Init(argc, argv);
 }
 
@@ -2239,7 +2249,6 @@ _Finalize()
                 tmp++;
             }
             fprintf(fpp, "'\n");
-            fprintf(fpp, "#'Num of REAL comms' '%d'\n",num_of_comms);
             fprintf(fpp,"#Mapping: ");
             for ( i =0; i<size; i++ ){
                 if ( ptr != NULL ){
