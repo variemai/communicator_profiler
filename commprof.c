@@ -352,7 +352,7 @@ int
 MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
 {
     int ret;
-    int comms;
+    int comms,rank,min_rank;
     char *buf;
     prof_attrs *communicator;
     ret = PMPI_Comm_create(comm, group, newcomm);
@@ -367,11 +367,15 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
     }
+    if ( group == MPI_GROUP_NULL || group == MPI_GROUP_EMPTY )
+        return ret;
+    PMPI_Comm_rank(comm, &rank);
+    PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
     /* Use the parent's name as a prefix for the newly created communicator */
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*8);
+    buf = (char*) malloc ( sizeof(char)*16);
     /* Append prefix+suffix and initialize the data for the new communicator */
-    sprintf(buf,"_c%d",my_coms);
+    sprintf(buf,"_c%d.%d",my_coms,min_rank);
     init_comm(buf, &communicator, comm, newcomm);
     free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
