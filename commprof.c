@@ -236,6 +236,8 @@ _MPI_Init(int *argc, char ***argv){
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
+    if ( argc != NULL )
+        ac = *argc;
     /* communicators[0] = MPI_COMM_WORLD; */
     /* PMPI_Barrier(MPI_COMM_WORLD); */
     return ret;
@@ -296,6 +298,8 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
+    if ( argc != NULL )
+        ac = *argc;
     /* free(dname); */
     /* communicators[0] = MPI_COMM_WORLD; */
     /* PMPI_Barrier(MPI_COMM_WORLD); */
