@@ -19,7 +19,6 @@
 #define MAX_ARGS 1024
 #define MAX_DIMS 8
 
-/* MPI_Comm *communicators = NULL; */
 int prof_enabled = 1;
 prof_attrs **local_data = NULL;
 prof_attrs **local_comms = NULL;
@@ -27,12 +26,14 @@ int local_cid= 0;
 int my_coms = 1;
 int ac;
 char *av[MAX_ARGS];
-/* rq* request_list = NULL; */
-/* int rq_index = 0; */
-/* int world_sz; */
 Table_T request_tab;
-/* FILE *dbg_file; */
-/* Table_T comm_tab; */
+
+/* Tool date */
+int mpisee_major_version = 0;
+int mpisee_minor_version = 1;
+char *mpisee_build_date = __DATE__;
+char *mpisee_build_time = __TIME__;
+
 
 static int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
@@ -161,7 +162,7 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
         /* } */
     }
     else{
-        fprintf(stderr, "MCPT: empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
+        fprintf(stderr, "mpisee: empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
     }
     return communicator;
 }
@@ -183,7 +184,7 @@ MPI_Pcontrol(const int level, ...)
     else if ( level == 0 )
         prof_enabled = 0;
     else
-        printf("MPICP: MPI_Pcontrol called with invalid value: %d\nProfiling enabled = %d\n",level,prof_enabled);
+        printf("mpisee: MPI_Pcontrol called with invalid value: %d\nProfiling enabled = %d\n",level,prof_enabled);
     /* ... end of body of routine ... */
     return mpi_errno;
 }
@@ -2200,6 +2201,36 @@ _Finalize()
             p = 1;
             fpp = fopen("per_process_data.csv", "w");
             ptr = proc_names;
+            PMPI_Get_library_version(version, &resultlen);
+            fprintf(fpp, "#'MPI LIBRARY' '%s'\n",version);
+            fprintf(fpp, "#'Processes' '%d'\n",size);
+            fprintf(fpp, "#'Run command' ");
+            fprintf(fpp, "'%s",av[0]);
+            for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
+                fprintf(fpp, " %s",av[i]);
+            }
+            fprintf(fpp, "'\n");
+
+            fprintf(fpp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
+            fprintf(fpp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
+            if ( env_var ){
+                fprintf(fpp, "#'mpisee env' '%s'\n", env_var);
+            }
+            else{
+                fprintf(fpp, "#'mpisee env'\n");
+            }
+            time_t date;
+            time(&date);
+            char* tmp = ctime(&date);
+            fprintf(fpp, "#'Profile date' ");
+            fprintf(fpp, "'%c",*tmp);
+            tmp++;
+            while ( *tmp != '\n' ){
+                fprintf(fpp, "%c",*tmp);
+                tmp++;
+            }
+            fprintf(fpp, "'\n");
+            fprintf(fpp, "#'Num of REAL comms' '%d'\n",num_of_comms);
             fprintf(fpp,"#Mapping: ");
             for ( i =0; i<size; i++ ){
                 if ( ptr != NULL ){
@@ -2341,21 +2372,35 @@ _Finalize()
             mcpt_abort("Aborting\n");
         }
         PMPI_Get_library_version(version, &resultlen);
-        fprintf(fp, "#'MPI LIBRARY'='%s'\n",version);
-        fprintf(fp, "#'Processes'='%d'\n",size);
-        fprintf(fp, "#'Application'='%s'\n",av[0]);
-        fprintf(fp, "#'Arguments'='");
-        for ( i = 1; i<ac; i++ ){
+        fprintf(fp, "#'MPI LIBRARY' '%s'\n",version);
+        fprintf(fp, "#'Processes' '%d'\n",size);
+        fprintf(fp, "#'Run command' ");
+        fprintf(fp, "'%s",av[0]);
+        for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
             fprintf(fp, " %s",av[i]);
         }
         fprintf(fp, "'\n");
-        fprintf(fp, "#'Num of REAL comms'='%d'\n",num_of_comms);
-        /* long t; */
-        /* time(&t); */
-        /* char *tmp = ctime(&t); */
-        /* char *date = (char*) malloc ( strlen(tmp)-1 ); */
-        /* strncpy(date, tmp, strlen(tmp)-1); */
-        /* fprintf(fp, "#'Date'='%s'\n",date); */
+
+        fprintf(fp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
+        fprintf(fp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
+        if ( env_var ){
+            fprintf(fp, "#'mpisee env' '%s'\n", env_var);
+        }
+        else{
+            fprintf(fp, "#'mpisee env'\n");
+        }
+        time_t date;
+        time(&date);
+        char* tmp = ctime(&date);
+        fprintf(fp, "#'Profile date' ");
+        fprintf(fp, "'%c",*tmp);
+        tmp++;
+        while ( *tmp != '\n' ){
+            fprintf(fp, "%c",*tmp);
+            tmp++;
+        }
+        fprintf(fp, "'\n");
+        fprintf(fp, "#'Num of REAL comms' '%d'\n",num_of_comms);
         fprintf(fp, "Comm,Size,Calls,");
         /* free(date); */
         for (k = 0; k<NUM_OF_PRIMS; k++){
