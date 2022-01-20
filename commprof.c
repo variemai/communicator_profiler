@@ -306,16 +306,17 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
 int
 MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
 {
-    /* getProcCmdLine (&ac, av); */
-    int i;
-    ac = 0;
-    *av = NULL;
-    if ( argc != NULL && *argc > 0 ){
-        for ( i = 0; i<*argc; i++ ){
-            av[i]=strdup(*argv[i]);
-            ac++;
-        }
-    }
+    if ( argc != NULL )
+        getProcCmdLine (&ac, av);
+    /* int i; */
+    /* ac = 0; */
+    /* if ( argc != NULL && *argc > 0 && argv != NULL ){ */
+    /*     ac = *argc; */
+    /*     for ( i = 0; i<ac && i<32 ; i++ ){ */
+    /*         if ( argv[i] != NULL ) */
+    /*             av[i]=strdup(*argv[i]); */
+    /*     } */
+    /* } */
     return _MPI_Init_thread(argc, argv, required, provided);
 }
 
@@ -348,17 +349,17 @@ F77_MPI_INIT (int *ierr)
 int
 MPI_Init(int *argc, char ***argv)
 {
-    /* if ( argc != NULL  ) */
-    /*     getProcCmdLine (&ac, av); */
-    int i;
-    ac = 0;
-    *av = NULL;
-    if ( argc != NULL && *argc > 0 ){
-        for ( i = 0; i<*argc; i++ ){
-            av[i]=strdup(*argv[i]);
-            ac++;
-        }
-    }
+    if ( argc != NULL  )
+        getProcCmdLine (&ac, av);
+    /* int i; */
+    /* printf("NUM OF ARGS = %d\n",*argc); */
+    /* if ( argc != NULL && *argc > 0 && argv != NULL ){ */
+    /*     ac = *argc; */
+    /*     for ( i = 0; i<ac && i<32 ; i++ ){ */
+    /*         if ( argv[i] != NULL ) */
+    /*             av[i]=strdup(*argv[i]); */
+    /*     } */
+    /* } */
 
     return _MPI_Init(argc, argv);
 }
