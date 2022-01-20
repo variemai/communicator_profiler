@@ -306,7 +306,16 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
 int
 MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
 {
-    getProcCmdLine (&ac, av);
+    /* getProcCmdLine (&ac, av); */
+    int i;
+    ac = 0;
+    *av = NULL;
+    if ( argc != NULL && *argc > 0 ){
+        for ( i = 0; i<*argc; i++ ){
+            av[i]=strdup(*argv[i]);
+            ac++;
+        }
+    }
     return _MPI_Init_thread(argc, argv, required, provided);
 }
 
