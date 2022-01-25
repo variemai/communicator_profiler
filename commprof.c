@@ -1766,6 +1766,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
             comm = Table_get(request_tab, &array_of_requests[i]);
             if ( comm != NULL ){
                 profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+                return ret;
             }
             /* else{ */
             /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
