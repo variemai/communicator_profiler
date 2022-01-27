@@ -33,6 +33,7 @@ int mpisee_major_version = 0;
 int mpisee_minor_version = 1;
 char *mpisee_build_date = __DATE__;
 char *mpisee_build_time = __TIME__;
+double total_time = 0.0;
 
 
 static int
@@ -232,6 +233,7 @@ _MPI_Init(int *argc, char ***argv){
         ac = *argc;
     /* communicators[0] = MPI_COMM_WORLD; */
     /* PMPI_Barrier(MPI_COMM_WORLD); */
+    total_time = MPI_Wtime();
     return ret;
 }
 
@@ -1772,6 +1774,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
             comm = Table_get(request_tab, &array_of_requests[i]);
             if ( comm != NULL ){
                 profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+                return ret;
             }
         }
 #endif
@@ -2108,6 +2111,8 @@ _Finalize()
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names,*ptr;
+    double *alltimes;
+    total_time = total_time - MPI_Wtime();
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -2192,10 +2197,13 @@ _Finalize()
     /* } */
     MPI_Get_processor_name(proc_name, &len);
 
-    if ( rank == 0 )
+    if ( rank == 0 ){
         proc_names = (char*) malloc ( sizeof (char)*MPI_MAX_PROCESSOR_NAME*size);
+        alltimes = (double*) malloc (sizeof(double)*size);
+    }
 
     PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
+    PMPI_Gather(&total_time, 1, MPI_DOUBLE, alltimes,1, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
 
@@ -2253,7 +2261,7 @@ _Finalize()
             tmp++;
         }
         fprintf(fpp, "'\n");
-        fprintf(fpp,"#Mapping: ");
+        fprintf(fpp,"#'Mapping:'");
         for ( i =0; i<size; i++ ){
             if ( ptr != NULL ){
                 snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, ptr);
@@ -2263,6 +2271,13 @@ _Finalize()
             else
                 fprintf(fpp, "%d %s\n",i,proc_name);
             ptr+=MPI_MAX_PROCESSOR_NAME;
+        }
+        fprintf(fpp,"#'Time elapsed for each process:'");
+        for ( i =0; i<size; i++ ){
+            if ( i != size-1 )
+                fprintf(fpp, "%d %lf,",i,alltimes[i]);
+            else
+                fprintf(fpp, "%d %lf\n",i,alltimes[i]);
         }
         fprintf(fpp, "Rank,Comm,Size,Volume,Calls,");
         for (k = 0; k<NUM_OF_PRIMS; k++){

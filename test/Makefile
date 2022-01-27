@@ -20,5 +20,6 @@ all:
 	$(CC) -g -L$(LIBPATH) sendrecv.c -o sendrecv.out  -lmcpt
 	$(CC) -g -L$(LIBPATH) barrier.c -o barrier.out  -lmcpt
 	$(CC) -g -L$(LIBPATH) stress_split.c -o stress_split.out -lmcpt
+	$(CC) -g -L$(LIBPATH) stress_waitall.c -o stress_waitall.out -lmcpt
 
 # end
