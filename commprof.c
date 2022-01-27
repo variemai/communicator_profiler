@@ -2112,7 +2112,7 @@ _Finalize()
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names,*ptr;
     double *alltimes;
-    total_time = total_time - MPI_Wtime();
+    total_time = MPI_Wtime()-total_time;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
