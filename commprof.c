@@ -2050,7 +2050,7 @@ void F77_MPI_REDUCE_SCATTER(const void  *sendbuf, void  *recvbuf, const int *rec
 int
 MPI_Comm_free(MPI_Comm *comm)
 {
-    int ret,flag,i,j;
+    int ret,flag,i;
     prof_attrs *com_info;
     PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
     if ( flag ){
@@ -2228,7 +2228,8 @@ _Finalize()
         int r =-1;
         int p = 0;
         FILE *fpp = NULL;
-        char *env_var = getenv("MCPT");
+        char *env_var = NULL;
+        env_var = getenv("MCPT");
         /* if ( env_var  && (strcmp(env_var, "p") == 0 )){ */
         p = 1;
         fpp = fopen("per_process_data.csv", "w");
@@ -2261,10 +2262,10 @@ _Finalize()
             tmp++;
         }
         fprintf(fpp, "'\n");
-        fprintf(fpp,"#'Mapping:'");
+        fprintf(fpp,"#Mapping: ");
         for ( i =0; i<size; i++ ){
             if ( ptr != NULL ){
-                snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, ptr);
+                snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, "%s", ptr);
             }
             if ( i != size-1 )
                 fprintf(fpp, "%d %s,",i,proc_name);
@@ -2272,7 +2273,7 @@ _Finalize()
                 fprintf(fpp, "%d %s\n",i,proc_name);
             ptr+=MPI_MAX_PROCESSOR_NAME;
         }
-        fprintf(fpp,"#'Time elapsed for each process:'");
+        fprintf(fpp,"#Time elapsed for each process: ");
         for ( i =0; i<size; i++ ){
             if ( i != size-1 )
                 fprintf(fpp, "%d %lf,",i,alltimes[i]);
@@ -2347,14 +2348,12 @@ _Finalize()
             memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS);
             memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS);
             memset(usizes, 0, sizeof(int)*total);
-            /* memset(utime_info, 0, sizeof(double)*total*NUM_OF_PRIMS); */
             for ( i = 0; i<total*NUM_OF_PRIMS; i++)
                 utime_info[i] = 0.0;
 
             num_of_comms = 0;
             j = 0;
             for ( i=0; i<total; i++ ){
-                /* Build the global communicator tree */
                 found = 0;
                 for ( k =0; k<total; k++ ){
                     if ( strcmp(names[i], unames[k] ) == 0 ){
@@ -2375,7 +2374,6 @@ _Finalize()
                         usizes[i]=sizes[j];
                         for ( k =0; k<NUM_OF_PRIMS; k++){
                             if ( k >= Sendrecv ){
-                                /* acculumate the bytes instead of taking the max after talks with jesper */
                                 uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k];
 
                                 if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){
@@ -2386,7 +2384,6 @@ _Finalize()
                                 uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
                                 uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
                             }
-                            /* DO NOT accumulate timing info take MAX */
                             if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
                                 utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
                             }
