@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "mpi.h"
 #include <stdlib.h>
-#define ITERS 1000              /* Default number of iterations */
+#define ITERS 512              /* Default number of iterations */
 
 int main (int argc, char *argv[]){
     int size, rank,iters,i;
@@ -16,8 +16,10 @@ int main (int argc, char *argv[]){
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-    for ( i = 0; i<iters; i++ )
+    for ( i = 0; i<iters; i++ ){
         MPI_Comm_split(MPI_COMM_WORLD, rank % 2, rank / 2, &splitcomm);
+        MPI_Comm_free(&splitcomm);
+    }
     MPI_Finalize();
     return 0;
 }

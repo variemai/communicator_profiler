@@ -187,7 +187,10 @@ _MPI_Init(int *argc, char ***argv){
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     /* communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4); */
-    local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    if ( size*4 > 512 )
+        local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    else
+        local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*512);
 
     /* world_sz = size*size; */
     request_tab = Table_new(1024, NULL, NULL);
@@ -243,7 +246,10 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     /* communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4); */
-    local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    if ( size*4 > 512 )
+        local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
+    else
+        local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*512);
 
     /* comm_tab = Table_new(256, NULL, NULL); */
 
@@ -2448,7 +2454,7 @@ _Finalize()
             fclose(fp);
         }
 
-        for ( i =0; i<total; i++ ){
+        for ( i =0; i<num_of_comms*size; i++ ){
             free(names[i]);
         }
         free(names);
@@ -2462,16 +2468,6 @@ _Finalize()
     PMPI_Type_free(&profiler_data);
     Table_free(&request_tab);
 
-    /* for ( i = 0; i < num_of_comms; i++ ){ */
-    /*     if ( local_comms[i] != NULL ){ */
-    /*         free(local_comms[i]); */
-    /*     } */
-
-    /* } */
-    /* free(array); */
-    /* free(recv_buffer); */
-    /* fclose(dbg_file); */
-    /* free(request_list); */
     return PMPI_Finalize();
 }
 

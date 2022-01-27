@@ -17,6 +17,7 @@ LIBPATH=$(abspath $(DSTRUCTF))
 
 #CC=mpicc
 CFLAGS=-O3 -flto -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
+#CFLAGS= -g -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
 SHARED=-shared
 
 #all:
