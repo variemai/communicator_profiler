@@ -2197,10 +2197,8 @@ _Finalize()
     /* } */
     MPI_Get_processor_name(proc_name, &len);
 
-    if ( rank == 0 ){
-        proc_names = (char*) malloc ( sizeof (char)*MPI_MAX_PROCESSOR_NAME*size);
-        alltimes = (double*) malloc (sizeof(double)*size);
-    }
+    proc_names = (char*) malloc ( sizeof (char)*MPI_MAX_PROCESSOR_NAME*size);
+    alltimes = (double*) malloc (sizeof(double)*size);
 
     PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
     PMPI_Gather(&total_time, 1, MPI_DOUBLE, alltimes,1, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
@@ -2477,8 +2475,8 @@ _Finalize()
         free(time_info);
     }
 
-    PMPI_Type_free(&profiler_data);
-    Table_free(&request_tab);
+    /* PMPI_Type_free(&profiler_data); */
+    /* Table_free(&request_tab); */
 
     return PMPI_Finalize();
 }
