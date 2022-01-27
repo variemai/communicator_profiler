@@ -68,25 +68,14 @@ get_comm_name(MPI_Comm comm)
     prof_attrs *communicator, *com_info;
     communicator = (prof_attrs*) malloc(sizeof(prof_attrs));
     if ( comm != MPI_COMM_WORLD ){
-    /*     for ( i = 0; i<my_coms; i++ ){ */
-    /*         if ( comm  == communicators[i] ) */
-    /*             break; */
-    /*     } */
-    /*     if ( i == my_coms ){ */
-    /*         fprintf(stderr, "Error: could not find the parent of communicator.\n"); */
-    /*         mcpt_abort("File:%s line:%d Aborting\n",__FILE__,__LINE__); */
-
-    /*     } */
-    /*     else{ */
-            PMPI_Comm_get_attr(comm, namekey(), &com_info, &flag);
-            if ( flag ){
-                strcpy(communicator->name, com_info->name);
-            }
-            else{
-                mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",
-                           __FILE__,__LINE__);
-            }
-        /* } */
+        PMPI_Comm_get_attr(comm, namekey(), &com_info, &flag);
+        if ( flag ){
+            strcpy(communicator->name, com_info->name);
+        }
+        else{
+            mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",
+                       __FILE__,__LINE__);
+        }
     }
     else{
         strcpy(communicator->name, "W");
@@ -2057,23 +2046,24 @@ MPI_Comm_free(MPI_Comm *comm)
     PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
     if ( flag ){
         for ( i = 0; i<local_cid; i++ ){
-            if ( strcmp(com_info->name, local_comms[i]->name) == 0 )
-            break;
+            /* if ( strcmp(com_info->name, local_comms[i]->name) == 0 ) */
+            if ( com_info == local_comms[i] )
+                break;
         }
         if ( i == local_cid  )
-            mcpt_abort("Comm_free on wrong communicator\n");
+            mcpt_abort("Comm_free on invalid communicator\n");
         local_comms[i] = (prof_attrs*) malloc (sizeof(prof_attrs));
-        /* memcpy(local_comms[i], com_info, sizeof(prof_attrs)); */
+        memcpy(local_comms[i], com_info, sizeof(prof_attrs));
         /* We can use memcpy here */
-        local_comms[i]->bytes = com_info->bytes;
-        local_comms[i]->msgs = com_info->msgs;
-        local_comms[i]->size = com_info->size;
-        strcpy(local_comms[i]->name,com_info->name);
-        for (j = 0; j < NUM_OF_PRIMS; j++) {
-            local_comms[i]->prims[j] = com_info->prims[j];
-            local_comms[i]->prim_bytes[j] = com_info->prim_bytes[j];
-            local_comms[i]->time_info[j] = com_info->time_info[j];
-        }
+        /* local_comms[i]->bytes = com_info->bytes; */
+        /* local_comms[i]->msgs = com_info->msgs; */
+        /* local_comms[i]->size = com_info->size; */
+        /* strcpy(local_comms[i]->name,com_info->name); */
+        /* for (j = 0; j < NUM_OF_PRIMS; j++) { */
+        /*     local_comms[i]->prims[j] = com_info->prims[j]; */
+        /*     local_comms[i]->prim_bytes[j] = com_info->prim_bytes[j]; */
+        /*     local_comms[i]->time_info[j] = com_info->time_info[j]; */
+        /* } */
     }
     ret = PMPI_Comm_free(comm);
     return ret;
@@ -2204,6 +2194,9 @@ _Finalize()
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
 
     if ( rank == 0 ){
+
+        time_t date;
+        char *tmp;
         fp = fopen("profiler_data.csv","w");
         names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
         unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
@@ -2222,61 +2215,60 @@ _Finalize()
         int p = 0;
         FILE *fpp = NULL;
         char *env_var = getenv("MCPT");
-        if ( env_var  && (strcmp(env_var, "p") == 0 )){
-            p = 1;
-            fpp = fopen("per_process_data.csv", "w");
-            ptr = proc_names;
-            PMPI_Get_library_version(version, &resultlen);
-            fprintf(fpp, "#'MPI LIBRARY' '%s'\n",version);
-            fprintf(fpp, "#'Processes' '%d'\n",size);
-            fprintf(fpp, "#'Run command' ");
-            fprintf(fpp, "'%s",av[0]);
-            for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
-                fprintf(fpp, " %s",av[i]);
-            }
-            fprintf(fpp, "'\n");
-
-            fprintf(fpp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
-            fprintf(fpp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
-            if ( env_var ){
-                fprintf(fpp, "#'mpisee env' '%s'\n", env_var);
-            }
-            else{
-                fprintf(fpp, "#'mpisee env'\n");
-            }
-            time_t date;
-            time(&date);
-            char* tmp = ctime(&date);
-            fprintf(fpp, "#'Profile date' ");
-            fprintf(fpp, "'%c",*tmp);
-            tmp++;
-            while ( *tmp != '\n' ){
-                fprintf(fpp, "%c",*tmp);
-                tmp++;
-            }
-            fprintf(fpp, "'\n");
-            fprintf(fpp,"#Mapping: ");
-            for ( i =0; i<size; i++ ){
-                if ( ptr != NULL ){
-                    snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, ptr);
-                }
-                if ( i != size-1 )
-                   fprintf(fpp, "%d %s,",i,proc_name);
-                else
-                   fprintf(fpp, "%d %s\n",i,proc_name);
-                ptr+=MPI_MAX_PROCESSOR_NAME;
-            }
-            fprintf(fpp, "Rank,Comm,Size,Volume,Calls,");
-            for (k = 0; k<NUM_OF_PRIMS; k++){
-                fprintf(fpp, "%s_Calls,",prim_names[k]);
-                fprintf(fpp, "%s_Volume,",prim_names[k]);
-                if ( k == NUM_OF_PRIMS -1 )
-                    fprintf(fpp, "%s_Time",prim_names[k]);
-                else
-                    fprintf(fpp, "%s_Time,",prim_names[k]);
-            }
-            fprintf(fpp,"\n");
+        /* if ( env_var  && (strcmp(env_var, "p") == 0 )){ */
+        p = 1;
+        fpp = fopen("per_process_data.csv", "w");
+        ptr = proc_names;
+        PMPI_Get_library_version(version, &resultlen);
+        fprintf(fpp, "#'MPI LIBRARY' '%s'\n",version);
+        fprintf(fpp, "#'Processes' '%d'\n",size);
+        fprintf(fpp, "#'Run command' ");
+        fprintf(fpp, "'%s",av[0]);
+        for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
+            fprintf(fpp, " %s",av[i]);
         }
+        fprintf(fpp, "'\n");
+
+        fprintf(fpp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
+        fprintf(fpp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
+        if ( env_var ){
+            fprintf(fpp, "#'mpisee env' '%s'\n", env_var);
+        }
+        else{
+            fprintf(fpp, "#'mpisee env'\n");
+        }
+        time(&date);
+        tmp = ctime(&date);
+        fprintf(fpp, "#'Profile date' ");
+        fprintf(fpp, "'%c",*tmp);
+        tmp++;
+        while ( *tmp != '\n' ){
+            fprintf(fpp, "%c",*tmp);
+            tmp++;
+        }
+        fprintf(fpp, "'\n");
+        fprintf(fpp,"#Mapping: ");
+        for ( i =0; i<size; i++ ){
+            if ( ptr != NULL ){
+                snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, ptr);
+            }
+            if ( i != size-1 )
+                fprintf(fpp, "%d %s,",i,proc_name);
+            else
+                fprintf(fpp, "%d %s\n",i,proc_name);
+            ptr+=MPI_MAX_PROCESSOR_NAME;
+        }
+        fprintf(fpp, "Rank,Comm,Size,Volume,Calls,");
+        for (k = 0; k<NUM_OF_PRIMS; k++){
+            fprintf(fpp, "%s_Calls,",prim_names[k]);
+            fprintf(fpp, "%s_Volume,",prim_names[k]);
+            if ( k == NUM_OF_PRIMS -1 )
+                fprintf(fpp, "%s_Time",prim_names[k]);
+            else
+                fprintf(fpp, "%s_Time,",prim_names[k]);
+        }
+        fprintf(fpp,"\n");
+        /* } */
 
         for ( i =0; i<size*num_of_comms; i++ ){
             if ( i % num_of_comms == 0 ){
@@ -2320,124 +2312,114 @@ _Finalize()
 
         total = j;
 
-        ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total);
-        umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total);
-        usizes = (int *) malloc (sizeof(int)*total);
-        uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS);
-        uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*NUM_OF_PRIMS);
-        utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS);
+        if ( env_var  && (strcmp(env_var, "p") == 0 )){
+            ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total);
+            umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total);
+            usizes = (int *) malloc (sizeof(int)*total);
+            uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS);
+            uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*NUM_OF_PRIMS);
+            utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS);
 
 
-        memset(ubytes, 0, sizeof(uint64_t )*total);
-        memset(umsgs, 0, sizeof(uint64_t )*total);
-        memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS);
-        memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS);
-        memset(usizes, 0, sizeof(int)*total);
-        /* memset(utime_info, 0, sizeof(double)*total*NUM_OF_PRIMS); */
-        for ( i = 0; i<total*NUM_OF_PRIMS; i++)
-            utime_info[i] = 0.0;
+            memset(ubytes, 0, sizeof(uint64_t )*total);
+            memset(umsgs, 0, sizeof(uint64_t )*total);
+            memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS);
+            memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS);
+            memset(usizes, 0, sizeof(int)*total);
+            /* memset(utime_info, 0, sizeof(double)*total*NUM_OF_PRIMS); */
+            for ( i = 0; i<total*NUM_OF_PRIMS; i++)
+                utime_info[i] = 0.0;
 
-        num_of_comms = 0;
-        j = 0;
-        for ( i=0; i<total; i++ ){
-            /* Build the global communicator tree */
-            found = 0;
-            for ( k =0; k<total; k++ ){
-                if ( strcmp(names[i], unames[k] ) == 0 ){
-                    found = 1;
+            num_of_comms = 0;
+            j = 0;
+            for ( i=0; i<total; i++ ){
+                /* Build the global communicator tree */
+                found = 0;
+                for ( k =0; k<total; k++ ){
+                    if ( strcmp(names[i], unames[k] ) == 0 ){
+                        found = 1;
+                    }
+                }
+                if ( !found ){
+                    strcpy(unames[j], names[i]);
+                    j++;
+                    num_of_comms++;
                 }
             }
-            if ( !found ){
-                strcpy(unames[j], names[i]);
-                j++;
-                num_of_comms++;
-            }
-        }
-        for ( i = 0; i<num_of_comms; i++){
-            for ( j=0; j<total; j++ ){
-                if ( strcmp(unames[i], names[j]) == 0 ){
-                    ubytes[i]+= bytes[j];
-                    umsgs[i]+= msgs[j];
-                    usizes[i]=sizes[j];
-                    for ( k =0; k<NUM_OF_PRIMS; k++){
-                        if ( k >= Sendrecv ){
-                            /* acculumate the bytes instead of taking the max after talks with jesper */
-                            uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k];
+            for ( i = 0; i<num_of_comms; i++){
+                for ( j=0; j<total; j++ ){
+                    if ( strcmp(unames[i], names[j]) == 0 ){
+                        ubytes[i]+= bytes[j];
+                        umsgs[i]+= msgs[j];
+                        usizes[i]=sizes[j];
+                        for ( k =0; k<NUM_OF_PRIMS; k++){
+                            if ( k >= Sendrecv ){
+                                /* acculumate the bytes instead of taking the max after talks with jesper */
+                                uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k];
 
-                            if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){
-                                uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k];
+                                if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){
+                                    uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k];
+                                }
                             }
-                        }
-                        else{
-                            uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
-                            uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
-                        }
-                        /* DO NOT accumulate timing info take MAX */
-                        if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
-                            utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
+                            else{
+                                uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
+                                uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
+                            }
+                            /* DO NOT accumulate timing info take MAX */
+                            if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
+                                utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
+                            }
                         }
                     }
                 }
             }
-        }
 
-        for ( i =0; i<total; i++ ){
-            free(names[i]);
-        }
-        free(names);
-        free(prims_bytes);
-        free(bytes);
-        free(msgs);
-        free(prims);
-        free(time_info);
+            if (fp == NULL){
+                fprintf(stderr, "Failed to open output file: profiler_stats.txt\n");
+                mcpt_abort("Aborting\n");
+            }
+            PMPI_Get_library_version(version, &resultlen);
+            fprintf(fp, "#'MPI LIBRARY' '%s'\n",version);
+            fprintf(fp, "#'Processes' '%d'\n",size);
+            fprintf(fp, "#'Run command' ");
+            fprintf(fp, "'%s",av[0]);
+            for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
+                fprintf(fp, " %s",av[i]);
+            }
+            fprintf(fp, "'\n");
 
-        if (fp == NULL){
-            fprintf(stderr, "Failed to open output file: profiler_stats.txt\n");
-            mcpt_abort("Aborting\n");
-        }
-        PMPI_Get_library_version(version, &resultlen);
-        fprintf(fp, "#'MPI LIBRARY' '%s'\n",version);
-        fprintf(fp, "#'Processes' '%d'\n",size);
-        fprintf(fp, "#'Run command' ");
-        fprintf(fp, "'%s",av[0]);
-        for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
-            fprintf(fp, " %s",av[i]);
-        }
-        fprintf(fp, "'\n");
-
-        fprintf(fp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
-        fprintf(fp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
-        if ( env_var ){
-            fprintf(fp, "#'mpisee env' '%s'\n", env_var);
-        }
-        else{
-            fprintf(fp, "#'mpisee env'\n");
-        }
-        time_t date;
-        time(&date);
-        char* tmp = ctime(&date);
-        fprintf(fp, "#'Profile date' ");
-        fprintf(fp, "'%c",*tmp);
-        tmp++;
-        while ( *tmp != '\n' ){
-            fprintf(fp, "%c",*tmp);
+            fprintf(fp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
+            fprintf(fp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
+            if ( env_var ){
+                fprintf(fp, "#'mpisee env' '%s'\n", env_var);
+            }
+            else{
+                fprintf(fp, "#'mpisee env'\n");
+            }
+            time(&date);
+            tmp = ctime(&date);
+            fprintf(fp, "#'Profile date' ");
+            fprintf(fp, "'%c",*tmp);
             tmp++;
-        }
-        fprintf(fp, "'\n");
-        fprintf(fp, "#'Num of REAL comms' '%d'\n",num_of_comms);
-        fprintf(fp, "Comm,Size,Calls,");
-        /* free(date); */
-        for (k = 0; k<NUM_OF_PRIMS; k++){
-            fprintf(fp, "%s_Calls,",prim_names[k]);
-            fprintf(fp, "%s_Volume,",prim_names[k]);
-            if ( k == NUM_OF_PRIMS -1 )
-                fprintf(fp, "%s_Time",prim_names[k]);
-            else
-                fprintf(fp, "%s_Time,",prim_names[k]);
-        }
-        fprintf(fp,"\n");
-        for ( i =0; i<num_of_comms; i++ ){
-            /* if ( strcmp(unames[i], "NULL") !=0 ){ */
+            while ( *tmp != '\n' ){
+                fprintf(fp, "%c",*tmp);
+                tmp++;
+            }
+            fprintf(fp, "'\n");
+            fprintf(fp, "#'Num of REAL comms' '%d'\n",num_of_comms);
+            fprintf(fp, "Comm,Size,Calls,");
+            /* free(date); */
+            for (k = 0; k<NUM_OF_PRIMS; k++){
+                fprintf(fp, "%s_Calls,",prim_names[k]);
+                fprintf(fp, "%s_Volume,",prim_names[k]);
+                if ( k == NUM_OF_PRIMS -1 )
+                    fprintf(fp, "%s_Time",prim_names[k]);
+                else
+                    fprintf(fp, "%s_Time,",prim_names[k]);
+            }
+            fprintf(fp,"\n");
+            for ( i =0; i<num_of_comms; i++ ){
+                /* if ( strcmp(unames[i], "NULL") !=0 ){ */
                 fprintf(fp,"%s(%d),%d,%" PRIu64 ",",unames[i],usizes[i],usizes[i],umsgs[i]);
                 for ( k =0; k<NUM_OF_PRIMS; k++ ){
                     fprintf(fp, "%u,",uprims[i*NUM_OF_PRIMS+k]);
@@ -2451,19 +2433,30 @@ _Finalize()
                         fprintf(fp, "%lf,",utime_info[i*NUM_OF_PRIMS+k]);
                 }
                 fprintf(fp,"\n");
-            /* } */
+                /* } */
+            }
+            printf("MCPT File: profiler_data.csv\n");
+            for ( i =0; i<total; i++ ){
+                free(unames[i]);
+            }
+            free(unames);
+            free(ubytes);
+            free(umsgs);
+            free(uprims);
+            free(uprims_bytes);
+            free(utime_info);
+            fclose(fp);
         }
-        printf("MCPT File: profiler_data.csv\n");
+
         for ( i =0; i<total; i++ ){
-            free(unames[i]);
+            free(names[i]);
         }
-        free(unames);
-        free(ubytes);
-        free(umsgs);
-        free(uprims);
-        free(uprims_bytes);
-        free(utime_info);
-        fclose(fp);
+        free(names);
+        free(prims_bytes);
+        free(bytes);
+        free(msgs);
+        free(prims);
+        free(time_info);
     }
 
     PMPI_Type_free(&profiler_data);
