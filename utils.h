@@ -14,7 +14,7 @@
 #define NUM_OF_PRIMS 36
 
 enum primitives{
-Send,           /* DO NOT ANYHTING BEFORE THIS */
+Send,           /* DO NOT ADD ANYHTING BEFORE THIS */
 Recv,
 Isend,
 Irecv,
