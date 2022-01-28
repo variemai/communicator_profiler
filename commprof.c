@@ -2209,7 +2209,6 @@ _Finalize()
 
         time_t date;
         char *tmp;
-        fp = fopen("profiler_data.csv","w");
         names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
         unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
         bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
@@ -2390,11 +2389,12 @@ _Finalize()
                 }
             }
 
+            fp = fopen("profiler_data.csv","w");
             if (fp == NULL){
                 fprintf(stderr, "Failed to open output file: profiler_stats.txt\n");
                 mcpt_abort("Aborting\n");
             }
-            PMPI_Get_library_version(version, &resultlen);
+            /* PMPI_Get_library_version(version, &resultlen); */
             fprintf(fp, "#'MPI LIBRARY' '%s'\n",version);
             fprintf(fp, "#'Processes' '%d'\n",size);
             fprintf(fp, "#'Run command' ");
@@ -2412,8 +2412,8 @@ _Finalize()
             else{
                 fprintf(fp, "#'mpisee env'\n");
             }
-            time(&date);
-            tmp = ctime(&date);
+            /* time(&date); */
+            /* tmp = ctime(&date); */
             fprintf(fp, "#'Profile date' ");
             fprintf(fp, "'%c",*tmp);
             tmp++;
