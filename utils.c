@@ -47,7 +47,7 @@ prof_attrs **comm_table = NULL;
 void mcpt_abort (char *fmt, ...){
   va_list args;
   va_start (args, fmt);
-  fprintf (stderr, "\n\n: MPICP ABORTING ");
+  fprintf (stderr, "\n\n: MPISEE ABORTING: ");
   vfprintf (stderr, fmt, args);
   va_end (args);
   fflush (stderr);

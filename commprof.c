@@ -30,10 +30,10 @@ Table_T request_tab;
 
 /* Tool date */
 int mpisee_major_version = 0;
-int mpisee_minor_version = 1;
+int mpisee_minor_version = 2;
 char *mpisee_build_date = __DATE__;
 char *mpisee_build_time = __TIME__;
-double total_time = 0.0;
+double *times = NULL;           /* Start and end time of the application */
 
 
 static int
@@ -193,6 +193,7 @@ _MPI_Init(int *argc, char ***argv){
     else
         local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*512);
 
+    times = (double*)malloc(sizeof(double)*2);
     /* world_sz = size*size; */
     request_tab = Table_new(1024, NULL, NULL);
     /* comm_tab = Table_new(256, NULL, NULL); */
@@ -233,7 +234,8 @@ _MPI_Init(int *argc, char ***argv){
         ac = *argc;
     /* communicators[0] = MPI_COMM_WORLD; */
     /* PMPI_Barrier(MPI_COMM_WORLD); */
-    total_time = MPI_Wtime();
+    /* total_time = MPI_Wtime(); */
+    times[0] = MPI_Wtime();
     return ret;
 }
 
@@ -253,6 +255,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     else
         local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*512);
 
+    times = (double*)malloc(sizeof(double)*2);
     /* comm_tab = Table_new(256, NULL, NULL); */
 
     /* world_sz = size*size; */
@@ -2112,7 +2115,7 @@ _Finalize()
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names,*ptr;
     double *alltimes;
-    total_time = MPI_Wtime()-total_time;
+    times[1] = MPI_Wtime();
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -2198,10 +2201,10 @@ _Finalize()
     MPI_Get_processor_name(proc_name, &len);
 
     proc_names = (char*) malloc ( sizeof (char)*MPI_MAX_PROCESSOR_NAME*size);
-    alltimes = (double*) malloc (sizeof(double)*size);
+    alltimes = (double*) malloc (sizeof(double)*size*2);
 
     PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
-    PMPI_Gather(&total_time, 1, MPI_DOUBLE, alltimes,1, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+    PMPI_Gather(times, 2, MPI_DOUBLE, alltimes,2, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
 
@@ -2226,10 +2229,15 @@ _Finalize()
         int p = 0;
         FILE *fpp = NULL;
         char *env_var = NULL;
+        char *fname = (char*)malloc(sizeof(char)*MPI_MAX_PROCESSOR_NAME);
+        snprintf(fname, MPI_MAX_PROCESSOR_NAME, "mpisee_profile_%d.csv",getpid());
         env_var = getenv("MCPT");
         /* if ( env_var  && (strcmp(env_var, "p") == 0 )){ */
         p = 1;
-        fpp = fopen("per_process_data.csv", "w");
+        fpp = fopen(fname, "w");
+        if ( fpp == NULL ){
+            mcpt_abort("ERROR opening outputfile: %s\n",fname);
+        }
         ptr = proc_names;
         PMPI_Get_library_version(version, &resultlen);
         fprintf(fpp, "#'MPI LIBRARY' '%s'\n",version);
@@ -2259,7 +2267,7 @@ _Finalize()
             tmp++;
         }
         fprintf(fpp, "'\n");
-        fprintf(fpp,"#Mapping: ");
+        fprintf(fpp,"#@ mapping_l ");
         for ( i =0; i<size; i++ ){
             if ( ptr != NULL ){
                 snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, "%s", ptr);
@@ -2270,9 +2278,16 @@ _Finalize()
                 fprintf(fpp, "%d %s\n",i,proc_name);
             ptr+=MPI_MAX_PROCESSOR_NAME;
         }
-        fprintf(fpp,"#Time elapsed for each process: ");
-        for ( i =0; i<size; i++ ){
-            if ( i != size-1 )
+        fprintf(fpp,"#@ starttime_l ");
+        for ( i =0; i<size*2; i+=2 ){
+            if ( i != size*2-1 )
+                fprintf(fpp, "%d %lf,",i,alltimes[i]);
+            else
+                fprintf(fpp, "%d %lf\n",i,alltimes[i]);
+        }
+        fprintf(fpp,"#@ endtime_l ");
+        for ( i =1; i<size*2; i+=2 ){
+            if ( i != size*2-1 )
                 fprintf(fpp, "%d %lf,",i,alltimes[i]);
             else
                 fprintf(fpp, "%d %lf\n",i,alltimes[i]);
@@ -2326,7 +2341,7 @@ _Finalize()
         }
         if( p ){
             fclose(fpp);
-            printf("Per process data file: per_process_data.csv\n");
+            printf("MPISEE: Per process data file: %s\n",fname);
         }
 
         total = j;
@@ -2475,8 +2490,8 @@ _Finalize()
         free(time_info);
     }
 
-    /* PMPI_Type_free(&profiler_data); */
-    /* Table_free(&request_tab); */
+    PMPI_Type_free(&profiler_data);
+    Table_free(&request_tab);
 
     return PMPI_Finalize();
 }
