@@ -28,6 +28,7 @@ all: default $(DSTRUCTF)
 
 default: libciface
 #	@echo PATH IS $(LIBPATH)
+	mkdir -p $(LIBF)
 	$(CC) $(CFLAGS) $(SHARED) $(SRCS) -L$(LIBPATH) -lciface -o $(LIBF)/libmcpt.so
 
 libciface: $(DSTRUCTF)
