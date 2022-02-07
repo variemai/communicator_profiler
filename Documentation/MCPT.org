@@ -6,7 +6,7 @@
 #+CALL: init()
 
 * Overview
-The main idea of this tool is to provide accurate information about the MPI Communicators via profiling with low overhead.
+The main idea of this tool is to provide accurate information about the MPI Communicators via profiling with a low overhead.
 ** Specifications
 1. Communicator related information (calls, tree)
 2. Data traffic (Bytes sent) in every communicator
@@ -116,8 +116,8 @@ There are two collective calls of ~MPI_Allreduce()~ in order to get the correct 
 ** DONE Describe Cart Sub implementations
 ** DONE Add timing for primitives
 ** DONE Remove unnecessary parts of code
-** TODO Free memory
-** HOLD Keep only the name in the communicator with Comm_set_attr
+** DONE Free memory
+** DONE Keep only the name in the communicator with Comm_set_attr
 ** DONE Cleanup code
 ** DONE How to add a new primitive
 ** DONE Add Recv and Irecv operations

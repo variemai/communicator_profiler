@@ -1,0 +1,18 @@
+#+TITLE: mpisee
+#+SUBTITLE: A profiling tool for MPI communicators
+#+OPTIONS: ^:nil num:nil
+
+* Introduction
+/mpisee/ is profiling tool for MPI that provides profiling data for the communicators of the MPI applications.
+* Features
+The tool provides the following data:
+- For each communicator:
+  1. Time spent
+  2. Volume
+  3. Number of calls
+- Additional data:
+  1. Total time of every MPI rank
+  2. Node mapping of every MPI rank
+* Build
+** Dependencies
+* Usage
