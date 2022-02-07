@@ -17,7 +17,6 @@
 *.pch
 
 # Libraries
-*.lib
 *.a
 *.la
 *.lo
@@ -64,3 +63,4 @@ test/*.csv
 profiles/*.R*
 .Rproj.user
 .ccls-cache/
+.vscode
