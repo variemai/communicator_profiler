@@ -19,6 +19,8 @@ LIBPATH=$(abspath $(DSTRUCTF))
 CFLAGS=-O3 -flto -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
 #CFLAGS= -g -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
 SHARED=-shared
+export CFLAGS
+export CC
 
 #all:
 #	@echo PATH IS  $(LIBPATH)
