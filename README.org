@@ -26,7 +26,12 @@ The tool provides the following data:
 - You can also link your application with the =libmpisee.so= using the ~-L/path/to/mpisee/lib~ and ~-lmpisee~
   - To run with this add the ~/path/to/mpisee/lib~ to LD_LIBRARY_PATH
 * Output
-- The csv file consists of lines that start with '#', with '#@', and the rest of the data that start with the MPI rank number.
+** Quick summary
+To get a quick summary of the profile:
+~python mpisee-through.py <args> <output file>~
+- Explain args here
+** Profiler output file description
+- The output csv file consists of lines that start with '#', with '#@', and the rest of the data that start with the MPI rank number.
 - Lines that start with '#' contain metadata information such as:
   - Profile date
   - MPI library version
