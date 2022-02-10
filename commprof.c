@@ -2240,33 +2240,33 @@ _Finalize()
         }
         ptr = proc_names;
         PMPI_Get_library_version(version, &resultlen);
-        fprintf(fpp, "#'MPI LIBRARY' '%s'\n",version);
-        fprintf(fpp, "#'Processes' '%d'\n",size);
-        fprintf(fpp, "#'Run command' ");
-        fprintf(fpp, "'%s",av[0]);
+        fprintf(fpp, "# MPI library %s\n",version);
+        /* fprintf(fpp, "#Processes '%d'\n",size); */
+        fprintf(fpp, "# Run command ");
+        fprintf(fpp, "%s",av[0]);
         for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
             fprintf(fpp, " %s",av[i]);
         }
-        fprintf(fpp, "'\n");
+        fprintf(fpp, "\n");
 
-        fprintf(fpp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
-        fprintf(fpp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
+        fprintf(fpp, "# mpisee Version %d.%d\n",mpisee_major_version,mpisee_minor_version);
+        fprintf(fpp, "# mpisee Build date %s, %s\n", mpisee_build_date,mpisee_build_time);
         if ( env_var ){
-            fprintf(fpp, "#'mpisee env' '%s'\n", env_var);
+            fprintf(fpp, "# mpisee env %s\n", env_var);
         }
         else{
-            fprintf(fpp, "#'mpisee env'\n");
+            fprintf(fpp, "# mpisee env\n");
         }
         time(&date);
         tmp = ctime(&date);
-        fprintf(fpp, "#'Profile date' ");
-        fprintf(fpp, "'%c",*tmp);
+        fprintf(fpp, "# Profile date ");
+        fprintf(fpp, "%c",*tmp);
         tmp++;
         while ( *tmp != '\n' ){
             fprintf(fpp, "%c",*tmp);
             tmp++;
         }
-        fprintf(fpp, "'\n");
+        fprintf(fpp, "\n");
         fprintf(fpp,"#@ mapping_l ");
         for ( i =0; i<size; i++ ){
             if ( ptr != NULL ){
