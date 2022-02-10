@@ -105,6 +105,16 @@ Communicator suffix includes two distinct ids:
 There are two collective calls of ~MPI_Allreduce()~ in order to get the correct ids for the name. The first call synchronizes between the processes and get the maximum number. This way all processes agree on the first id of this communicator. Note that this call is done in the parent communicator. The second ~MPI_Allreduce()~ call is done in the newly created communicators where every processes sends its corresponding rank in the parent communicator and gets the minimum. This is allows the profiler to distinct between the newly created communicators. The second id of each of the new communicators is the minimum rank of the process in the parent communicator.
 **** Code
 #+INCLUDE: "../commprof.c" src c :lines "300-343"
+* Output File Format
+- Lines with =#@= contain information of how to read the output file. Lines described with =_l= denote a list of items
+  - =#@metric_l= denotes the type of metric used for the specific line ("VOL,TIME,NCALLS")
+  - =#@metric_type_l= denotes the unit for this metric (float,int)
+  - =#@comm_l= list of communicator names
+  - =#@call_l= list of MPI calls
+  - =#@rank_start_l= list of start timestamp for each rank
+  - =#@rank_end_l= list of end timestamp for each rank
+- Format of a data line:
+  "Rank", "Comm", "Call", "Type", "Val"
 * Contribute
 ** How to add a new primitive for profiling
 1. Increase the "NUM_OF_PRIMS" variable in "utils." file

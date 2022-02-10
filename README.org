@@ -3,7 +3,7 @@
 #+OPTIONS: ^:nil num:nil
 
 * Introduction
-/mpisee/ is profiling tool for MPI that provides profiling data for the communicators of the MPI applications. /mpisee-through/ post-processes the profiles for quick summary information.
+=mpisee= is a profiling tool for MPI that provides profiling data for the communicators of the MPI applications. To conveniently read the output of =mpisee= =mpisee-through= use to post-processes the output file for quick summary information.
 * Features
 - Output in a csv file
 - Post-processing with /mpisee-through/
@@ -21,3 +21,16 @@ The tool provides the following data:
 1. MPI library (openmpi,mpich) version $> 2$
 2. gcc version $> 10$ that supports lto, otherwise disable lto flag in Makefile
 * Usage
+- Recommended: ~LD_PRELOAD=/path/to/mpisee/lib/libmpisee.so run <application>~
+- You can also link your application with the =libmpisee.so= using the ~-L/path/to/mpisee/lib~ and ~-lmpisee~
+  - To run with this add the ~/path/to/mpisee/lib~ to LD_LIBRARY_PATH
+* Output
+- The csv file consists of some lines that start with a =#= and =#@= and the rest of the data.
+- Lines that start with =#= contain metadata information such as:
+  - Profile date
+  - MPI library version
+  - Application and arguments
+  - =mpisee= version
+- Lines that start with =#@= contain some data information:
+  - Start and end time for each process
+  - Mapping of each process
