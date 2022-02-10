@@ -30,47 +30,8 @@ The tool provides the following data:
 To get a quick summary of the profile:
 ~python mpisee-through.py <args> <output file>~
 - Explain args here
-- =mpisee= output example
-#+begin_src latex
-\begin{figure}[!t]
-  \centering
-\begin{lstlisting}[basicstyle=\tiny\tt,framesep=0pt,framexleftmargin=2pt,xleftmargin=0pt]
-COMM                SIZE      PROCS
-W_a1_s2.0           128       0-127
-
-	Call                   Mean[s]    Min[s]    Max[s]         Volume    #Calls
-	---------------------------------------------------------------------------
-	Alltoallv               0.8016    0.3520    1.1856     3873236800     11776
 
 
-COMM                SIZE      PROCS
-W_a1_s3.0           128       0-63, 128-191
-
-	Call                   Mean[s]    Min[s]    Max[s]         Volume    #Calls
-	---------------------------------------------------------------------------
-	Alltoallv               1.1803    0.5428    1.8756     7456121600     11776
-
-
-COMM                SIZE      PROCS
-W_a1_s4.0           4         0, 64, 128, 192
-
-	Call                   Mean[s]    Min[s]    Max[s]         Volume    #Calls
-	---------------------------------------------------------------------------
-	Alltoallv               0.1416    0.0020    0.2715        2980800       368
-
-
-COMM                SIZE      PROCS
-W_a1_s5.0           256       0-255
-
-	Call                   Mean[s]    Min[s]    Max[s]         Volume    #Calls
-	---------------------------------------------------------------------------
-	Alltoallv               1.0335    0.7398    1.4108     8740110400     23552
-\end{lstlisting}
-\caption{A subset of the communicator-centric output produced by
-  \mpiseesummary for \splatt.}
-  \label{fig:splatt_with_mpisee_summary}
-\end{figure}
-#+end_src
 ** Profiler output file description
 - The output csv file consists of lines that start with '#', with '#@', and the rest of the data that start with the MPI rank number.
 - Lines that start with '#' contain metadata information such as:
