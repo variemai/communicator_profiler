@@ -15,9 +15,9 @@ LIBF=./lib
 DSTRUCTF=datastructlib
 LIBPATH=$(abspath $(DSTRUCTF))
 
-#CC=mpicc
 CFLAGS=-O3 -flto -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
-#CFLAGS= -g -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
+## Use the line to run withiout lto flag if your compiler does not support it
+#CFLAGS= -O3 -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
 SHARED=-shared
 export CFLAGS
 export CC
@@ -26,12 +26,12 @@ export CC
 #	@echo PATH IS  $(LIBPATH)
 
 all: default $(DSTRUCTF)
-	@echo MCPT compiled
+	@echo mpisee compiled
 
 default: libciface
 #	@echo PATH IS $(LIBPATH)
 	mkdir -p $(LIBF)
-	$(CC) $(CFLAGS) $(SHARED) $(SRCS) -L$(LIBPATH) -lciface -o $(LIBF)/libmcpt.so
+	$(CC) $(CFLAGS) $(SHARED) $(SRCS) -L$(LIBPATH) -lciface -o $(LIBF)/libmpisee.so
 
 libciface: $(DSTRUCTF)
 	$(MAKE) -C $<
