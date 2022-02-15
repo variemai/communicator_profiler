@@ -15,7 +15,7 @@ LIBF=./lib
 DSTRUCTF=datastructlib
 LIBPATH=$(abspath $(DSTRUCTF))
 
-CFLAGS=-O3 -flto -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
+CFLAGS=-O3 -flto -Wall -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
 ## Use the line to run withiout lto flag if your compiler does not support it
 #CFLAGS= -O3 -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
 SHARED=-shared
@@ -31,7 +31,7 @@ all: default $(DSTRUCTF)
 default: libciface
 #	@echo PATH IS $(LIBPATH)
 	mkdir -p $(LIBF)
-	$(CC) $(CFLAGS) $(SHARED) $(SRCS) -L$(LIBPATH) -lciface -o $(LIBF)/libmpisee.so
+	$(CC) $(CFLAGS) $(SHARED) $(SRCS) -L$(LIBPATH) -l$(DSTRUCTF) -o $(LIBF)/libmpisee.so
 
 libciface: $(DSTRUCTF)
 	$(MAKE) -C $<
