@@ -1,8 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
+find_package(MPI REQUIRED)
 # set the project name
-project(datastructlib VERSION 1.0 DESCRIPTION "C Data Structures Library")
+project(datastructlib VERSION 1.1 DESCRIPTION "C Data Structures Library")
 
-add_library(datastructlib STATIC
+add_library(datastructlib SHARED
   arith.c
   assert.c
   atom.c

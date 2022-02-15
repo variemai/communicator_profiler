@@ -15,6 +15,7 @@
 
 #include "table.h"
 #include <inttypes.h>
+#include "commprofConfig.h"
 
 #define MAX_ARGS 1024
 #define MAX_DIMS 8
@@ -29,8 +30,6 @@ char *av[MAX_ARGS];
 Table_T request_tab;
 
 /* Tool date */
-int mpisee_major_version = 0;
-int mpisee_minor_version = 2;
 char *mpisee_build_date = __DATE__;
 char *mpisee_build_time = __TIME__;
 double *times = NULL;           /* Start and end time of the application */
@@ -2249,7 +2248,7 @@ _Finalize()
         }
         fprintf(fpp, "\n");
 
-        fprintf(fpp, "# mpisee Version %d.%d\n",mpisee_major_version,mpisee_minor_version);
+        fprintf(fpp, "# mpisee Version %d.%d\n",mpisee_VERSION_MAJOR,mpisee_VERSION_MINOR);
         fprintf(fpp, "# mpisee Build date %s, %s\n", mpisee_build_date,mpisee_build_time);
         if ( env_var ){
             fprintf(fpp, "# mpisee env %s\n", env_var);
