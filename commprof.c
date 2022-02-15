@@ -2418,7 +2418,7 @@ _Finalize()
             }
             fprintf(fp, "'\n");
 
-            fprintf(fp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
+            fprintf(fp, "#'mpisee Version' '%d.%d'\n",mpisee_VERSION_MAJOR,mpisee_VERSION_MINOR);
             fprintf(fp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
             if ( env_var ){
                 fprintf(fp, "#'mpisee env' '%s'\n", env_var);
