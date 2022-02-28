@@ -2277,20 +2277,98 @@ _Finalize()
                 fprintf(fpp, "%d %s\n",i,proc_name);
             ptr+=MPI_MAX_PROCESSOR_NAME;
         }
-        fprintf(fpp,"#@ starttime_l ");
+        fprintf(fpp,"#@ metric_l ");
+        fprintf(fpp,"VOL,");
+        fprintf(fpp,"TIME,");
+        fprintf(fpp,"NCALLS\n");
+
+        fprintf(fpp,"#@ metric_type_l ");
+        fprintf(fpp,"int,");
+        fprintf(fpp,"float,");
+        fprintf(fpp,"int\n");
+
+        fprintf(fpp,"#@ rank_start_l ");
         for ( i =0; i<size*2; i+=2 ){
             if ( i != size*2-1 )
                 fprintf(fpp, "%d %lf,",i,alltimes[i]);
             else
                 fprintf(fpp, "%d %lf\n",i,alltimes[i]);
         }
-        fprintf(fpp,"#@ endtime_l ");
+        fprintf(fpp,"#@ rank_end_l ");
         for ( i =1; i<size*2; i+=2 ){
             if ( i != size*2-1 )
                 fprintf(fpp, "%d %lf,",i,alltimes[i]);
             else
                 fprintf(fpp, "%d %lf\n",i,alltimes[i]);
         }
+        /* I need to move the post processing of the communicators here */
+
+        ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total);
+        umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total);
+        usizes = (int *) malloc (sizeof(int)*total);
+        uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS);
+        uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*NUM_OF_PRIMS);
+        utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS);
+
+
+        memset(ubytes, 0, sizeof(uint64_t )*total);
+        memset(umsgs, 0, sizeof(uint64_t )*total);
+        memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS);
+        memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS);
+        memset(usizes, 0, sizeof(int)*total);
+        for ( i = 0; i<total*NUM_OF_PRIMS; i++)
+            utime_info[i] = 0.0;
+
+        num_of_comms = 0;
+        j = 0;
+        for ( i=0; i<total; i++ ){
+            found = 0;
+            for ( k =0; k<total; k++ ){
+                if ( strcmp(names[i], unames[k] ) == 0 ){
+                    found = 1;
+                }
+            }
+            if ( !found ){
+                strcpy(unames[j], names[i]);
+                j++;
+                num_of_comms++;
+            }
+        }
+        for ( i = 0; i<num_of_comms; i++){
+            for ( j=0; j<total; j++ ){
+                if ( strcmp(unames[i], names[j]) == 0 ){
+                    ubytes[i]+= bytes[j];
+                    umsgs[i]+= msgs[j];
+                    usizes[i]=sizes[j];
+                    for ( k =0; k<NUM_OF_PRIMS; k++){
+                        if ( k >= Sendrecv ){
+                            uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k];
+
+                            if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){
+                                uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k];
+                            }
+                        }
+                        else{
+                            uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
+                            uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
+                        }
+                        if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
+                            utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
+                        }
+                    }
+                }
+            }
+        }
+        fprintf(fpp,"#@ comm_l ");
+        for ( i = 0; i<num_of_comms; i++ ){
+            if ( i < num_of_comms- 1 )
+                fprintf(fpp, "%s,",unames[i]);
+            else
+                fprintf(fpp, "%s\n",unames[i]);
+        }
+
+
+
         fprintf(fpp, "Rank,Comm,Size,Volume,Calls,");
         for (k = 0; k<NUM_OF_PRIMS; k++){
             fprintf(fpp, "%s_Calls,",prim_names[k]);
