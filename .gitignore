@@ -69,3 +69,4 @@ cmake_install.cmake
 CMakeCache.txt
 .cmake/*
 .DS_Store
+Makefile

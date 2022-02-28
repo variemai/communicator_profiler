@@ -57,10 +57,10 @@ RM = /opt/local/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /Users/ioannisvardas/repos/communicator_profiler/datastructlib
+CMAKE_SOURCE_DIR = /Users/ioannisvardas/repos/communicator_profiler
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /Users/ioannisvardas/repos/communicator_profiler/datastructlib
+CMAKE_BINARY_DIR = /Users/ioannisvardas/repos/communicator_profiler
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,14 +87,14 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ioannisvardas/repos/communicator_profiler/datastructlib/CMakeFiles /Users/ioannisvardas/repos/communicator_profiler/datastructlib//CMakeFiles/progress.marks
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ioannisvardas/repos/communicator_profiler/datastructlib/CMakeFiles 0
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(CMAKE_COMMAND) -E cmake_progress_start /Users/ioannisvardas/repos/communicator_profiler/CMakeFiles /Users/ioannisvardas/repos/communicator_profiler/datastructlib//CMakeFiles/progress.marks
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 datastructlib/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /Users/ioannisvardas/repos/communicator_profiler/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
 clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 clean
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 datastructlib/clean
 .PHONY : clean
 
 # The main clean target
@@ -103,30 +103,31 @@ clean/fast: clean
 
 # Prepare targets for installation.
 preinstall: all
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 preinstall
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 datastructlib/preinstall
 .PHONY : preinstall
 
 # Prepare targets for installation.
 preinstall/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 preinstall
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 datastructlib/preinstall
 .PHONY : preinstall/fast
 
 # clear depends
 depend:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 1
 .PHONY : depend
 
-#=============================================================================
-# Target rules for targets named datastructlib
+# Convenience name for target.
+datastructlib/CMakeFiles/datastructlib.dir/rule:
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 datastructlib/CMakeFiles/datastructlib.dir/rule
+.PHONY : datastructlib/CMakeFiles/datastructlib.dir/rule
 
-# Build rule for target.
-datastructlib: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 datastructlib
+# Convenience name for target.
+datastructlib: datastructlib/CMakeFiles/datastructlib.dir/rule
 .PHONY : datastructlib
 
 # fast build rule for target.
 datastructlib/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/build
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/build
 .PHONY : datastructlib/fast
 
 arith.o: arith.c.o
@@ -134,7 +135,7 @@ arith.o: arith.c.o
 
 # target to build an object file
 arith.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/arith.c.o
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/arith.c.o
 .PHONY : arith.c.o
 
 arith.i: arith.c.i
@@ -142,7 +143,7 @@ arith.i: arith.c.i
 
 # target to preprocess a source file
 arith.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/arith.c.i
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/arith.c.i
 .PHONY : arith.c.i
 
 arith.s: arith.c.s
@@ -150,7 +151,7 @@ arith.s: arith.c.s
 
 # target to generate assembly for a file
 arith.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/arith.c.s
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/arith.c.s
 .PHONY : arith.c.s
 
 assert.o: assert.c.o
@@ -158,7 +159,7 @@ assert.o: assert.c.o
 
 # target to build an object file
 assert.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/assert.c.o
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/assert.c.o
 .PHONY : assert.c.o
 
 assert.i: assert.c.i
@@ -166,7 +167,7 @@ assert.i: assert.c.i
 
 # target to preprocess a source file
 assert.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/assert.c.i
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/assert.c.i
 .PHONY : assert.c.i
 
 assert.s: assert.c.s
@@ -174,7 +175,7 @@ assert.s: assert.c.s
 
 # target to generate assembly for a file
 assert.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/assert.c.s
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/assert.c.s
 .PHONY : assert.c.s
 
 atom.o: atom.c.o
@@ -182,7 +183,7 @@ atom.o: atom.c.o
 
 # target to build an object file
 atom.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/atom.c.o
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/atom.c.o
 .PHONY : atom.c.o
 
 atom.i: atom.c.i
@@ -190,7 +191,7 @@ atom.i: atom.c.i
 
 # target to preprocess a source file
 atom.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/atom.c.i
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/atom.c.i
 .PHONY : atom.c.i
 
 atom.s: atom.c.s
@@ -198,7 +199,7 @@ atom.s: atom.c.s
 
 # target to generate assembly for a file
 atom.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/atom.c.s
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/atom.c.s
 .PHONY : atom.c.s
 
 except.o: except.c.o
@@ -206,7 +207,7 @@ except.o: except.c.o
 
 # target to build an object file
 except.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/except.c.o
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/except.c.o
 .PHONY : except.c.o
 
 except.i: except.c.i
@@ -214,7 +215,7 @@ except.i: except.c.i
 
 # target to preprocess a source file
 except.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/except.c.i
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/except.c.i
 .PHONY : except.c.i
 
 except.s: except.c.s
@@ -222,7 +223,7 @@ except.s: except.c.s
 
 # target to generate assembly for a file
 except.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/except.c.s
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/except.c.s
 .PHONY : except.c.s
 
 list.o: list.c.o
@@ -230,7 +231,7 @@ list.o: list.c.o
 
 # target to build an object file
 list.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/list.c.o
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/list.c.o
 .PHONY : list.c.o
 
 list.i: list.c.i
@@ -238,7 +239,7 @@ list.i: list.c.i
 
 # target to preprocess a source file
 list.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/list.c.i
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/list.c.i
 .PHONY : list.c.i
 
 list.s: list.c.s
@@ -246,7 +247,7 @@ list.s: list.c.s
 
 # target to generate assembly for a file
 list.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/list.c.s
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/list.c.s
 .PHONY : list.c.s
 
 memchk.o: memchk.c.o
@@ -254,7 +255,7 @@ memchk.o: memchk.c.o
 
 # target to build an object file
 memchk.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/memchk.c.o
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/memchk.c.o
 .PHONY : memchk.c.o
 
 memchk.i: memchk.c.i
@@ -262,7 +263,7 @@ memchk.i: memchk.c.i
 
 # target to preprocess a source file
 memchk.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/memchk.c.i
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/memchk.c.i
 .PHONY : memchk.c.i
 
 memchk.s: memchk.c.s
@@ -270,7 +271,7 @@ memchk.s: memchk.c.s
 
 # target to generate assembly for a file
 memchk.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/memchk.c.s
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/memchk.c.s
 .PHONY : memchk.c.s
 
 queue.o: queue.c.o
@@ -278,7 +279,7 @@ queue.o: queue.c.o
 
 # target to build an object file
 queue.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/queue.c.o
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/queue.c.o
 .PHONY : queue.c.o
 
 queue.i: queue.c.i
@@ -286,7 +287,7 @@ queue.i: queue.c.i
 
 # target to preprocess a source file
 queue.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/queue.c.i
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/queue.c.i
 .PHONY : queue.c.i
 
 queue.s: queue.c.s
@@ -294,7 +295,7 @@ queue.s: queue.c.s
 
 # target to generate assembly for a file
 queue.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/queue.c.s
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/queue.c.s
 .PHONY : queue.c.s
 
 stack.o: stack.c.o
@@ -302,7 +303,7 @@ stack.o: stack.c.o
 
 # target to build an object file
 stack.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/stack.c.o
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/stack.c.o
 .PHONY : stack.c.o
 
 stack.i: stack.c.i
@@ -310,7 +311,7 @@ stack.i: stack.c.i
 
 # target to preprocess a source file
 stack.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/stack.c.i
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/stack.c.i
 .PHONY : stack.c.i
 
 stack.s: stack.c.s
@@ -318,7 +319,7 @@ stack.s: stack.c.s
 
 # target to generate assembly for a file
 stack.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/stack.c.s
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/stack.c.s
 .PHONY : stack.c.s
 
 table.o: table.c.o
@@ -326,7 +327,7 @@ table.o: table.c.o
 
 # target to build an object file
 table.c.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/table.c.o
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/table.c.o
 .PHONY : table.c.o
 
 table.i: table.c.i
@@ -334,7 +335,7 @@ table.i: table.c.i
 
 # target to preprocess a source file
 table.c.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/table.c.i
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/table.c.i
 .PHONY : table.c.i
 
 table.s: table.c.s
@@ -342,7 +343,7 @@ table.s: table.c.s
 
 # target to generate assembly for a file
 table.c.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/datastructlib.dir/build.make CMakeFiles/datastructlib.dir/table.c.s
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(MAKE) $(MAKESILENT) -f datastructlib/CMakeFiles/datastructlib.dir/build.make datastructlib/CMakeFiles/datastructlib.dir/table.c.s
 .PHONY : table.c.s
 
 # Help Target
@@ -392,6 +393,6 @@ help:
 # No rule that depends on this can have commands that come from listfiles
 # because they might be regenerated.
 cmake_check_build_system:
-	$(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
+	cd /Users/ioannisvardas/repos/communicator_profiler && $(CMAKE_COMMAND) -S$(CMAKE_SOURCE_DIR) -B$(CMAKE_BINARY_DIR) --check-build-system CMakeFiles/Makefile.cmake 0
 .PHONY : cmake_check_build_system
 
