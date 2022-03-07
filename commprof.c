@@ -2331,7 +2331,7 @@ _Finalize()
         memset(usizes, 0, sizeof(int)*total);
         /* for ( i = 0; i<total*NUM_OF_PRIMS; i++) */
         /*     utime_info[i] = 0.0; */
-
+        int local_n_comms = num_of_comms;
         num_of_comms = 0;
         j = 0;
         for ( i=0; i<total; i++ ){
@@ -2421,8 +2421,8 @@ _Finalize()
 
         j = 0;
         fprintf(fpp, "Rank,Call,Comm,Type,Val\n");
-        for ( i =0; i<size*num_of_comms; i++ ){
-            if ( i % num_of_comms == 0 ){
+        for ( i =0; i<size*local_n_comms; i++ ){
+            if ( i % local_n_comms == 0 ){
                 r++;
             }
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
