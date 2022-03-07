@@ -2301,23 +2301,36 @@ _Finalize()
             else
                 fprintf(fpp, "%d %lf\n",i,alltimes[i]);
         }
+        j = 0;
+        for ( i =0; i<size*num_of_comms; i++ ){
+            if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
+                unames[j] = strdup("NULL");
+                /* Use memcpy instead of loop */
+                names[j]=strdup(recv_buffer[i].name);
+                bytes[j] = recv_buffer[i].bytes;
+                msgs[j] = recv_buffer[i].msgs;
+                sizes[j] = recv_buffer[i].size;
+                j++;
+            }
+        }
         /* I need to move the post processing of the communicators here */
 
-        ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total);
-        umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total);
+        total = j;
+        /* ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total); */
+        /* umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total); */
         usizes = (int *) malloc (sizeof(int)*total);
-        uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS);
-        uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*NUM_OF_PRIMS);
-        utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS);
+        /* uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS); */
+        /* uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*NUM_OF_PRIMS); */
+        /* utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS); */
 
 
-        memset(ubytes, 0, sizeof(uint64_t )*total);
-        memset(umsgs, 0, sizeof(uint64_t )*total);
-        memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS);
-        memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS);
+        /* memset(ubytes, 0, sizeof(uint64_t )*total); */
+        /* memset(umsgs, 0, sizeof(uint64_t )*total); */
+        /* memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS); */
+        /* memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS); */
         memset(usizes, 0, sizeof(int)*total);
-        for ( i = 0; i<total*NUM_OF_PRIMS; i++)
-            utime_info[i] = 0.0;
+        /* for ( i = 0; i<total*NUM_OF_PRIMS; i++) */
+        /*     utime_info[i] = 0.0; */
 
         num_of_comms = 0;
         j = 0;
@@ -2334,29 +2347,28 @@ _Finalize()
                 num_of_comms++;
             }
         }
-        total = j;
         for ( i = 0; i<num_of_comms; i++){
             for ( j=0; j<total; j++ ){
                 if ( strcmp(unames[i], names[j]) == 0 ){
-                    ubytes[i]+= bytes[j];
-                    umsgs[i]+= msgs[j];
+                    /* ubytes[i]+= bytes[j]; */
+                    /* umsgs[i]+= msgs[j]; */
                     usizes[i]=sizes[j];
-                    for ( k =0; k<NUM_OF_PRIMS; k++){
-                        if ( k >= Sendrecv ){
-                            uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k];
+                    /* for ( k =0; k<NUM_OF_PRIMS; k++){ */
+                    /*     if ( k >= Sendrecv ){ */
+                    /*         uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k]; */
 
-                            if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){
-                                uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k];
-                            }
-                        }
-                        else{
-                            uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
-                            uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
-                        }
-                        if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
-                            utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
-                        }
-                    }
+                    /*         if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){ */
+                    /*             uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k]; */
+                    /*         } */
+                    /*     } */
+                    /*     else{ */
+                    /*         uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k]; */
+                    /*         uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k]; */
+                    /*     } */
+                    /*     if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){ */
+                    /*         utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k]; */
+                    /*     } */
+                    /* } */
                 }
             }
         }
@@ -2414,12 +2426,11 @@ _Finalize()
                 r++;
             }
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
-                unames[j] = strdup("NULL");
-                /* Use memcpy instead of loop */
-                names[j]=strdup(recv_buffer[i].name);
-                bytes[j] = recv_buffer[i].bytes;
-                msgs[j] = recv_buffer[i].msgs;
-                sizes[j] = recv_buffer[i].size;
+                /* unames[j] = strdup("NULL"); */
+                /* names[j]=strdup(recv_buffer[i].name); */
+                /* bytes[j] = recv_buffer[i].bytes; */
+                /* msgs[j] = recv_buffer[i].msgs; */
+                /* sizes[j] = recv_buffer[i].size; */
                 /* fprintf(fpp, "%d,%s,%d,%llu,%llu,",r,names[j],sizes[j],bytes[j],msgs[j]); */
                 /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
                 for ( k =0; k<NUM_OF_PRIMS; k++){
@@ -2447,7 +2458,7 @@ _Finalize()
         fclose(fpp);
         printf("MPISEE: Per process data file: %s\n",fname);
 
-        total = j;
+        /* total = j; */
 
         if ( env_var  && (strcmp(env_var, "p") == 0 )){
             ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total);
