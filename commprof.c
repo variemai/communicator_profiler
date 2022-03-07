@@ -2225,14 +2225,14 @@ _Finalize()
 
         j = 0;
         int r =-1;
-        int p = 0;
+        /* int p = 0; */
         FILE *fpp = NULL;
         char *env_var = NULL;
         char *fname = (char*)malloc(sizeof(char)*MPI_MAX_PROCESSOR_NAME);
         snprintf(fname, MPI_MAX_PROCESSOR_NAME, "mpisee_profile_%d.csv",getpid());
         env_var = getenv("MCPT");
         /* if ( env_var  && (strcmp(env_var, "p") == 0 )){ */
-        p = 1;
+        /* p = 1; */
         fpp = fopen(fname, "w");
         if ( fpp == NULL ){
             mcpt_abort("ERROR opening outputfile: %s\n",fname);
@@ -2367,20 +2367,47 @@ _Finalize()
                 fprintf(fpp, "%s\n",unames[i]);
         }
 
-
-
-        fprintf(fpp, "Rank,Comm,Size,Volume,Calls,");
-        for (k = 0; k<NUM_OF_PRIMS; k++){
-            fprintf(fpp, "%s_Calls,",prim_names[k]);
-            fprintf(fpp, "%s_Volume,",prim_names[k]);
-            if ( k == NUM_OF_PRIMS -1 )
-                fprintf(fpp, "%s_Time",prim_names[k]);
+        fprintf(fpp,"#@ comm_sz_l ");
+        for ( i = 0; i<num_of_comms; i++ ){
+            if ( i < num_of_comms- 1 )
+                fprintf(fpp, "%d,",usizes[i]);
             else
-                fprintf(fpp, "%s_Time,",prim_names[k]);
+                fprintf(fpp, "%d\n",usizes[i]);
         }
-        fprintf(fpp,"\n");
-        /* } */
 
+
+        fprintf(fpp,"#@ call_l ");
+        for (k = 0; k<NUM_OF_PRIMS; k++){
+            if ( k == NUM_OF_PRIMS -1 )
+                fprintf(fpp, "%s,",prim_names[k]);
+            else
+                fprintf(fpp, "%s\n",prim_names[k]);
+        }
+
+
+        /* fprintf(fpp, "Rank,Comm,Size,Volume,Calls,"); */
+        /* for (k = 0; k<NUM_OF_PRIMS; k++){ */
+        /*     fprintf(fpp, "%s_Calls,",prim_names[k]); */
+        /*     fprintf(fpp, "%s_Volume,",prim_names[k]); */
+        /*     if ( k == NUM_OF_PRIMS -1 ) */
+        /*         fprintf(fpp, "%s_Time",prim_names[k]); */
+        /*     else */
+        /*         fprintf(fpp, "%s_Time,",prim_names[k]); */
+        /* } */
+        /* fprintf(fpp,"\n"); */
+
+        /* fprintf(fpp,"#@ metric_l "); */
+        /* fprintf(fpp,"VOL,"); */
+        /* fprintf(fpp,"TIME,"); */
+        /* fprintf(fpp,"NCALLS\n"); */
+
+        /* fprintf(fpp,"#@ metric_type_l "); */
+        /* fprintf(fpp,"int,"); */
+        /* fprintf(fpp,"float,"); */
+        /* fprintf(fpp,"int\n"); */
+
+        j = 0;
+        fprintf(fpp, "Rank,Call,Comm,Type,Val\n");
         for ( i =0; i<size*num_of_comms; i++ ){
             if ( i % num_of_comms == 0 ){
                 r++;
@@ -2392,34 +2419,32 @@ _Finalize()
                 bytes[j] = recv_buffer[i].bytes;
                 msgs[j] = recv_buffer[i].msgs;
                 sizes[j] = recv_buffer[i].size;
-                if( p )
-                    fprintf(fpp, "%d,%s,%d,%ld,%ld,",r,names[j],sizes[j],bytes[j],msgs[j]);
+                /* fprintf(fpp, "%d,%s,%d,%llu,%llu,",r,names[j],sizes[j],bytes[j],msgs[j]); */
                 /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
                 for ( k =0; k<NUM_OF_PRIMS; k++){
                     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
                     prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k];
                     time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k];
-                    if ( p ){
-                        fprintf(fpp, "%u,",prims[j*NUM_OF_PRIMS+k]);
-                        if ( prims[j*NUM_OF_PRIMS+k] > 0 )
-                            fprintf(fpp, "%" PRIu64 ",",prims_bytes[j*NUM_OF_PRIMS+k]);
-                        else
-                            fprintf(fpp, "0.0,");
-                        if ( k == NUM_OF_PRIMS-1 )
-                            fprintf(fpp, "%lf",time_info[j*NUM_OF_PRIMS+k]);
-                        else
-                            fprintf(fpp, "%lf,",time_info[j*NUM_OF_PRIMS+k]);
-                    }
+                    fprintf(fpp, "%d,%d,%d,0,%llu\n",r,k,j,prims_bytes[j*NUM_OF_PRIMS+k]);
+                    fprintf(fpp, "%d,%d,%d,1,%lf\n",r,k,j,time_info[j*NUM_OF_PRIMS+k]);
+                    fprintf(fpp, "%d,%d,%d,2,%u\n",r,k,j,prims[j*NUM_OF_PRIMS+k]);
+
+                    /* fprintf(fpp, "%u,",prims[j*NUM_OF_PRIMS+k]); */
+                    /* if ( prims[j*NUM_OF_PRIMS+k] > 0 ) */
+                    /*     fprintf(fpp, "%" PRIu64 ",",prims_bytes[j*NUM_OF_PRIMS+k]); */
+                    /* else */
+                    /*     fprintf(fpp, "0.0,"); */
+                    /* if ( k == NUM_OF_PRIMS-1 ) */
+                    /*     fprintf(fpp, "%lf",time_info[j*NUM_OF_PRIMS+k]); */
+                    /* else */
+                    /*     fprintf(fpp, "%lf,",time_info[j*NUM_OF_PRIMS+k]); */
                 }
-                if ( p )
-                    fprintf(fpp,"\n");
+                /* fprintf(fpp,"\n"); */
                 j++;
             }
         }
-        if( p ){
-            fclose(fpp);
-            printf("MPISEE: Per process data file: %s\n",fname);
-        }
+        fclose(fpp);
+        printf("MPISEE: Per process data file: %s\n",fname);
 
         total = j;
 
