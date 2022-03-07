@@ -2289,17 +2289,17 @@ _Finalize()
 
         fprintf(fpp,"#@ rank_start_l ");
         for ( i =0; i<size*2; i+=2 ){
-            if ( i != size*2-1 )
-                fprintf(fpp, "%d %lf,",i,alltimes[i]);
+            if ( i != size*2-2 )
+                fprintf(fpp, "%lf,",alltimes[i]);
             else
-                fprintf(fpp, "%d %lf\n",i,alltimes[i]);
+                fprintf(fpp, "%lf\n",alltimes[i]);
         }
         fprintf(fpp,"#@ rank_end_l ");
         for ( i =1; i<size*2; i+=2 ){
             if ( i != size*2-1 )
-                fprintf(fpp, "%d %lf,",i,alltimes[i]);
+                fprintf(fpp, "%lf,",alltimes[i]);
             else
-                fprintf(fpp, "%d %lf\n",i,alltimes[i]);
+                fprintf(fpp, "%lf\n",alltimes[i]);
         }
         j = 0;
         for ( i =0; i<size*num_of_comms; i++ ){
@@ -2309,7 +2309,7 @@ _Finalize()
                 names[j]=strdup(recv_buffer[i].name);
                 /* bytes[j] = recv_buffer[i].bytes; */
                 /* msgs[j] = recv_buffer[i].msgs; */
-                /* sizes[j] = recv_buffer[i].size; */
+                sizes[j] = recv_buffer[i].size;
                 j++;
             }
         }
@@ -2442,10 +2442,11 @@ _Finalize()
                     /* prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k]; */
                     /* prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k]; */
                     /* time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k]; */
-                    fprintf(fpp, "%d,%d,%d,0,%llu\n",r,k,j,(uint64_t)recv_buffer[i].prim_bytes[k]);
-                    fprintf(fpp, "%d,%d,%d,1,%lf\n",r,k,j,(double)recv_buffer[i].time_info[k]);
-                    fprintf(fpp, "%d,%d,%d,2,%u\n",r,k,j,(uint32_t)recv_buffer[i].prims[k]);
-
+                    if ( (uint32_t)recv_buffer[i].prims[k] > 0 ){
+                        fprintf(fpp, "%d,%d,%d,0,%" PRIu64 "\n",r,k,j,(uint64_t)recv_buffer[i].prim_bytes[k]);
+                        fprintf(fpp, "%d,%d,%d,1,%lf\n",r,k,j,(double)recv_buffer[i].time_info[k]);
+                        fprintf(fpp, "%d,%d,%d,2,%u\n",r,k,j,(uint32_t)recv_buffer[i].prims[k]);
+                    }
                     /* fprintf(fpp, "%u,",prims[j*NUM_OF_PRIMS+k]); */
                     /* if ( prims[j*NUM_OF_PRIMS+k] > 0 ) */
                     /*     fprintf(fpp, "%" PRIu64 ",",prims_bytes[j*NUM_OF_PRIMS+k]); */
@@ -2465,148 +2466,151 @@ _Finalize()
 
         /* total = j; */
 
-        if ( env_var  && (strcmp(env_var, "p") == 0 )){
-            ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total);
-            umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total);
-            usizes = (int *) malloc (sizeof(int)*total);
-            uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS);
-            uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*NUM_OF_PRIMS);
-            utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS);
+        /* if ( env_var  && (strcmp(env_var, "p") == 0 )){ */
+        /*     ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total); */
+        /*     umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total); */
+        /*     usizes = (int *) malloc (sizeof(int)*total); */
+        /*     uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS); */
+        /*     uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*NUM_OF_PRIMS); */
+        /*     utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS); */
 
 
-            memset(ubytes, 0, sizeof(uint64_t )*total);
-            memset(umsgs, 0, sizeof(uint64_t )*total);
-            memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS);
-            memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS);
-            memset(usizes, 0, sizeof(int)*total);
-            for ( i = 0; i<total*NUM_OF_PRIMS; i++)
-                utime_info[i] = 0.0;
+        /*     memset(ubytes, 0, sizeof(uint64_t )*total); */
+        /*     memset(umsgs, 0, sizeof(uint64_t )*total); */
+        /*     memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS); */
+        /*     memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS); */
+        /*     memset(usizes, 0, sizeof(int)*total); */
+        /*     for ( i = 0; i<total*NUM_OF_PRIMS; i++) */
+        /*         utime_info[i] = 0.0; */
 
-            num_of_comms = 0;
-            j = 0;
-            for ( i=0; i<total; i++ ){
-                found = 0;
-                for ( k =0; k<total; k++ ){
-                    if ( strcmp(names[i], unames[k] ) == 0 ){
-                        found = 1;
-                    }
-                }
-                if ( !found ){
-                    strcpy(unames[j], names[i]);
-                    j++;
-                    num_of_comms++;
-                }
-            }
-            for ( i = 0; i<num_of_comms; i++){
-                for ( j=0; j<total; j++ ){
-                    if ( strcmp(unames[i], names[j]) == 0 ){
-                        ubytes[i]+= bytes[j];
-                        umsgs[i]+= msgs[j];
-                        usizes[i]=sizes[j];
-                        for ( k =0; k<NUM_OF_PRIMS; k++){
-                            if ( k >= Sendrecv ){
-                                uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k];
+        /*     num_of_comms = 0; */
+        /*     j = 0; */
+        /*     for ( i=0; i<total; i++ ){ */
+        /*         found = 0; */
+        /*         for ( k =0; k<total; k++ ){ */
+        /*             if ( strcmp(names[i], unames[k] ) == 0 ){ */
+        /*                 found = 1; */
+        /*             } */
+        /*         } */
+        /*         if ( !found ){ */
+        /*             strcpy(unames[j], names[i]); */
+        /*             j++; */
+        /*             num_of_comms++; */
+        /*         } */
+        /*     } */
+        /*     for ( i = 0; i<num_of_comms; i++){ */
+        /*         for ( j=0; j<total; j++ ){ */
+        /*             if ( strcmp(unames[i], names[j]) == 0 ){ */
+        /*                 ubytes[i]+= bytes[j]; */
+        /*                 umsgs[i]+= msgs[j]; */
+        /*                 usizes[i]=sizes[j]; */
+        /*                 for ( k =0; k<NUM_OF_PRIMS; k++){ */
+        /*                     if ( k >= Sendrecv ){ */
+        /*                         uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k]; */
 
-                                if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){
-                                    uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k];
-                                }
-                            }
-                            else{
-                                uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
-                                uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
-                            }
-                            if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
-                                utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
-                            }
-                        }
-                    }
-                }
-            }
+        /*                         if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){ */
+        /*                             uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k]; */
+        /*                         } */
+        /*                     } */
+        /*                     else{ */
+        /*                         uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k]; */
+        /*                         uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k]; */
+        /*                     } */
+        /*                     if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){ */
+        /*                         utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k]; */
+        /*                     } */
+        /*                 } */
+        /*             } */
+        /*         } */
+        /*     } */
 
-            fp = fopen("profiler_data.csv","w");
-            if (fp == NULL){
-                fprintf(stderr, "Failed to open output file: profiler_stats.txt\n");
-                mcpt_abort("Aborting\n");
-            }
-            /* PMPI_Get_library_version(version, &resultlen); */
-            fprintf(fp, "#'MPI LIBRARY' '%s'\n",version);
-            fprintf(fp, "#'Processes' '%d'\n",size);
-            fprintf(fp, "#'Run command' ");
-            fprintf(fp, "'%s",av[0]);
-            for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
-                fprintf(fp, " %s",av[i]);
-            }
-            fprintf(fp, "'\n");
+        /*     fp = fopen("profiler_data.csv","w"); */
+        /*     if (fp == NULL){ */
+        /*         fprintf(stderr, "Failed to open output file: profiler_stats.txt\n"); */
+        /*         mcpt_abort("Aborting\n"); */
+        /*     } */
+        /*     /\* PMPI_Get_library_version(version, &resultlen); *\/ */
+        /*     fprintf(fp, "#'MPI LIBRARY' '%s'\n",version); */
+        /*     fprintf(fp, "#'Processes' '%d'\n",size); */
+        /*     fprintf(fp, "#'Run command' "); */
+        /*     fprintf(fp, "'%s",av[0]); */
+        /*     for ( i = 1; i<ac && i<MAX_ARGS; i++ ){ */
+        /*         fprintf(fp, " %s",av[i]); */
+        /*     } */
+        /*     fprintf(fp, "'\n"); */
 
-            fprintf(fp, "#'mpisee Version' '%d.%d'\n",mpisee_VERSION_MAJOR,mpisee_VERSION_MINOR);
-            fprintf(fp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
-            if ( env_var ){
-                fprintf(fp, "#'mpisee env' '%s'\n", env_var);
-            }
-            else{
-                fprintf(fp, "#'mpisee env'\n");
-            }
-            /* time(&date); */
-            /* tmp = ctime(&date); */
-            fprintf(fp, "#'Profile date' ");
-            fprintf(fp, "'%c",*tmp);
-            tmp++;
-            while ( *tmp != '\n' ){
-                fprintf(fp, "%c",*tmp);
-                tmp++;
-            }
-            fprintf(fp, "'\n");
-            fprintf(fp, "#'Num of REAL comms' '%d'\n",num_of_comms);
-            fprintf(fp, "Comm,Size,Calls,");
-            /* free(date); */
-            for (k = 0; k<NUM_OF_PRIMS; k++){
-                fprintf(fp, "%s_Calls,",prim_names[k]);
-                fprintf(fp, "%s_Volume,",prim_names[k]);
-                if ( k == NUM_OF_PRIMS -1 )
-                    fprintf(fp, "%s_Time",prim_names[k]);
-                else
-                    fprintf(fp, "%s_Time,",prim_names[k]);
-            }
-            fprintf(fp,"\n");
-            for ( i =0; i<num_of_comms; i++ ){
-                /* if ( strcmp(unames[i], "NULL") !=0 ){ */
-                fprintf(fp,"%s(%d),%d,%" PRIu64 ",",unames[i],usizes[i],usizes[i],umsgs[i]);
-                for ( k =0; k<NUM_OF_PRIMS; k++ ){
-                    fprintf(fp, "%u,",uprims[i*NUM_OF_PRIMS+k]);
-                    if ( uprims[i*NUM_OF_PRIMS+k] > 0 )
-                        fprintf(fp, "%" PRIu64 ",",uprims_bytes[i*NUM_OF_PRIMS+k]);
-                    else
-                        fprintf(fp, "0.0,");
-                    if ( k == NUM_OF_PRIMS-1 )
-                        fprintf(fp, "%lf",utime_info[i*NUM_OF_PRIMS+k]);
-                    else
-                        fprintf(fp, "%lf,",utime_info[i*NUM_OF_PRIMS+k]);
-                }
-                fprintf(fp,"\n");
-                /* } */
-            }
-            printf("MCPT File: profiler_data.csv\n");
-            /* for ( i =0; i<total; i++ ){ */
-            /*     free(unames[i]); */
-            /* } */
-            free(unames);
-            free(ubytes);
-            free(umsgs);
-            free(uprims);
-            free(uprims_bytes);
-            free(utime_info);
-            fclose(fp);
-        }
-        for ( i =0; i<total; i++ ){
-                free(unames[i]);
+        /*     fprintf(fp, "#'mpisee Version' '%d.%d'\n",mpisee_VERSION_MAJOR,mpisee_VERSION_MINOR); */
+        /*     fprintf(fp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time); */
+        /*     if ( env_var ){ */
+        /*         fprintf(fp, "#'mpisee env' '%s'\n", env_var); */
+        /*     } */
+        /*     else{ */
+        /*         fprintf(fp, "#'mpisee env'\n"); */
+        /*     } */
+        /*     /\* time(&date); *\/ */
+        /*     /\* tmp = ctime(&date); *\/ */
+        /*     fprintf(fp, "#'Profile date' "); */
+        /*     fprintf(fp, "'%c",*tmp); */
+        /*     tmp++; */
+        /*     while ( *tmp != '\n' ){ */
+        /*         fprintf(fp, "%c",*tmp); */
+        /*         tmp++; */
+        /*     } */
+        /*     fprintf(fp, "'\n"); */
+        /*     fprintf(fp, "#'Num of REAL comms' '%d'\n",num_of_comms); */
+        /*     fprintf(fp, "Comm,Size,Calls,"); */
+        /*     /\* free(date); *\/ */
+        /*     for (k = 0; k<NUM_OF_PRIMS; k++){ */
+        /*         fprintf(fp, "%s_Calls,",prim_names[k]); */
+        /*         fprintf(fp, "%s_Volume,",prim_names[k]); */
+        /*         if ( k == NUM_OF_PRIMS -1 ) */
+        /*             fprintf(fp, "%s_Time",prim_names[k]); */
+        /*         else */
+        /*             fprintf(fp, "%s_Time,",prim_names[k]); */
+        /*     } */
+        /*     fprintf(fp,"\n"); */
+        /*     for ( i =0; i<num_of_comms; i++ ){ */
+        /*         /\* if ( strcmp(unames[i], "NULL") !=0 ){ *\/ */
+        /*         fprintf(fp,"%s(%d),%d,%" PRIu64 ",",unames[i],usizes[i],usizes[i],umsgs[i]); */
+        /*         for ( k =0; k<NUM_OF_PRIMS; k++ ){ */
+        /*             fprintf(fp, "%u,",uprims[i*NUM_OF_PRIMS+k]); */
+        /*             if ( uprims[i*NUM_OF_PRIMS+k] > 0 ) */
+        /*                 fprintf(fp, "%" PRIu64 ",",uprims_bytes[i*NUM_OF_PRIMS+k]); */
+        /*             else */
+        /*                 fprintf(fp, "0.0,"); */
+        /*             if ( k == NUM_OF_PRIMS-1 ) */
+        /*                 fprintf(fp, "%lf",utime_info[i*NUM_OF_PRIMS+k]); */
+        /*             else */
+        /*                 fprintf(fp, "%lf,",utime_info[i*NUM_OF_PRIMS+k]); */
+        /*         } */
+        /*         fprintf(fp,"\n"); */
+        /*         /\* } *\/ */
+        /*     } */
+        /*     printf("MCPT File: profiler_data.csv\n"); */
+        /*     /\* for ( i =0; i<total; i++ ){ *\/ */
+        /*     /\*     free(unames[i]); *\/ */
+        /*     /\* } *\/ */
+        /*     free(unames); */
+        /*     free(ubytes); */
+        /*     free(umsgs); */
+        /*     free(uprims); */
+        /*     free(uprims_bytes); */
+        /*     free(utime_info); */
+        /*     fclose(fp); */
+        /* } */
+
+        for ( i =0; i<num_of_comms*size; i++ ){
+            free(unames[i]);
         }
         free(unames);
-        for ( i =0; i<num_of_comms*size; i++ ){
-            free(names[i]);
+
+        for ( i =0; i<total; i++ ){
+            if ( names[i] != NULL )
+                free(names[i]);
         }
         free(names);
         free(sizes);
-        free(usizes);
+        /* free(usizes); */
         /* free(prims_bytes); */
         /* free(bytes); */
         /* free(msgs); */
