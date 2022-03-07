@@ -2213,15 +2213,15 @@ _Finalize()
         char *tmp;
         names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
         unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
-        bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
-        msgs = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
+        /* bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size); */
+        /* msgs = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size); */
         sizes = (int *) malloc (sizeof(int )*num_of_comms*size);
-        prims = (uint32_t*) malloc ( sizeof(uint32_t)*num_of_comms*size*
-                                     NUM_OF_PRIMS );
-        prims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size
-                                           *NUM_OF_PRIMS);
-        time_info = (double*) malloc ( sizeof(double)*num_of_comms*size*
-                                       NUM_OF_PRIMS );
+        /* prims = (uint32_t*) malloc ( sizeof(uint32_t)*num_of_comms*size* */
+        /*                              NUM_OF_PRIMS ); */
+        /* prims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size */
+        /*                                    *NUM_OF_PRIMS); */
+        /* time_info = (double*) malloc ( sizeof(double)*num_of_comms*size* */
+        /*                                NUM_OF_PRIMS ); */
 
         j = 0;
         int r =-1;
@@ -2307,9 +2307,9 @@ _Finalize()
                 unames[j] = strdup("NULL");
                 /* Use memcpy instead of loop */
                 names[j]=strdup(recv_buffer[i].name);
-                bytes[j] = recv_buffer[i].bytes;
-                msgs[j] = recv_buffer[i].msgs;
-                sizes[j] = recv_buffer[i].size;
+                /* bytes[j] = recv_buffer[i].bytes; */
+                /* msgs[j] = recv_buffer[i].msgs; */
+                /* sizes[j] = recv_buffer[i].size; */
                 j++;
             }
         }
@@ -2392,9 +2392,9 @@ _Finalize()
         fprintf(fpp,"#@ call_l ");
         for (k = 0; k<NUM_OF_PRIMS; k++){
             if ( k == NUM_OF_PRIMS -1 )
-                fprintf(fpp, "%s,",prim_names[k]);
-            else
                 fprintf(fpp, "%s\n",prim_names[k]);
+            else
+                fprintf(fpp, "%s,",prim_names[k]);
         }
 
 
@@ -2433,13 +2433,18 @@ _Finalize()
                 /* sizes[j] = recv_buffer[i].size; */
                 /* fprintf(fpp, "%d,%s,%d,%llu,%llu,",r,names[j],sizes[j],bytes[j],msgs[j]); */
                 /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
+                for ( j = 0; j<num_of_comms; j++ ){
+                    if ( strcmp(recv_buffer[i].name,unames[j]) == 0 )
+                        break;
+                }
+
                 for ( k =0; k<NUM_OF_PRIMS; k++){
-                    prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
-                    prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k];
-                    time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k];
-                    fprintf(fpp, "%d,%d,%d,0,%llu\n",r,k,j,prims_bytes[j*NUM_OF_PRIMS+k]);
-                    fprintf(fpp, "%d,%d,%d,1,%lf\n",r,k,j,time_info[j*NUM_OF_PRIMS+k]);
-                    fprintf(fpp, "%d,%d,%d,2,%u\n",r,k,j,prims[j*NUM_OF_PRIMS+k]);
+                    /* prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k]; */
+                    /* prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k]; */
+                    /* time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k]; */
+                    fprintf(fpp, "%d,%d,%d,0,%llu\n",r,k,j,(uint64_t)recv_buffer[i].prim_bytes[k]);
+                    fprintf(fpp, "%d,%d,%d,1,%lf\n",r,k,j,(double)recv_buffer[i].time_info[k]);
+                    fprintf(fpp, "%d,%d,%d,2,%u\n",r,k,j,(uint32_t)recv_buffer[i].prims[k]);
 
                     /* fprintf(fpp, "%u,",prims[j*NUM_OF_PRIMS+k]); */
                     /* if ( prims[j*NUM_OF_PRIMS+k] > 0 ) */
@@ -2452,7 +2457,7 @@ _Finalize()
                     /*     fprintf(fpp, "%lf,",time_info[j*NUM_OF_PRIMS+k]); */
                 }
                 /* fprintf(fpp,"\n"); */
-                j++;
+                /* j++; */
             }
         }
         fclose(fpp);
@@ -2581,9 +2586,9 @@ _Finalize()
                 /* } */
             }
             printf("MCPT File: profiler_data.csv\n");
-            for ( i =0; i<total; i++ ){
-                free(unames[i]);
-            }
+            /* for ( i =0; i<total; i++ ){ */
+            /*     free(unames[i]); */
+            /* } */
             free(unames);
             free(ubytes);
             free(umsgs);
@@ -2592,16 +2597,21 @@ _Finalize()
             free(utime_info);
             fclose(fp);
         }
-
+        for ( i =0; i<total; i++ ){
+                free(unames[i]);
+        }
+        free(unames);
         for ( i =0; i<num_of_comms*size; i++ ){
             free(names[i]);
         }
         free(names);
-        free(prims_bytes);
-        free(bytes);
-        free(msgs);
-        free(prims);
-        free(time_info);
+        free(sizes);
+        free(usizes);
+        /* free(prims_bytes); */
+        /* free(bytes); */
+        /* free(msgs); */
+        /* free(prims); */
+        /* free(time_info); */
     }
 
     PMPI_Type_free(&profiler_data);
