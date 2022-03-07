@@ -2334,6 +2334,7 @@ _Finalize()
                 num_of_comms++;
             }
         }
+        total = j;
         for ( i = 0; i<num_of_comms; i++){
             for ( j=0; j<total; j++ ){
                 if ( strcmp(unames[i], names[j]) == 0 ){
