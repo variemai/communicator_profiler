@@ -2604,11 +2604,11 @@ _Finalize()
         }
         free(unames);
 
-        for ( i =0; i<total; i++ ){
-            if ( names[i] != NULL )
-                free(names[i]);
-        }
-        free(names);
+        /* for ( i =0; i<total; i++ ){ */
+        /*     if ( names[i] != NULL ) */
+        /*         free(names[i]); */
+        /* } */
+        /* free(names); */
         free(sizes);
         /* free(usizes); */
         /* free(prims_bytes); */
