@@ -2599,17 +2599,17 @@ _Finalize()
         /*     fclose(fp); */
         /* } */
 
-        for ( i =0; i<num_of_comms*size; i++ ){
-            free(unames[i]);
-        }
-        free(unames);
+        /* for ( i =0; i<num_of_comms*size; i++ ){ */
+        /*     free(unames[i]); */
+        /* } */
+        /* free(unames); */
 
         /* for ( i =0; i<total; i++ ){ */
         /*     if ( names[i] != NULL ) */
         /*         free(names[i]); */
         /* } */
         /* free(names); */
-        free(sizes);
+        /* free(sizes); */
         /* free(usizes); */
         /* free(prims_bytes); */
         /* free(bytes); */
