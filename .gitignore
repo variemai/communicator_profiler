@@ -70,3 +70,5 @@ CMakeCache.txt
 .cmake/*
 .DS_Store
 Makefile
+datastructlib/Makefile
+test/Makefile
