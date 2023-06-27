@@ -27,6 +27,11 @@ REVERSE = "\033[;7m"
 
 # Function declarations
 
+def print_decoration(decoration):
+    if sys.stdout.isatty():
+        # the output is not redirected, we can use a fancy style:
+        sys.stdout.write(decoration)
+
 
 def compact_proc_list(proc_list):
     proc_list.sort()
@@ -175,16 +180,16 @@ def print_cct(table, comm_to_procs, comm_limit):
         comm_calls = list(filter(lambda x: x["comm"] == comm, table))
         comm_calls.sort(key=lambda x: x["call_mean"], reverse=True)
 
-        sys.stdout.write(BOLD)
+        print_decoration(BOLD)
         print("COMM".ljust(20) + "SIZE".ljust(10) + "PROCS")
-        sys.stdout.write(RESET)
+        print_decoration(RESET)
         print(
             f"{comm}".ljust(20)
             + f"{len(comm_to_procs[comm])}".ljust(10)
             + f"{compact_proc_list(comm_to_procs[comm])}",
             end="\n\n",
         )
-        sys.stdout.write(RESET)
+        print_decoration(RESET)
         print(
             "\t"
             + "Call".ljust(20)

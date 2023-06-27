@@ -54,7 +54,7 @@ void mcpt_abort (char *fmt, ...){
   PMPI_Abort(MPI_COMM_WORLD, -1);
 }
 
-char *get_appname (){
+char *get_appname (void){
   int pid, exelen, insize = 256;
   char *inbuf = NULL, file[256];
 
@@ -104,19 +104,18 @@ getProcCmdLine (int *ac, char **av)
   if (infile != NULL){
     while (!feof (infile)){
       inbuf = malloc (MAX_ARG_STRING_SIZE);
+      memset(inbuf, 0, MAX_ARG_STRING_SIZE);
       if (fread (inbuf, 1, MAX_ARG_STRING_SIZE, infile) > 0){
         arg_ptr = inbuf;
-        while (*arg_ptr != '\0'){
+        while (*arg_ptr != 0){
           av[i] = strdup (arg_ptr);
           arg_ptr += strlen (av[i]) + 1;
           i++;
         }
       }
+      free(inbuf);
     }
     *ac = i;
-    if(inbuf != NULL ){
-      free (inbuf);
-    }
     fclose (infile);
   }
   else{
