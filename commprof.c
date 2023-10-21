@@ -8,12 +8,13 @@
 #include <ctype.h>
 #include <time.h>
 #include <unistd.h>
+#include <unordered_map>
 
 #ifndef MPICH_API_PUBLIC
 #include "symbols.h"
 #endif
 
-#include "table.h"
+//#include "table.h"
 #include <inttypes.h>
 
 #define MAX_ARGS 1024
@@ -26,7 +27,10 @@ int local_cid= 0;
 int my_coms = 1;
 int ac;
 char *av[MAX_ARGS];
-Table_T request_tab;
+//Table_T request_tab;
+std::unordered_map<MPI_Request, MPI_Comm> requests_map;
+
+
 
 /* Tool date */
 int mpisee_major_version = 0;
@@ -197,7 +201,7 @@ _MPI_Init(int *argc, char ***argv){
     memset(local_comms, 0, sizeof(prof_attrs*)*nb_local_comms);
 
     /* world_sz = size*size; */
-    request_tab = Table_new(1024, NULL, NULL);
+    //request_tab = Table_new(1024, NULL, NULL);
     /* comm_tab = Table_new(256, NULL, NULL); */
 
     /* for ( i =0 ; i<size*4; i++ ){ */
@@ -209,6 +213,9 @@ _MPI_Init(int *argc, char ***argv){
         appname = get_appname();
         printf("MPI_Init: MPI Communicator Profiling Tool\nProfiling application\
  %s\n",appname);
+ #ifdef MPICH_API_PUBLIC
+        printf("MPICH_API_PUBLIC enabled\n");
+ #endif
         fflush(stdout);
     }
     /* Debuggin file please remove when running */
@@ -259,7 +266,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     /* comm_tab = Table_new(256, NULL, NULL); */
 
     /* world_sz = size*size; */
-    request_tab = Table_new(1024, NULL, NULL);
+    //request_tab = Table_new(1024, NULL, NULL);
 
     /* for ( i =0 ; i<size*4; i++ ){ */
     /*     communicators[i] = MPI_COMM_NULL; */
@@ -337,7 +344,18 @@ F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr)
     return;
 }
 
+/* void
+mpi_init_ (int *ierr){
+  int ret = 0;
+  char **tmp;
+  getProcCmdLine (&ac, av);
+  tmp = av;
+  ret = _MPI_Init (&ac, (char ***) &tmp);
+  *ierr = ret;
+  return;
+} */
 
+extern "C" {
 void
 F77_MPI_INIT (int *ierr)
 {
@@ -348,6 +366,7 @@ F77_MPI_INIT (int *ierr)
   ret = _MPI_Init (&ac, (char ***) &tmp);
   *ierr = ret;
   return;
+}
 }
 
 int
@@ -529,6 +548,7 @@ MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
     prof_attrs *communicator;
     char *buf;
     ret = PMPI_Comm_idup(comm, newcomm, request);
+    /*
 #ifndef MPICH_API_PUBLIC
     Table_put(request_tab, request, comm);
 #else
@@ -536,6 +556,7 @@ MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
     *com = comm;
     Table_put(request_tab, request, com);
 #endif
+*/
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
@@ -753,7 +774,7 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
         t_elapsed = MPI_Wtime() - t_elapsed;
 
         profile_this(comm, count, datatype, Isend, t_elapsed, 0);
-
+/*
 #ifndef MPICH_API_PUBLIC
         Table_put(request_tab, request, comm);
 #else
@@ -761,6 +782,7 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
         *com = comm;
         Table_put(request_tab, request, com);
 #endif
+*/
     }
     else{
         ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
@@ -794,7 +816,7 @@ F77_MPI_ISEND(const void  *buf, int  * count, MPI_Fint  * datatype,
 }
 
 
-
+extern "C" {
 int
 MPI_Send(const void *buf, int count, MPI_Datatype datatype,
          int dest,int tag, MPI_Comm comm)
@@ -812,7 +834,9 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
     }
     return ret;
 }
+}
 
+extern "C" {
 void
 F77_MPI_SEND(const void  *buf, int  * count, MPI_Fint  * datatype,
              int  * dest, int  * tag, MPI_Fint  * comm , MPI_Fint *ierr)
@@ -826,7 +850,9 @@ F77_MPI_SEND(const void  *buf, int  * count, MPI_Fint  * datatype,
     *ierr = ret;
     return;
 }
+}
 
+extern "C"{
 int
 MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
           MPI_Comm comm, MPI_Request *request)
@@ -840,7 +866,8 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
         t_elapsed = MPI_Wtime() - t_elapsed;
         profile_this(comm, count,datatype,Irecv,t_elapsed,0);
 #ifndef MPICH_API_PUBLIC
-        Table_put(request_tab, request, comm);
+        //Table_put(request_tab, request, comm);
+        requests_map[*request] = comm;
 #else
         MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
         *com = comm;
@@ -852,7 +879,9 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     }
     return ret;
 }
+}
 
+extern "C" {
 void
 F77_MPI_IRECV(void  *buf, int  * count, MPI_Fint  * datatype, int  * source,
               int  * tag, MPI_Fint  * comm, MPI_Fint  *request , MPI_Fint *ierr)
@@ -870,6 +899,7 @@ F77_MPI_IRECV(void  *buf, int  * count, MPI_Fint  * datatype, int  * source,
     if ( ret == MPI_SUCCESS )
         *request = MPI_Request_c2f(c_request);
     return;
+}
 }
 
 int
@@ -1015,6 +1045,7 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
         else {
             sum = count;
         }
+        /*
 #ifndef MPICH_API_PUBLIC
         Table_put(request_tab, request, comm);
 #else
@@ -1022,6 +1053,7 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
         *com = comm;
         Table_put(request_tab, request, com);
 #endif
+*/
         profile_this(comm,sum,datatype,Ibcast,t_elapsed,root);
     }
     else{
@@ -1096,6 +1128,7 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
         t_elapsed =  MPI_Wtime();
         ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        /*
 #ifndef MPICH_API_PUBLIC
         Table_put(request_tab, request, comm);
 #else
@@ -1103,6 +1136,7 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
         *com = comm;
         Table_put(request_tab, request, com);
 #endif
+*/
 
         profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
     }
@@ -1698,21 +1732,23 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     /* int i; */
 
 #ifndef MPICH_API_PUBLIC
-    MPI_Comm comm = NULL;
+    MPI_Comm comm ;
 #else
     MPI_Comm *comm = NULL;
 #endif
     if ( prof_enabled == 1 ){
+        //comm = Table_get(request_tab, request);
+        comm = requests_map[*request];
         t_elapsed = MPI_Wtime();
         ret = PMPI_Wait(request, status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        comm = Table_get(request_tab, request);
-        if ( comm == NULL ){
-            /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
+        //PMPI_Comm_rank(comm,&rank);
+        if ( comm == NULL  ){
+            fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); 
             return ret;
         }
 #ifndef MPICH_API_PUBLIC
-        profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+       profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
 #else
         profile_this(*comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
 #endif
@@ -1723,7 +1759,7 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     return ret;
 }
 
-
+extern "C" {
 void
 F77_MPI_WAIT(MPI_Fint  *request, MPI_Status  *status , MPI_Fint *ierr)
 {
@@ -1732,6 +1768,7 @@ F77_MPI_WAIT(MPI_Fint  *request, MPI_Status  *status , MPI_Fint *ierr)
    c_request = MPI_Request_f2c(*request);
    ret = MPI_Wait(&c_request, status);
    *ierr = ret;
+}
 }
 
 
@@ -1759,7 +1796,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
 #ifndef MPICH_API_PUBLIC
         /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
         for ( i =0; i<count; i++ ){
-            comm = Table_get(request_tab, &array_of_requests[i]);
+            //comm = Table_get(request_tab, &array_of_requests[i]);
             if ( comm != NULL ){
                 profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
                 return ret;
@@ -1829,7 +1866,7 @@ MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *s
 #ifndef MPICH_API_PUBLIC
         /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
         for ( i =0; i<count; i++ ){
-            comm = Table_get(request_tab, &array_of_requests[i]);
+            //comm = Table_get(request_tab, &array_of_requests[i]);
             if ( comm != NULL ){
                 profile_this(comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
                 break;
@@ -1858,8 +1895,8 @@ F77_MPI_WAITANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
 {
     int ret,i;
     MPI_Request *c_array_of_requests;
-    c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
-    assert(c_array_of_requests);
+    //c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
+    //assert(c_array_of_requests);
     for (i = 0; i < *count; i++) {
         c_array_of_requests[i] = MPI_Request_f2c(array_of_requests[i]);
     }
@@ -1893,7 +1930,7 @@ MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
         t_elapsed = MPI_Wtime();
         ret = PMPI_Test(request,flag,status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        comm = Table_get(request_tab, request);
+        //comm = Table_get(request_tab, request);
         if ( comm == NULL ){
             /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
             return ret;
@@ -1949,7 +1986,7 @@ MPI_Testany(int count, MPI_Request *array_of_requests, int *index, int *flag, MP
 #ifndef MPICH_API_PUBLIC
         /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
         for ( i =0; i<count; i++ ){
-            comm = Table_get(request_tab, &array_of_requests[i]);
+            //comm = Table_get(request_tab, &array_of_requests[i]);
             if ( comm != NULL ){
                 profile_this(comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
                 break;
@@ -1981,8 +2018,8 @@ F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
 
     int ret,i;
     MPI_Request *c_array_of_requests;
-    c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
-    assert(c_array_of_requests != NULL);
+    //c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
+    //assert(c_array_of_requests != NULL);
     for (i = 0; i < *count; i++) {
         c_array_of_requests[i] = MPI_Request_f2c(array_of_requests[i]);
     }
@@ -2491,7 +2528,7 @@ _Finalize(void)
     }
 
     PMPI_Type_free(&profiler_data);
-    Table_free(&request_tab);
+    //Table_free(&request_tab);
 
     return PMPI_Finalize();
 }
@@ -2507,6 +2544,7 @@ MPI_Finalize (void)
   return rc;
 }
 
+extern "C" {
 void
 F77_MPI_FINALIZE (int *ierr)
 {
@@ -2516,6 +2554,7 @@ F77_MPI_FINALIZE (int *ierr)
   *ierr = rc;
 
   return;
+}
 }
 
 /* void apply_print(const void *key,void **value,void *cl){ */

@@ -16,7 +16,7 @@ DSTRUCTF=datastructlib
 LIBPATH=$(abspath $(DSTRUCTF))
 
 #CC=mpicc
-CFLAGS=-O3 -flto -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
+CFLAGS=-O2 -g -flto -Wall -march=native -pedantic -fPIC -I$(LIBPATH)
 #CFLAGS= -g -Wall -march=native -std=gnu99 -pedantic -fPIC -I$(LIBPATH)
 SHARED=-shared
 
@@ -26,12 +26,13 @@ SHARED=-shared
 all: default $(DSTRUCTF)
 	@echo MCPT compiled
 
-default: libciface
+default:
 #	@echo PATH IS $(LIBPATH)
-	$(CC) $(CFLAGS) $(SHARED) $(SRCS) -L$(LIBPATH) -lciface -o $(LIBF)/libmcpt.so
+#	$(CC) $(CFLAGS) $(SHARED) $(SRCS) -L$(LIBPATH) -lciface -o $(LIBF)/libmcpt.so
+	$(CC) $(CFLAGS) $(SHARED) $(SRCS) -o $(LIBF)/libmcpt.so
 
-libciface: $(DSTRUCTF)
-	$(MAKE) -C $<
+#libciface: $(DSTRUCTF)
+#	$(MAKE) -C $<
 
 tests: test default
 	$(MAKE) -C $<

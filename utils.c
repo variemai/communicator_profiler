@@ -60,7 +60,7 @@ char *get_appname (void){
 
   pid = getpid ();
   snprintf (file, 256, "/proc/%d/exe", pid);
-  inbuf = malloc (insize);
+  inbuf = (char*) malloc (insize);
   if (inbuf == NULL){
       mcpt_abort ("unable to allocate space for full executable path.\n");
   }
@@ -70,7 +70,7 @@ char *get_appname (void){
       if (errno != ENOENT){
           while (exelen == -1 && errno == ENAMETOOLONG){
               insize += 256;
-              inbuf = realloc (inbuf, insize);
+              inbuf =(char*) realloc (inbuf, insize);
               exelen = readlink (file, inbuf, insize);
           }
           inbuf[exelen] = '\0';
@@ -103,7 +103,7 @@ getProcCmdLine (int *ac, char **av)
 
   if (infile != NULL){
     while (!feof (infile)){
-      inbuf = malloc (MAX_ARG_STRING_SIZE);
+      inbuf = (char*) malloc (MAX_ARG_STRING_SIZE);
       memset(inbuf, 0, MAX_ARG_STRING_SIZE);
       if (fread (inbuf, 1, MAX_ARG_STRING_SIZE, infile) > 0){
         arg_ptr = inbuf;
