@@ -73,3 +73,5 @@ datastructlib/CMakeFiles/
 datastructlib/cmake_install.cmake
 test/*
 build/
+.idea/
+.vscode/
