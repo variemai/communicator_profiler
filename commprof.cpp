@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <cfloat>
+#include <cstddef>
 #include <cstdio>
 #include <mpi.h>
 #include <stdint.h>
@@ -10,6 +11,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <unordered_map>
+#include <vector>
 
 #ifdef OMPI_MAJOR_VERSION
 #include "symbols.h"
@@ -2187,8 +2189,8 @@ _Finalize(void)
     char *proc_names = NULL;
     char *ptr;
     double *alltimes = NULL;
-    double max_mpi_time = 0.0, min_mpi_time = DBL_MAX, mpi_time = 0.0;
-    int max_mpi_time_r = -1, min_mpi_time_r = -1;
+    std::vector<double> mpi_times;
+    double mpi_time = 0.0;
     total_time = MPI_Wtime()-total_time;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -2379,14 +2381,15 @@ _Finalize(void)
         for ( i =0; i<size*num_of_comms; i++ ){
             if ( i % num_of_comms == 0 ){
                 if ( r > -1 ){ //r is initialized to -1
-                    if(mpi_time > max_mpi_time){
-                        max_mpi_time = mpi_time;
-                        max_mpi_time_r = r;
-                    }
-                    if ( mpi_time < min_mpi_time ){
-                        min_mpi_time = mpi_time;
-                        min_mpi_time_r = r;
-                    }
+                    mpi_times.push_back(mpi_time);
+                    // if(mpi_time > max_mpi_time){
+                    //     max_mpi_time = mpi_time;
+                    //     max_mpi_time_r = r;
+                    // }
+                    // if ( mpi_time < min_mpi_time ){
+                    //     min_mpi_time = mpi_time;
+                    //     min_mpi_time_r = r;
+                    // }
                 }
                 r++;
                 mpi_time = 0.0;
@@ -2399,7 +2402,7 @@ _Finalize(void)
                 msgs[j] = recv_buffer[i].msgs;
                 sizes[j] = recv_buffer[i].size;
                 if( p )
-                    fprintf(fpp, "%d,%s,%d,%llu,%llu,",r,names[j],sizes[j],bytes[j],msgs[j]);
+                    fprintf(fpp, "%d,%s,%d,%lu,%lu,",r,names[j],sizes[j],bytes[j],msgs[j]);
                 /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
                 for ( k =0; k<NUM_OF_PRIMS; k++){
                     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
@@ -2424,8 +2427,17 @@ _Finalize(void)
             }
         }
         if( p ){
-            fprintf(fpp, "#MAX MPI Time (Rank Time), %d %lf\n",max_mpi_time_r,max_mpi_time);
-            fprintf(fpp, "#MIN MPI Time (Rank Time), %d %lf\n",min_mpi_time_r,min_mpi_time);
+            fprintf(fpp, "'# MPI Time (Rank Time)', ");
+            for (size_t i=0; i < mpi_times.size(); i++) {
+                fprintf(fpp, " %lu %lf",i,mpi_times[i]);
+                if ( i == mpi_times.size()-1 ){
+                    fprintf(fpp, "\n");
+                }
+                else{
+                    fprintf(fpp, ",");
+                }
+            }
+            // fprintf(fpp, "#'MPI Time (Rank Time)', %d %lf\n",min_mpi_time_r,min_mpi_time);
             fclose(fpp);
             printf("Per process data file: per_process_data.csv\n");
         }
