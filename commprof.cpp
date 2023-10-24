@@ -2376,21 +2376,12 @@ _Finalize(void)
                 fprintf(fpp, "%s_Time,",prim_names[k]);
         }
         fprintf(fpp,"\n");
-        /* } */
 
         for ( i =0; i<size*num_of_comms; i++ ){
             if ( i % num_of_comms == 0  ){
                 if ( r > -1 ){ //r is initialized to -1
                     mpi_times.push_back(mpi_time);
                     mpi_time = 0.0;
-                    // if(mpi_time > max_mpi_time){
-                    //     max_mpi_time = mpi_time;
-                    //     max_mpi_time_r = r;
-                    // }
-                    // if ( mpi_time < min_mpi_time ){
-                    //     min_mpi_time = mpi_time;
-                    //     min_mpi_time_r = r;
-                    // }
                 }
                 r++;
             }
@@ -2428,17 +2419,16 @@ _Finalize(void)
         }
         mpi_times.push_back(mpi_time);
         if( p ){
-            fprintf(fpp, "# 'MPI Time (Rank Time)', ");
+            fprintf(fpp, "#'MPI Time (Rank Time)',");
             for (size_t it=0; it < mpi_times.size(); it++) {
-                fprintf(fpp, " %lu %lf",it,mpi_times[it]);
-                if ( i == mpi_times.size()-1 ){
+                fprintf(fpp, "%lu %lf",it,mpi_times[it]);
+                if ( it == mpi_times.size()-1 ){
                     fprintf(fpp, "\n");
                 }
                 else{
                     fprintf(fpp, ",");
                 }
             }
-            // fprintf(fpp, "#'MPI Time (Rank Time)', %d %lf\n",min_mpi_time_r,min_mpi_time);
             fclose(fpp);
             printf("Per process data file: per_process_data.csv\n");
         }
