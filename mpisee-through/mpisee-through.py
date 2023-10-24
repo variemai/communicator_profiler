@@ -52,9 +52,24 @@ def print_elapsed_time(elapsed_time):
     print_decoration(BOLD)
     print(f"Overall Timing Statistics for {len(values)} MPI Processes")
     print_decoration(RESET)
-    print(f"Maximum Total Time[s]: {max_value} (MPI Rank in MPI_COMM_WORLD: {max_rank})")
-    print(f"Minimum Total Time[s]: {min_value} (MPI Rank in MPI_COMM_WORLD: {min_rank})")
+    print(f"Maximum Total Time: {max_value}[s] (MPI Rank in MPI_COMM_WORLD: {max_rank})")
+    print(f"Minimum Total Time: {min_value}[s] (MPI Rank in MPI_COMM_WORLD: {min_rank})")
+
+def print_mpi_times(mpi_times):
+    max_info = mpi_times[0][1].split()
+    max_rank = int(max_info[0])
+    max_time = float(max_info[1])
+
+    # Extracting the information from the list for minimum MPI time
+    min_info = mpi_times[1][1].split()
+    min_rank = int(min_info[0])
+    min_time = float(min_info[1])
+
+    # Formatting the output for both maximum and minimum
+    print(f"Maximum MPI Time: {max_time} (MPI Rank in MPI_COMM_WORLD: {max_rank})")
+    print(f"Minimum MPI Time: {min_time} (MPI Rank in MPI_COMM_WORLD: {min_rank})")
     print("\n")
+
 
 
 def compact_proc_list(proc_list):
@@ -110,20 +125,23 @@ def prepare_data(file_path):
             index_to_colname[i]: i for i in range(0, len(index_to_colname))
         }
         raw_data = []
+        mpi_data = []
         for row in csv_file:
             row_parsed = []
-            for j in range(0, len(row)):
-                row_parsed.append(
-                    float(row[j]) if colname_to_index["Comm"] != j else row[j]
-                )
-
-            raw_data.append(row_parsed)
+            if '#' in row[0]:
+                mpi_data.append(row)
+            else:
+                for j in range(0, len(row)):
+                    row_parsed.append(
+                        float(row[j]) if colname_to_index["Comm"] != j else row[j]
+                    )
+                raw_data.append(row_parsed)
 
     data_groupBy_comm, comm_to_procs = groupBy_comm(raw_data, colname_to_index)
 
     table = create_table(data_groupBy_comm, colname_to_index, index_to_colname)
 
-    return table, mapping, comm_to_procs, time_elapsed
+    return table, mapping, comm_to_procs, time_elapsed, mpi_data
 
 
 def groupBy_comm(data, colname_to_index):
@@ -320,11 +338,12 @@ def main():
     )
     args = my_parser.parse_args()
 
-    table, mapping, comm_to_procs,elapsed_time = prepare_data(args.file_path)
+    table, mapping, comm_to_procs,elapsed_time,mpi_times = prepare_data(args.file_path)
 
     print_header()
     print_mapping(mapping)
     print_elapsed_time(elapsed_time)
+    print_mpi_times(mpi_times)
 
     if args.cct:
         print_cct(table, comm_to_procs, args.cct_limit)

@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <cfloat>
 #include <cstdio>
 #include <mpi.h>
 #include <stdint.h>
@@ -2186,7 +2187,7 @@ _Finalize(void)
     char *proc_names = NULL;
     char *ptr;
     double *alltimes = NULL;
-    double max_mpi_time = 0.0, min_mpi_time = 0.0, mpi_time = 0.0;
+    double max_mpi_time = 0.0, min_mpi_time = DBL_MAX, mpi_time = 0.0;
     int max_mpi_time_r = -1, min_mpi_time_r = -1;
     total_time = MPI_Wtime()-total_time;
 
@@ -2377,13 +2378,15 @@ _Finalize(void)
 
         for ( i =0; i<size*num_of_comms; i++ ){
             if ( i % num_of_comms == 0 ){
-                if(mpi_time > max_mpi_time){
-                    max_mpi_time = mpi_time;
-                    max_mpi_time_r = r;
-                }
-                if ( mpi_time < min_mpi_time ){
-                    min_mpi_time = mpi_time;
-                    min_mpi_time_r = r;
+                if ( r > -1 ){ //r is initialized to -1
+                    if(mpi_time > max_mpi_time){
+                        max_mpi_time = mpi_time;
+                        max_mpi_time_r = r;
+                    }
+                    if ( mpi_time < min_mpi_time ){
+                        min_mpi_time = mpi_time;
+                        min_mpi_time_r = r;
+                    }
                 }
                 r++;
                 mpi_time = 0.0;
