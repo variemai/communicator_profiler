@@ -2379,9 +2379,10 @@ _Finalize(void)
         /* } */
 
         for ( i =0; i<size*num_of_comms; i++ ){
-            if ( i % num_of_comms == 0  || i ==(size*num_of_comms)-1 ){
+            if ( i % num_of_comms == 0  ){
                 if ( r > -1 ){ //r is initialized to -1
                     mpi_times.push_back(mpi_time);
+                    mpi_time = 0.0;
                     // if(mpi_time > max_mpi_time){
                     //     max_mpi_time = mpi_time;
                     //     max_mpi_time_r = r;
@@ -2392,7 +2393,6 @@ _Finalize(void)
                     // }
                 }
                 r++;
-                mpi_time = 0.0;
             }
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
                 unames[j] = strdup("NULL");
@@ -2426,10 +2426,11 @@ _Finalize(void)
                 j++;
             }
         }
+        mpi_times.push_back(mpi_time);
         if( p ){
             fprintf(fpp, "# 'MPI Time (Rank Time)', ");
-            for (size_t i=0; i < mpi_times.size(); i++) {
-                fprintf(fpp, " %lu %lf",i,mpi_times[i]);
+            for (size_t it=0; it < mpi_times.size(); it++) {
+                fprintf(fpp, " %lu %lf",it,mpi_times[it]);
                 if ( i == mpi_times.size()-1 ){
                     fprintf(fpp, "\n");
                 }
