@@ -1,4 +1,5 @@
 #include "utils.h"
+#include <cstdio>
 #include <mpi.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -2185,6 +2186,8 @@ _Finalize(void)
     char *proc_names = NULL;
     char *ptr;
     double *alltimes = NULL;
+    double max_mpi_time = 0.0, min_mpi_time = 0.0, mpi_time = 0.0;
+    int max_mpi_time_r = -1, min_mpi_time_r = -1;
     total_time = MPI_Wtime()-total_time;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -2374,7 +2377,16 @@ _Finalize(void)
 
         for ( i =0; i<size*num_of_comms; i++ ){
             if ( i % num_of_comms == 0 ){
+                if(mpi_time > max_mpi_time){
+                    max_mpi_time = mpi_time;
+                    max_mpi_time_r = r;
+                }
+                if ( mpi_time < min_mpi_time ){
+                    min_mpi_time = mpi_time;
+                    min_mpi_time_r = r;
+                }
                 r++;
+                mpi_time = 0.0;
             }
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
                 unames[j] = strdup("NULL");
@@ -2390,6 +2402,7 @@ _Finalize(void)
                     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
                     prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k];
                     time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k];
+                    mpi_time+=time_info[j*NUM_OF_PRIMS+k];
                     if ( p ){
                         fprintf(fpp, "%u,",prims[j*NUM_OF_PRIMS+k]);
                         if ( prims[j*NUM_OF_PRIMS+k] > 0 )
@@ -2408,6 +2421,8 @@ _Finalize(void)
             }
         }
         if( p ){
+            fprintf(fpp, "#MAX MPI Time (Rank Time), %d %lf\n",max_mpi_time_r,max_mpi_time);
+            fprintf(fpp, "#MIN MPI Time (Rank Time), %d %lf\n",min_mpi_time_r,min_mpi_time);
             fclose(fpp);
             printf("Per process data file: per_process_data.csv\n");
         }
