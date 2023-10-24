@@ -32,28 +32,63 @@ def print_decoration(decoration):
         # the output is not redirected, we can use a fancy style:
         sys.stdout.write(decoration)
 
-def print_elapsed_time(elapsed_time):
+
+def ratio_to_percentage(ratio):
+    return f"{ratio * 100:.2f}%"
+
+def get_values(inlist):
     ranks = []
     values = []
-    for entry in elapsed_time[1:]:  # skipping the first informational string
+
+    # Flatten the list if its first element is a list
+    if isinstance(inlist[0], list):
+        inlist = inlist[0] + inlist[1:]
+
+    for entry in inlist[1:]:  # skipping the first informational string
         rank, value = entry.split()
         ranks.append(int(rank))
         values.append(float(value))
 
     max_value = max(values)
     min_value = min(values)
-    #mean_value = sum(values) / len(values)
 
     max_rank = ranks[values.index(max_value)]
     min_rank = ranks[values.index(min_value)]
 
+    return max_rank,max_value,min_rank,min_value
 
-    #print(f"Mean Time between {len(values)}: {mean_value}")
+
+def print_times(elapsed_time, mpi_times):
+    max_rank, max_value, min_rank, min_value = get_values(elapsed_time)
+    max_mpi_rank, max_mpi_time, min_mpi_rank, min_mpi_time = get_values(mpi_times)
+
+    ranks = []
+    ratios = []
+
+    mpi_times = mpi_times[0]+mpi_times[1:]
+    for i in range(1,len(elapsed_time)):  # skipping the first informational string
+        time = elapsed_time[i].split()[1]
+        mpi_time = mpi_times[i].split()[1]
+        ranks.append(int(i))
+        if time == 0:
+            return "Cannot compute ratio: Division by zero"
+        ratios.append(float(mpi_time)/float(time))
+    
+    max_ratio = max(ratios)
+    min_ratio = min(ratios)
+    max_ratio_rank = ranks[ratios.index(max_ratio)]
+    min_ratio_rank = ranks[ratios.index(min_ratio)]
+
     print_decoration(BOLD)
-    print(f"Overall Timing Statistics for {len(values)} MPI Processes")
+    print(f"Overall Timing Statistics for {len(ratios)} MPI Processes (Ranks in MPI_COMM_WORLD)")
     print_decoration(RESET)
-    print(f"Maximum Total Time: {max_value}[s] (MPI Rank in MPI_COMM_WORLD: {max_rank})")
-    print(f"Minimum Total Time: {min_value}[s] (MPI Rank in MPI_COMM_WORLD: {min_rank})")
+    print(f"Maximum Total Time: {max_value}s (MPI Rank: {max_rank})")
+    print(f"Minimum Total Time: {min_value}s (MPI Rank: {min_rank})")
+    print(f"Maximum MPI Time: {max_mpi_time}s (MPI Rank: {max_mpi_rank})")
+    print(f"Minimum MPI Time: {min_mpi_time}s (MPI Rank: {min_mpi_rank})")
+    print(f"Maximum Percentage of MPI Time to Total Time: {ratio_to_percentage(max_ratio)} (MPI Rank: {max_ratio_rank})")
+    print(f"Minimum Percentage of MPI Time to Total Time: {ratio_to_percentage(min_ratio)} (MPI Rank: {min_ratio_rank})")
+    print("\n")
 
 def print_mpi_times(mpi_times):
     max_info = mpi_times[0][1].split()
@@ -68,7 +103,6 @@ def print_mpi_times(mpi_times):
     # Formatting the output for both maximum and minimum
     print(f"Maximum MPI Time: {max_time} (MPI Rank in MPI_COMM_WORLD: {max_rank})")
     print(f"Minimum MPI Time: {min_time} (MPI Rank in MPI_COMM_WORLD: {min_rank})")
-    print("\n")
 
 
 
@@ -342,8 +376,9 @@ def main():
 
     print_header()
     print_mapping(mapping)
-    print_elapsed_time(elapsed_time)
-    print_mpi_times(mpi_times)
+    print_times(elapsed_time,mpi_times)
+    #print_elapsed_time(elapsed_time)
+    #print_mpi_times(mpi_times)
 
     if args.cct:
         print_cct(table, comm_to_procs, args.cct_limit)
