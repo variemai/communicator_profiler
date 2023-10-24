@@ -80,7 +80,8 @@ def prepare_data(file_path):
         for i in range(7): #skip those lines for now
             next(csv_file)
         mapping = next(csv_file)
-        next(csv_file)                    #skip also this line
+        time_elapsed = next(csv_file)                    #skip also this line
+        print(time_elapsed)
         index_to_colname = next(csv_file)
         colname_to_index = {
             index_to_colname[i]: i for i in range(0, len(index_to_colname))
