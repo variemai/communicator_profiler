@@ -2379,7 +2379,7 @@ _Finalize(void)
         /* } */
 
         for ( i =0; i<size*num_of_comms; i++ ){
-            if ( i % num_of_comms == 0 ){
+            if ( i % num_of_comms == 0  || i ==(size*num_of_comms)-1 ){
                 if ( r > -1 ){ //r is initialized to -1
                     mpi_times.push_back(mpi_time);
                     // if(mpi_time > max_mpi_time){
@@ -2427,7 +2427,7 @@ _Finalize(void)
             }
         }
         if( p ){
-            fprintf(fpp, "'# MPI Time (Rank Time)', ");
+            fprintf(fpp, "# 'MPI Time (Rank Time)', ");
             for (size_t i=0; i < mpi_times.size(); i++) {
                 fprintf(fpp, " %lu %lf",i,mpi_times[i]);
                 if ( i == mpi_times.size()-1 ){
