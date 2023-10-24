@@ -5,11 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <ctype.h>
 #include <time.h>
 #include <unistd.h>
 #include <unordered_map>
 
-#ifdef OMPI_MAJOR_VERSION
+#ifndef MPICH_API_PUBLIC
 #include "symbols.h"
 #endif
 
@@ -34,8 +35,8 @@ std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 /* Tool date */
 int mpisee_major_version = 0;
 int mpisee_minor_version = 1;
-char mpisee_build_date[sizeof(__DATE__)] = __DATE__;
-char mpisee_build_time[sizeof(__TIME__)] = __TIME__;
+char *mpisee_build_date = __DATE__;
+char *mpisee_build_time = __TIME__;
 double total_time = 0.0;
 
 
@@ -212,11 +213,8 @@ _MPI_Init(int *argc, char ***argv){
         appname = get_appname();
         printf("MPI_Init: MPI Communicator Profiling Tool\nProfiling application\
  %s\n",appname);
- #ifdef MPICH_NAME
-        printf("MPICH library used\n");
- #endif
- #ifdef OMPI_MAJOR_VERSION
-        printf("OpenMPI library used\n");
+ #ifdef MPICH_API_PUBLIC
+        printf("MPICH_API_PUBLIC enabled\n");
  #endif
         fflush(stdout);
     }
@@ -321,11 +319,19 @@ MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
 {
     if ( argc != NULL )
         getProcCmdLine (&ac, av);
+    /* int i; */
+    /* ac = 0; */
+    /* if ( argc != NULL && *argc > 0 && argv != NULL ){ */
+    /*     ac = *argc; */
+    /*     for ( i = 0; i<ac && i<32 ; i++ ){ */
+    /*         if ( argv[i] != NULL ) */
+    /*             av[i]=strdup(*argv[i]); */
+    /*     } */
+    /* } */
     return _MPI_Init_thread(argc, argv, required, provided);
 }
 
 
-extern "C" {
 void
 F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr)
 {
@@ -336,7 +342,6 @@ F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr)
     ret = _MPI_Init_thread(&ac, (char***)&tmp , *required, provided);
     *ierr = ret;
     return;
-}
 }
 
 /* void
@@ -369,6 +374,16 @@ MPI_Init(int *argc, char ***argv)
 {
     if ( argc != NULL  )
         getProcCmdLine (&ac, av);
+    /* int i; */
+    /* printf("NUM OF ARGS = %d\n",*argc); */
+    /* if ( argc != NULL && *argc > 0 && argv != NULL ){ */
+    /*     ac = *argc; */
+    /*     for ( i = 0; i<ac && i<32 ; i++ ){ */
+    /*         if ( argv[i] != NULL ) */
+    /*             av[i]=strdup(*argv[i]); */
+    /*     } */
+    /* } */
+
     return _MPI_Init(argc, argv);
 }
 
@@ -412,7 +427,6 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
 }
 
 
-extern "C" {
 void
 F77_MPI_COMM_CREATE(MPI_Fint  * comm, MPI_Fint  * group, MPI_Fint  *comm_out ,
                     MPI_Fint *ierr)
@@ -429,7 +443,6 @@ F77_MPI_COMM_CREATE(MPI_Fint  * comm, MPI_Fint  * group, MPI_Fint  *comm_out ,
         *comm_out = MPI_Comm_c2f(c_comm_out);
     return;
 
-}
 }
 
 /*
@@ -477,7 +490,6 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
                    MPI_Fint  *comm_out , MPI_Fint *ierr)
@@ -490,7 +502,6 @@ F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
     if ( ret == MPI_SUCCESS )
         *comm_out = MPI_Comm_c2f(c_comm_out);
     return;
-}
 }
 
 
@@ -515,7 +526,6 @@ MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 }
 
 
-extern "C" {
 void
 F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
 {
@@ -528,7 +538,6 @@ F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
         *comm_out =  MPI_Comm_c2f(newcomm);
     return;
 }
-}
 
 /* idup is supposed to be non-blocking but we make blocking calls in the wrapper */
 int
@@ -539,14 +548,15 @@ MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
     prof_attrs *communicator;
     char *buf;
     ret = PMPI_Comm_idup(comm, newcomm, request);
-
-#ifdef OMPI_MAJOR_VERSION
-    requests_map[*request] = comm;
+    /*
+#ifndef MPICH_API_PUBLIC
+    Table_put(request_tab, request, comm);
+#else
+    MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
+    *com = comm;
+    Table_put(request_tab, request, com);
 #endif
-#ifdef MPICH_NAME
-    requests_map[request] = comm;
-#endif
-
+*/
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
@@ -584,7 +594,6 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
 }
 
 
-extern "C" {
 void
 F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, const int  *dims,
                     const int  *periods, int  * reorder,
@@ -598,7 +607,6 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, const int  *dims,
     if ( ret == MPI_SUCCESS  )
         *comm_cart = MPI_Comm_c2f(c_comm_cart);
     return;
-}
 }
 
 
@@ -625,7 +633,6 @@ MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_CART_SUB(MPI_Fint  * comm, const int  *remain_dims,
                  MPI_Fint  *comm_new , MPI_Fint *ierr)
@@ -639,7 +646,6 @@ F77_MPI_CART_SUB(MPI_Fint  * comm, const int  *remain_dims,
     *comm_new = MPI_Comm_c2f(c_comm_new);
     *ierr = rc;
     return;
-}
 }
 
 int
@@ -667,7 +673,6 @@ MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
 }
 
 
-extern "C" {
 void
 F77_MPI_GRAPH_CREATE(MPI_Fint  * comm_old, int  * nnodes, const int  *index,
                      const int  *edges, int  * reorder, MPI_Fint  *comm_graph,
@@ -686,7 +691,6 @@ F77_MPI_GRAPH_CREATE(MPI_Fint  * comm_old, int  * nnodes, const int  *index,
         *comm_graph = MPI_Comm_c2f(c_comm_graph);
     }
     return;
-}
 
 }
 
@@ -742,7 +746,6 @@ MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_COMM_SPLIT_TYPE(MPI_Fint  * comm, int  * split_type, int  * key,
                         MPI_Fint *info, MPI_Fint  *newcomm , MPI_Fint *ierr)
@@ -758,7 +761,6 @@ F77_MPI_COMM_SPLIT_TYPE(MPI_Fint  * comm, int  * split_type, int  * key,
         *newcomm = MPI_Comm_c2f(c_comm_out);
     return;
 }
-}
 
 int
 MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
@@ -772,21 +774,29 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
         t_elapsed = MPI_Wtime() - t_elapsed;
 
         profile_this(comm, count, datatype, Isend, t_elapsed, 0);
-#ifdef OMPI_MAJOR_VERSION
-        requests_map[*request] = comm;
+/*
+#ifndef MPICH_API_PUBLIC
+        Table_put(request_tab, request, comm);
+#else
+        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
+        *com = comm;
+        Table_put(request_tab, request, com);
 #endif
-#ifdef MPICH_NAME
-        requests_map[request] = comm;
-#endif
-
+*/
     }
     else{
         ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
     }
+    /* if (rq_index == world_sz){ */
+    /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
+    /*     world_sz = world_sz*world_sz; */
+    /* } */
+    /* request_list[rq_index].req = request; */
+    /* request_list[rq_index].comm = comm; */
+    /* rq_index++; */
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_ISEND(const void  *buf, int  * count, MPI_Fint  * datatype,
                           int  * dest, int  * tag, MPI_Fint  * comm,
@@ -803,7 +813,6 @@ F77_MPI_ISEND(const void  *buf, int  * count, MPI_Fint  * datatype,
     if ( ret == MPI_SUCCESS )
         *request = MPI_Request_c2f(c_request);
     return;
-}
 }
 
 
@@ -856,11 +865,13 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
         ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
         profile_this(comm, count,datatype,Irecv,t_elapsed,0);
-#ifdef OMPI_MAJOR_VERSION
+#ifndef MPICH_API_PUBLIC
+        //Table_put(request_tab, request, comm);
         requests_map[*request] = comm;
-#endif
-#ifdef MPICH_NAME
-        requests_map[request] = comm;
+#else
+        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
+        *com = comm;
+        Table_put(request_tab, request, com);
 #endif
     }
     else{
@@ -909,7 +920,6 @@ MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_RECV(void* buf, int* count,MPI_Fint* datatype, int* source, int* tag,
              MPI_Fint  * comm, MPI_Status  *status , MPI_Fint *ierr)
@@ -922,7 +932,6 @@ F77_MPI_RECV(void* buf, int* count,MPI_Fint* datatype, int* source, int* tag,
     ret = MPI_Recv(buf,*count,c_datatype,*source,*tag,c_comm,status);
     *ierr = ret;
     return;
-}
 }
 
 int
@@ -956,7 +965,6 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 
-extern "C" {
 void
 F77_MPI_SENDRECV(const void  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
                  int  * dest, int  * sendtag, void  *recvbuf, int  * recvcount,
@@ -974,7 +982,6 @@ F77_MPI_SENDRECV(const void  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
                         *recvcount, c_recvtype, *source, *recvtag, c_comm, status);
     *ierr = ret;
     return;
-}
 }
 
 
@@ -1005,7 +1012,6 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
 
 }
 
-extern "C" {
 void
 F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
               MPI_Fint  * comm , MPI_Fint *ierr)
@@ -1019,7 +1025,6 @@ F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
     c_comm = MPI_Comm_f2c(*comm);
     ret = MPI_Bcast(buffer, *count, c_datatype, *root, c_comm);
     *ierr = ret;
-}
 }
 
 int
@@ -1040,7 +1045,6 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
         else {
             sum = count;
         }
-//#ifndef MPICH_NAME
         /*
 #ifndef MPICH_API_PUBLIC
         Table_put(request_tab, request, comm);
@@ -1059,7 +1063,6 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_IBCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
                MPI_Fint  * comm, MPI_Fint  *request , MPI_Fint *ierr)
@@ -1074,7 +1077,6 @@ F77_MPI_IBCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
     *ierr = ret;
     if ( ret == MPI_SUCCESS )
         *request = MPI_Request_c2f(c_request);
-}
 }
 
 int
@@ -1096,7 +1098,6 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_ALLREDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
                   MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm ,
@@ -1114,7 +1115,6 @@ F77_MPI_ALLREDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
     ret = MPI_Allreduce(sendbuf, recvbuf, *count, c_datatype, c_op, c_comm);
     *ierr =ret;
     return;
-}
 }
 
 int
@@ -1147,7 +1147,6 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
 }
 
 
-extern "C" {
 void
 F77_MPI_IALLREDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
                    MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm,
@@ -1169,7 +1168,6 @@ F77_MPI_IALLREDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
     if ( ret == MPI_SUCCESS )
         *request = MPI_Request_c2f(c_request);
     return;
-}
 }
 
 int
@@ -1195,7 +1193,6 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 
-extern "C" {
 void
 F77_MPI_ALLGATHER(const void *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
                   void  *recvbuf, int  * recvcount, MPI_Fint  * recvtype,
@@ -1212,7 +1209,6 @@ F77_MPI_ALLGATHER(const void *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
     ret = MPI_Allgather(sendbuf, *sendcount, c_sendtype, recvbuf, *recvcount, c_recvtype, c_comm);
     *ierr =ret;
     return;
-}
 }
 
 int
@@ -1237,7 +1233,6 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_ALLTOALL(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
                  void  *recvbuf, int  * recvcnt, MPI_Fint  * recvtype,
@@ -1255,7 +1250,6 @@ F77_MPI_ALLTOALL(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
     ret = MPI_Alltoall(sendbuf, *sendcount, c_sendtype, recvbuf, *recvcnt, c_recvtype, c_comm);
     *ierr = ret;
     return;
-}
 }
 
 
@@ -1291,7 +1285,6 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
 }
 
 
-extern "C" {
 void
 F77_MPI_ALLTOALLV(const void  *sendbuf, const int  *sendcnts, const int  *sdispls,
                   MPI_Fint  * sendtype, void  *recvbuf, const int  *recvcnts,
@@ -1310,7 +1303,6 @@ F77_MPI_ALLTOALLV(const void  *sendbuf, const int  *sendcnts, const int  *sdispl
     ret = MPI_Alltoallv(sendbuf, sendcnts, sdispls, c_sendtype, recvbuf, recvcnts, rdispls, c_recvtype, c_comm);
     *ierr = ret;
     return;
-}
 }
 
 int
@@ -1380,7 +1372,6 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 
-extern "C" {
 void
 F77_MPI_ALLGATHERV(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
                    void  *recvbuf, int  *recvcounts, int  *displs,
@@ -1398,7 +1389,6 @@ F77_MPI_ALLGATHERV(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
     ret = MPI_Allgatherv(sendbuf, *sendcount, c_sendtype, recvbuf, recvcounts, displs, c_recvtype, c_comm);
     *ierr = ret;
     return;
-}
 }
 
 
@@ -1423,7 +1413,7 @@ MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
     return ret;
 }
 
-extern "C" {
+
 void F77_MPI_REDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
                     MPI_Fint  * datatype, MPI_Fint  * op, int  * root,
                     MPI_Fint  * comm , MPI_Fint *ierr)
@@ -1441,7 +1431,6 @@ void F77_MPI_REDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
     *ierr = ret;
     return;
 
-}
 }
 
 int
@@ -1465,7 +1454,6 @@ MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
 
 }
 
-extern "C" {
 void
 F77_MPI_GATHER(const void  *sendbuf, int  * sendcnt, MPI_Fint  * sendtype,
                void  *recvbuf, int  * recvcount, MPI_Fint  * recvtype,
@@ -1484,7 +1472,6 @@ F77_MPI_GATHER(const void  *sendbuf, int  * sendcnt, MPI_Fint  * sendtype,
     *ierr = ret;
     return;
 
-}
 }
 
 
@@ -1529,7 +1516,6 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_GATHERV(const void  *sendbuf, int* sendcount, MPI_Fint  * sendtype,
                 void  *recvbuf, const int* recvcounts, const int  *displs,
@@ -1549,7 +1535,6 @@ F77_MPI_GATHERV(const void  *sendbuf, int* sendcount, MPI_Fint  * sendtype,
 
     *ierr = (MPI_Fint)ret;
     return;
-}
 }
 
 
@@ -1592,7 +1577,6 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_SCATTERV(const void  *sendbuf, const int  *sendcounts, const int  *displs,
                  MPI_Fint  * sendtype, void  *recvbuf, int  * recvcount,
@@ -1612,7 +1596,6 @@ F77_MPI_SCATTERV(const void  *sendbuf, const int  *sendcounts, const int  *displ
 
     *ierr = (MPI_Fint)ret;
     return;
-}
 }
 
 int
@@ -1645,7 +1628,6 @@ MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_SCATTER(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
                 void  *recvbuf, int  * recvcount, MPI_Fint  * recvtype, int  * root,
@@ -1665,7 +1647,6 @@ F77_MPI_SCATTER(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
 
     *ierr = (MPI_Fint)ret;
     return;
-}
 }
 
 
@@ -1691,7 +1672,6 @@ MPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 }
 
 
-extern "C" {
 void
 F77_MPI_SCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * datatype,
              MPI_Fint  * op, MPI_Fint  * comm , MPI_Fint *ierr)
@@ -1709,7 +1689,6 @@ F77_MPI_SCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * dat
 
     *ierr = (MPI_Fint)ret;
     return;
-}
 }
 
 
@@ -1733,7 +1712,6 @@ MPI_Barrier ( MPI_Comm comm )
 }
 
 
-extern "C" {
 void
 F77_MPI_BARRIER(MPI_Fint  * comm , MPI_Fint *ierr)
 {
@@ -1744,7 +1722,6 @@ F77_MPI_BARRIER(MPI_Fint  * comm , MPI_Fint *ierr)
     ret = MPI_Barrier(c_comm);
     *ierr = (MPI_Fint)ret;
     return;
-}
 }
 
 int
@@ -1770,10 +1747,9 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
             fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); 
             return ret;
         }
-#ifdef OMPI_MAJOR_VERSION
+#ifndef MPICH_API_PUBLIC
        profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
-#endif
-#ifdef MPICH_NAME
+#else
         profile_this(*comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
 #endif
     }
@@ -1846,7 +1822,6 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
 }
 
 
-extern "C" {
 void
 F77_MPI_WAITALL(int  * count, MPI_Fint  *array_of_requests,
                 MPI_Status  *array_of_statuses , MPI_Fint *ierr)
@@ -1866,7 +1841,6 @@ F77_MPI_WAITALL(int  * count, MPI_Fint  *array_of_requests,
        }
    }
    free( c_requests );
-}
 }
 
 int
@@ -1915,7 +1889,6 @@ MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *s
     return ret;
 }
 
-extern "C" {
 void
 F77_MPI_WAITANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
                 MPI_Status  *status , MPI_Fint *ierr)
@@ -1938,7 +1911,6 @@ F77_MPI_WAITANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
     free(c_array_of_requests);
     return;
 
-}
 }
 
 int
@@ -1976,7 +1948,6 @@ MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
 }
 
 
-extern "C" {
 void
 F77_MPI_TEST(MPI_Fint  *request, int  *flag, MPI_Status  *status , MPI_Fint *ierr)
 {
@@ -1990,7 +1961,6 @@ F77_MPI_TEST(MPI_Fint  *request, int  *flag, MPI_Status  *status , MPI_Fint *ier
         *request = MPI_Request_c2f(c_request);
     }
     return;
-}
 }
 
 int
@@ -2041,7 +2011,6 @@ MPI_Testany(int count, MPI_Request *array_of_requests, int *index, int *flag, MP
 }
 
 
-extern "C" {
 void
 F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
                 int  *flag, MPI_Status  *status , MPI_Fint *ierr)
@@ -2065,7 +2034,6 @@ F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
     free(c_array_of_requests);
     return;
 
-}
 }
 
 int
@@ -2096,7 +2064,6 @@ MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int *recvcounts,
 
 }
 
-extern "C" {
 void F77_MPI_REDUCE_SCATTER(const void  *sendbuf, void  *recvbuf, const int *recvcnts,
                             MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm,
                             MPI_Fint *ierr)
@@ -2114,7 +2081,6 @@ void F77_MPI_REDUCE_SCATTER(const void  *sendbuf, void  *recvbuf, const int *rec
     *ierr = (MPI_Fint)ret;
     return;
 
-}
 }
 
 int
@@ -2149,7 +2115,6 @@ MPI_Comm_free(MPI_Comm *comm)
 }
 
 
-extern "C" {
 void
 F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
 {
@@ -2160,7 +2125,6 @@ F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
     ret = MPI_Comm_free(&c_comm);
     *ierr = ret;
     return;
-}
 }
 
 static int

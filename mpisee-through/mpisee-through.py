@@ -32,6 +32,30 @@ def print_decoration(decoration):
         # the output is not redirected, we can use a fancy style:
         sys.stdout.write(decoration)
 
+def print_elapsed_time(elapsed_time):
+    ranks = []
+    values = []
+    for entry in elapsed_time[1:]:  # skipping the first informational string
+        rank, value = entry.split()
+        ranks.append(int(rank))
+        values.append(float(value))
+
+    max_value = max(values)
+    min_value = min(values)
+    #mean_value = sum(values) / len(values)
+
+    max_rank = ranks[values.index(max_value)]
+    min_rank = ranks[values.index(min_value)]
+
+
+    #print(f"Mean Time between {len(values)}: {mean_value}")
+    print_decoration(BOLD)
+    print(f"Overall Timing Statistics for {len(values)} MPI Processes")
+    print_decoration(RESET)
+    print(f"Maximum Total Time[s]: {max_value} (MPI Rank in MPI_COMM_WORLD: {max_rank})")
+    print(f"Minimum Total Time[s]: {min_value} (MPI Rank in MPI_COMM_WORLD: {min_rank})")
+    print("\n")
+
 
 def compact_proc_list(proc_list):
     proc_list.sort()
@@ -81,7 +105,6 @@ def prepare_data(file_path):
             next(csv_file)
         mapping = next(csv_file)
         time_elapsed = next(csv_file)                    #skip also this line
-        print(time_elapsed)
         index_to_colname = next(csv_file)
         colname_to_index = {
             index_to_colname[i]: i for i in range(0, len(index_to_colname))
@@ -100,7 +123,7 @@ def prepare_data(file_path):
 
     table = create_table(data_groupBy_comm, colname_to_index, index_to_colname)
 
-    return table, mapping, comm_to_procs
+    return table, mapping, comm_to_procs, time_elapsed
 
 
 def groupBy_comm(data, colname_to_index):
@@ -297,10 +320,11 @@ def main():
     )
     args = my_parser.parse_args()
 
-    table, mapping, comm_to_procs = prepare_data(args.file_path)
+    table, mapping, comm_to_procs,elapsed_time = prepare_data(args.file_path)
 
     print_header()
     print_mapping(mapping)
+    print_elapsed_time(elapsed_time)
 
     if args.cct:
         print_cct(table, comm_to_procs, args.cct_limit)
