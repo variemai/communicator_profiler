@@ -75,3 +75,5 @@ test/*
 build/
 .idea/
 .vscode/
+build_*
+build

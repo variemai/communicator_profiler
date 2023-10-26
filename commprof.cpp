@@ -12,16 +12,13 @@
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
+#include "commprof.h"
 
 #ifdef OMPI_MAJOR_VERSION
 #include "symbols.h"
 #endif
 
-//#include "table.h"
 #include <inttypes.h>
-
-#define MAX_ARGS 1024
-#define MAX_DIMS 8
 
 int prof_enabled = 1;
 prof_attrs **local_data = NULL;
@@ -42,16 +39,18 @@ char mpisee_build_date[sizeof(__DATE__)] = __DATE__;
 char mpisee_build_time[sizeof(__TIME__)] = __TIME__;
 double total_time = 0.0;
 
-
-static int
+extern "C" {
+int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
 {
   prof_attrs *com = (prof_attrs*)attr;
   free(com);
   return MPI_SUCCESS;
 }
+}
 
-static int
+extern "C" {
+int
 namekey(void)
 {
   // hidden key value for type attributes
@@ -63,7 +62,7 @@ namekey(void)
 
   return namekeyval;
 }
-
+}
 
 /*
  * Create a new communicator structure and add the parent
@@ -371,8 +370,11 @@ F77_MPI_INIT (int *ierr)
 int
 MPI_Init(int *argc, char ***argv)
 {
-    if ( argc != NULL  )
+    if ( argc != NULL  ){
         getProcCmdLine (&ac, av);
+        //getRunCmd(ac, av);
+
+    }
     return _MPI_Init(argc, argv);
 }
 
@@ -2322,12 +2324,13 @@ _Finalize(void)
         fprintf(fpp, "#'MPI LIBRARY' '%s'\n",version);
         fprintf(fpp, "#'Processes' '%d'\n",size);
         fprintf(fpp, "#'Run command' ");
+        // if (av != NULL){
         fprintf(fpp, "'%s",av[0]);
         for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
             fprintf(fpp, " %s",av[i]);
         }
         fprintf(fpp, "'\n");
-
+        // }
         fprintf(fpp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
         fprintf(fpp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
         if ( env_var ){

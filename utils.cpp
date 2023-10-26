@@ -122,3 +122,13 @@ getProcCmdLine (int *ac, char **av)
     mcpt_abort("Error opening file %s FILE:LINE = %d",file,__FILE__,__LINE__);
   }
 }
+
+// void
+// getRunCmd(int argc, char **argv){
+//   int i;
+//   ac = argc;
+//   av = (char**) malloc ( sizeof(char*)*ac );
+//   for ( i =0; i<ac; i++ ){
+//       av[i] = strdup(argv[i]);
+//   }
+// }
