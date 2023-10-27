@@ -90,20 +90,6 @@ def print_times(elapsed_time, mpi_times):
     print(f"Minimum Percentage of MPI Time to Total Time: {ratio_to_percentage(min_ratio)} (MPI Rank: {min_ratio_rank})")
     print("\n")
 
-def print_mpi_times(mpi_times):
-    max_info = mpi_times[0][1].split()
-    max_rank = int(max_info[0])
-    max_time = float(max_info[1])
-
-    # Extracting the information from the list for minimum MPI time
-    min_info = mpi_times[1][1].split()
-    min_rank = int(min_info[0])
-    min_time = float(min_info[1])
-
-    # Formatting the output for both maximum and minimum
-    print(f"Maximum MPI Time: {max_time} (MPI Rank in MPI_COMM_WORLD: {max_rank})")
-    print(f"Minimum MPI Time: {min_time} (MPI Rank in MPI_COMM_WORLD: {min_rank})")
-
 
 
 def compact_proc_list(proc_list):
