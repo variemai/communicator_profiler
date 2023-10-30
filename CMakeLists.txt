@@ -19,7 +19,17 @@ if(MPI_CXX_LINK_FLAGS)
 endif()
 
 set_target_properties(mpisee PROPERTIES SOVERSION 1)
-message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPI_CXX_INCLUDE_DIRS}")
+#message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPI_CXX_INCLUDE_DIRS}")
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
+
 enable_testing()
 add_subdirectory(test)
+find_program(SRUN_EXEC srun)
+
+if(SRUN_EXEC)
+    set(MPIEXEC "${SRUN_EXEC}")
+    message(STATUS "Found srun: ${SRUN_EXEC}")
+else()
+    message(STATUS "srun not found, using default MPIEXEC")
+endif()
+

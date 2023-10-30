@@ -12,6 +12,13 @@ add_executable(comm_split comm_split.cpp)
 add_executable(allg_rand_data allg_rand_data.cpp)
 add_executable(comm_free comm_free.cpp)
 
+find_program(SRUN_EXEC srun)
+if(SRUN_EXEC)
+    message(STATUS "srun found at: ${SRUN_EXEC}")
+    set(MPIEXEC ${SRUN_EXEC})
+else()
+    message(STATUS "srun not found in PATH")
+endif()
 
 add_test(NAME ctest0 COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${PROJECT_BINARY_DIR}/test/ctest0)
 add_test(NAME ctest1 COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${PROJECT_BINARY_DIR}/test/ctest1)
