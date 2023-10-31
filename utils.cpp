@@ -1,5 +1,11 @@
 #include "utils.h"
 #include "symbols.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <stdarg.h>
+#include <string.h>
+
 #define MAX_ARG_STRING_SIZE 4096
 
 const char prim_names[][NUM_OF_PRIMS]={
