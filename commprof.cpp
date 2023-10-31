@@ -10,6 +10,7 @@
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <cstdarg>
 #include <unordered_map>
 #include <vector>
 #include "commprof.h"
