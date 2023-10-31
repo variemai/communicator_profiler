@@ -2285,15 +2285,24 @@ _Finalize(void)
 
     MPI_Get_processor_name(proc_name, &len);
 
-    if ( rank == 0 ){
-        proc_names = (char*) malloc ( sizeof (char)*MPI_MAX_PROCESSOR_NAME*size);
+    if (rank == 0) {
+        proc_names = NULL;
+        proc_names = (char *)malloc(sizeof(char) * MPI_MAX_PROCESSOR_NAME * size);
+        if (proc_names == NULL) {
+            mcpt_abort("malloc error for proc_names buffer Rank: %d\n",rank);
+        }
+        alltimes = NULL;
         alltimes = (double*) malloc (sizeof(double)*size);
+        if (alltimes == NULL) {
+            mcpt_abort("malloc error for alltimes buffer Rank: %d\n",rank);
+        }
     }
 
     PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
     PMPI_Gather(&total_time, 1, MPI_DOUBLE, alltimes,1, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
-    PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
-                num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
+    PMPI_Gather(array, num_of_comms * sizeof(prof_attrs), MPI_BYTE, recv_buffer,
+                num_of_comms * sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
+    PMPI_Barrier(MPI_COMM_WORLD);
     free(array);
     array = NULL;
     if ( rank == 0 ){
