@@ -2605,7 +2605,6 @@ _Finalize(void)
 
     PMPI_Type_free(&profiler_data);
     free(array);
-    array = NULL;
     //Table_free(&request_tab);
 
     return PMPI_Finalize();
