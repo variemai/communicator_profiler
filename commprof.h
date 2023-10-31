@@ -3,10 +3,11 @@
 
 #define MAX_DIMS 8
 #include "utils.h"
-
+#include <vector>
 extern int prof_enabled;
 extern prof_attrs **local_data;
-extern prof_attrs **local_comms;
+// extern prof_attrs **local_comms;
+extern std::vector<prof_attrs*> local_communicators;
 extern int local_cid;
 extern int my_coms;
 

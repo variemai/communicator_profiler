@@ -92,9 +92,8 @@ char *get_appname (void){
   return NULL;
 }
 
-void
-getProcCmdLine (int *ac, char **av)
-{
+void getProcCmdLine(int *ac, char **av) {
+#ifdef __linux__
   int i = 0, pid;
   char *inbuf, file[256];
   FILE *infile;
@@ -127,6 +126,13 @@ getProcCmdLine (int *ac, char **av)
   else{
     mcpt_abort("Error opening file %s FILE:LINE = %d",file,__FILE__,__LINE__);
   }
+
+#elif __APPLE__
+  *ac = 0;
+  *av = NULL;
+#else
+  mcpt_abort("Unsupported platform");
+#endif
 }
 
 // void
