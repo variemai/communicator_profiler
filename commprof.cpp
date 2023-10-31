@@ -2157,10 +2157,10 @@ static int
 _Finalize(void)
 {
     FILE *fp;
-    prof_attrs *array;
+    prof_attrs *array = NULL;
     int rank,size;
     int i,j,k,found,len;
-    prof_attrs *recv_buffer;
+    prof_attrs *recv_buffer = NULL;
     prof_attrs dummy;
     char **names, **unames;
     int total_comms,total,num_of_comms, resultlen;
@@ -2185,17 +2185,18 @@ _Finalize(void)
     PMPI_Allreduce(&num_of_comms, &total_comms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
     num_of_comms = total_comms;
 
-    array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
-    recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
-/* typedef struct profiler_attributes{ */
-/*     char name[NAMELEN]; */
-/*     uint64_t bytes; */
-/*     uint64_t msgs; */
-/*     int size; */
-/*     uint32_t prims[NUM_OF_PRIMS]; */
-/*     uint64_t prim_bytes[NUM_OF_PRIMS]; */
-/*     double time_info[NUM_OF_PRIMS]; */
-/* }prof_attrs; */
+    array = (prof_attrs *)malloc(sizeof(prof_attrs) * num_of_comms);
+    if (array == NULL) {
+        mcpt_abort("malloc error for send buffer Rank: %d\n",rank);
+    }
+    if ( rank == 0 ){
+        recv_buffer =
+            (prof_attrs *)malloc(sizeof(prof_attrs) * num_of_comms * size);
+        if (recv_buffer == NULL) {
+            mcpt_abort("malloc error for receive buffer Rank: %d\n",rank);
+        }
+    }
+
 
     MPI_Datatype types[7] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT64_T, MPI_INT,
     MPI_UINT32_T, MPI_UINT64_T, MPI_DOUBLE };
@@ -2292,7 +2293,8 @@ _Finalize(void)
     PMPI_Gather(&total_time, 1, MPI_DOUBLE, alltimes,1, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
     PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
-
+    free(array);
+    array = NULL;
     if ( rank == 0 ){
 
         time_t date;
@@ -2576,6 +2578,7 @@ _Finalize(void)
             free(uprims);
             free(uprims_bytes);
             free(utime_info);
+            free(recv_buffer);
             fclose(fp);
         }
 

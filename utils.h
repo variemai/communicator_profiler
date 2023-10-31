@@ -3,12 +3,7 @@
 
 #include <mpi.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <unistd.h>
-#include <stdarg.h>
-#include <string.h>
 #define NAMELEN 256
 #define PRIMLEN 16
 #define NUM_OF_PRIMS 36
