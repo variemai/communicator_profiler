@@ -52,7 +52,7 @@ int main (int argc, char *argv[]){
 
     for (i = 0; i < local_communicators.size(); i++) {
         sum += local_communicators[i]->prim_bytes[Bcast];
-        std::cout << "i: " << i << "bytes = " << local_communicators[i]->prim_bytes[Bcast] << "\n";
+        std::cout << "Rank : " << rank << ", i: " << i << ", Bcast bytes = " << local_communicators[i]->prim_bytes[Bcast] << " in communicator: " << local_communicators[i]->name << "\n";
     }
     for (i = 0; i < 3; i++) {
         bytes_sum += bytes[i];

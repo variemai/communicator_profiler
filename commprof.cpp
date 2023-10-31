@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <vector>
 #include "commprof.h"
+#include <algorithm>
 
 #ifdef OMPI_MAJOR_VERSION
 #include "symbols.h"
@@ -2117,14 +2118,16 @@ MPI_Comm_free(MPI_Comm *comm)
 {
     int ret,flag;
     prof_attrs *com_info, *tmp;
-    PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
+    PMPI_Comm_get_attr(*comm, namekey(), &tmp, &flag);
     if (flag) {
-        // Check if com_info is in the local_communicators vector
-        if (std::find(local_communicators.begin(), local_communicators.end(), com_info) != local_communicators.end()) {
-            // com_info is present in the vector
-            tmp = (prof_attrs *)malloc(sizeof(prof_attrs));
-            memcpy(tmp, com_info, sizeof(prof_attrs));
-            local_communicators.push_back(tmp);
+        auto it = std::find(local_communicators.begin(), local_communicators.end(), tmp);
+        if (it != local_communicators.end()) {
+            // Calculate the index of the found element
+            size_t index = std::distance(local_communicators.begin(), it);
+            // Now "index" holds the position of com_info in the vector
+            com_info = (prof_attrs *)malloc(sizeof(prof_attrs));
+            memcpy(com_info, tmp, sizeof(prof_attrs));
+            local_communicators[index] = com_info;
         } else {
             // com_info is not present in the vector
             mcpt_abort("Comm_free on invalid communicator\n");
@@ -2137,6 +2140,8 @@ MPI_Comm_free(MPI_Comm *comm)
         //     mcpt_abort("Comm_free on invalid communicator\n");
         // local_comms[i] = (prof_attrs*) malloc (sizeof(prof_attrs));
         // memcpy(local_comms[i], com_info, sizeof(prof_attrs));
+    }else {
+        mcpt_abort("Comm free: Comm_get_attr did not find communicator\n");
     }
     ret = PMPI_Comm_free(comm);
     return ret;

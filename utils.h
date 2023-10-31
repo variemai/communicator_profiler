@@ -72,7 +72,7 @@ extern const char prim_names[][NUM_OF_PRIMS];
 extern int ac;
 extern char *av[MAX_ARGS];
 
-void mcpt_abort (char *fmt, ...);
+void mcpt_abort (const char *fmt, ...);
 
 void getProcCmdLine (int *ac, char **av);
 char * get_appname(void);

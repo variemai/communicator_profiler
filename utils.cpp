@@ -50,7 +50,7 @@ const char prim_names[][NUM_OF_PRIMS]={
 char *appname = NULL;
 prof_attrs **comm_table = NULL;
 
-void mcpt_abort (char *fmt, ...){
+void mcpt_abort (const char *fmt, ...){
   va_list args;
   va_start (args, fmt);
   fprintf (stderr, "\n\n: MPICP ABORTING ");
