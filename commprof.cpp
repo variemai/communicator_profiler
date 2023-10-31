@@ -1,7 +1,7 @@
 #include "utils.h"
-#include <cfloat>
 #include <cstddef>
 #include <cstdio>
+#include <cstring>
 #include <mpi.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -29,7 +29,7 @@ int ac;
 char *av[MAX_ARGS];
 //Table_T request_tab;
 std::unordered_map<MPI_Request, MPI_Comm> requests_map;
-
+std::vector<prof_attrs*> local_communicators; //maintain two arrays of pointers to communicators for now
 
 
 /* Tool date */
@@ -112,6 +112,7 @@ init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
         (*communicator)->time_info[i] = 0.0;
     }
     local_comms[local_cid] = *communicator;
+    local_communicators.push_back(*communicator);
     /* communicators[my_coms] = *newcomm; */
     /* Table_put(comm_tab, (*communicator)->name, *communicator); */
     my_coms++;
@@ -202,14 +203,6 @@ _MPI_Init(int *argc, char ***argv){
     local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*nb_local_comms);
     memset(local_comms, 0, sizeof(prof_attrs*)*nb_local_comms);
 
-    /* world_sz = size*size; */
-    //request_tab = Table_new(1024, NULL, NULL);
-    /* comm_tab = Table_new(256, NULL, NULL); */
-
-    /* for ( i =0 ; i<size*4; i++ ){ */
-    /*     communicators[i] = MPI_COMM_NULL; */
-    /*     local_comms[i] = NULL; */
-    /* } */
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
@@ -241,6 +234,8 @@ _MPI_Init(int *argc, char ***argv){
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     local_comms[local_cid] = communicator;
     local_cid++;
+
+    local_communicators.push_back(communicator);
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
@@ -268,20 +263,18 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     else
         local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*512);
 
-    /* comm_tab = Table_new(256, NULL, NULL); */
-
-    /* world_sz = size*size; */
-    //request_tab = Table_new(1024, NULL, NULL);
-
-    /* for ( i =0 ; i<size*4; i++ ){ */
-    /*     communicators[i] = MPI_COMM_NULL; */
-    /*     local_comms[i] = NULL; */
-    /* } */
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
         printf("MPI_Init_thread: MPI Communicator Profiling Tool\nProfiling\
- application %s\n",appname);
+application %s\n",appname);
+        fflush(stdout);
+ #ifdef MPICH_NAME
+        printf("MPICH library used\n");
+ #endif
+ #ifdef OMPI_MAJOR_VERSION
+        printf("OpenMPI library used\n");
+ #endif
         fflush(stdout);
     }
     /* Debuggin file please remove when running */
@@ -306,6 +299,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     }
     local_comms[local_cid] = communicator;
     local_cid++;
+    local_communicators.push_back(communicator);
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
@@ -2125,11 +2119,10 @@ int
 MPI_Comm_free(MPI_Comm *comm)
 {
     int ret,flag,i;
-    prof_attrs *com_info;
+    prof_attrs *com_info, *tmp;
     PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
     if ( flag ){
         for ( i = 0; i<local_cid; i++ ){
-            /* if ( strcmp(com_info->name, local_comms[i]->name) == 0 ) */
             if ( com_info == local_comms[i] )
                 break;
         }
@@ -2137,16 +2130,9 @@ MPI_Comm_free(MPI_Comm *comm)
             mcpt_abort("Comm_free on invalid communicator\n");
         local_comms[i] = (prof_attrs*) malloc (sizeof(prof_attrs));
         memcpy(local_comms[i], com_info, sizeof(prof_attrs));
-        /* We can use memcpy here */
-        /* local_comms[i]->bytes = com_info->bytes; */
-        /* local_comms[i]->msgs = com_info->msgs; */
-        /* local_comms[i]->size = com_info->size; */
-        /* strcpy(local_comms[i]->name,com_info->name); */
-        /* for (int j = 0; j < NUM_OF_PRIMS; j++) { */
-        /*     local_comms[i]->prims[j] = com_info->prims[j]; */
-        /*     local_comms[i]->prim_bytes[j] = com_info->prim_bytes[j]; */
-        /*     local_comms[i]->time_info[j] = com_info->time_info[j]; */
-        /* } */
+        tmp = (prof_attrs *)malloc(sizeof(prof_attrs));
+        memcpy(tmp, com_info, sizeof(prof_attrs));
+        local_communicators.push_back(tmp);
     }
     ret = PMPI_Comm_free(comm);
     return ret;
@@ -2236,21 +2222,48 @@ _Finalize(void)
     PMPI_Type_create_struct(7, blocklen, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
-    for ( i = 0; i < num_of_comms; i++ ){
-        if ( local_comms[i] != NULL ){
+    // for ( i = 0; i < num_of_comms; i++ ){
+    //     if ( local_comms[i] != NULL ){
+
+    //         /* We can use memcpy here */
+    //         /* memcpy(&array[i], local_comms[i], sizeof(prof_attrs)); */
+    //         strcpy(array[i].name, local_comms[i]->name);
+    //         array[i].bytes = local_comms[i]->bytes;
+    //         array[i].msgs= local_comms[i]->msgs;
+    //         array[i].size = local_comms[i]->size;
+    //         for ( k=0; k<NUM_OF_PRIMS; k++ ){
+    //             array[i].prims[k] = local_comms[i]->prims[k];
+    //             array[i].prim_bytes[k] =local_comms[i]->prim_bytes[k];
+    //             array[i].time_info[k] = local_comms[i]->time_info[k];
+    //         }
+    //     }
+    //     else{
+    //         strcpy(array[i].name, "NULL");
+    //         /* memset(&array[i], 0, sizeof(prof_attrs)); */
+    //         array[i].msgs = 0;
+    //         array[i].bytes = 0;
+    //         array[i].size = 0;
+    //         /* We can use memset here */
+    //         for ( k=0; k<NUM_OF_PRIMS; k++ ){
+    //             array[i].prims[k] = 0;
+    //             array[i].prim_bytes[k] = 0;
+    //             array[i].time_info[k] = 0.0;
+    //         }
+    //     }
+    // }
+    for (i = 0; i < local_communicators.size(); i++) {
+        if ( local_communicators[i] != NULL ){
 
             /* We can use memcpy here */
-            /* memcpy(&array[i], local_comms[i], sizeof(prof_attrs)); */
-            strcpy(array[i].name, local_comms[i]->name);
-            array[i].bytes = local_comms[i]->bytes;
-            array[i].msgs= local_comms[i]->msgs;
-            array[i].size = local_comms[i]->size;
-            /* printf("%s: %lu, %lu, %d, ",local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs,local_comms[i]->size); */
+            /* memcpy(&array[i], local_communicators[i], sizeof(prof_attrs)); */
+            strcpy(array[i].name, local_communicators[i]->name);
+            array[i].bytes = local_communicators[i]->bytes;
+            array[i].msgs= local_communicators[i]->msgs;
+            array[i].size = local_communicators[i]->size;
             for ( k=0; k<NUM_OF_PRIMS; k++ ){
-                array[i].prims[k] = local_comms[i]->prims[k];
-                array[i].prim_bytes[k] =local_comms[i]->prim_bytes[k];
-                array[i].time_info[k] = local_comms[i]->time_info[k];
-                /* printf("%lf, ", local_comms[i]->time_info[k]); */
+                array[i].prims[k] = local_communicators[i]->prims[k];
+                array[i].prim_bytes[k] =local_communicators[i]->prim_bytes[k];
+                array[i].time_info[k] = local_communicators[i]->time_info[k];
             }
         }
         else{
@@ -2267,13 +2280,7 @@ _Finalize(void)
             }
         }
     }
-    /* for ( i =0; i< num_of_comms; i++ ){ */
-    /*     for ( k=0; k<NUM_OF_PRIMS; k++ ){ */
-    /*         if ( k == Send || k == Isend || k == Irecv || k == Recv ) */
-    /*             printf("Rank %d %s = %d\n",rank,prim_names[k],array[i].prims[k]); */
-    /*         fflush(stdout); */
-    /*     } */
-    /* } */
+
     MPI_Get_processor_name(proc_name, &len);
 
     if ( rank == 0 ){
