@@ -2303,8 +2303,6 @@ _Finalize(void)
     PMPI_Gather(array, num_of_comms * sizeof(prof_attrs), MPI_BYTE, recv_buffer,
                 num_of_comms * sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
     PMPI_Barrier(MPI_COMM_WORLD);
-    free(array);
-    array = NULL;
     if ( rank == 0 ){
 
         time_t date;
@@ -2606,6 +2604,8 @@ _Finalize(void)
     }
 
     PMPI_Type_free(&profiler_data);
+    free(array);
+    array = NULL;
     //Table_free(&request_tab);
 
     return PMPI_Finalize();
