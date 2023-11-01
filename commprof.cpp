@@ -73,8 +73,12 @@ prof_attrs*
 get_comm_name(MPI_Comm comm)
 {
     int flag;
-    prof_attrs *communicator, *com_info;
+    prof_attrs *communicator = NULL, *com_info;
     communicator = (prof_attrs*) malloc(sizeof(prof_attrs));
+    if (communicator == NULL){
+        mcpt_abort("malloc get_comm_name failed\nAborting...\n");
+    }
+    memset(communicator, 0, sizeof(prof_attrs));
     if ( comm != MPI_COMM_WORLD ){
         PMPI_Comm_get_attr(comm, namekey(), &com_info, &flag);
         if ( flag ){
@@ -2163,22 +2167,21 @@ F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
 }
 
 static int
-_Finalize(void)
-{
+_Finalize(void) {
     FILE *fp;
     prof_attrs *array = NULL;
-    int rank,size;
-    int i,j,k,found,len;
+    int rank, size;
+    int i, j, k, found, len;
     prof_attrs *recv_buffer = NULL;
     prof_attrs dummy;
     char **names, **unames;
-    int total,num_of_comms, resultlen;
-    uint64_t *bytes, *ubytes,*prims_bytes,*uprims_bytes;
-    uint32_t *prims,*uprims;
+    int total, num_of_comms, resultlen;
+    uint64_t *bytes, *ubytes, *prims_bytes, *uprims_bytes;
+    uint32_t *prims, *uprims;
     uint64_t *msgs, *umsgs;
     double *time_info, *utime_info;
     /* time_t t; */
-    int *sizes,*usizes;
+    int *sizes, *usizes;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names = NULL;
@@ -2186,44 +2189,29 @@ _Finalize(void)
     double *alltimes = NULL;
     std::vector<double> mpi_times;
     double mpi_time = 0.0;
-    total_time = MPI_Wtime()-total_time;
+    total_time = MPI_Wtime() - total_time;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     num_of_comms = local_communicators.size();
-    // Use this when not using the vector for communicators
-    // num_of_comms = my_coms;
-    // PMPI_Allreduce(&num_of_comms, &total_comms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    // num_of_comms = total_comms;
-    // array = (prof_attrs *)malloc(sizeof(prof_attrs) * num_of_comms);
-    // if (array == NULL) {
-    //     mcpt_abort("malloc error for send buffer Rank: %d\n",rank);
-    // }
-    // if ( rank == 0 ){
-    //     recv_buffer =
-    //         (prof_attrs *)malloc(sizeof(prof_attrs) * num_of_comms * size);
-    //     if (recv_buffer == NULL) {
-    //         mcpt_abort("malloc error for receive buffer Rank: %d\n",rank);
-    //     }
-    // }
 
-    array = (prof_attrs *)malloc(sizeof(prof_attrs) * num_of_comms);
+
+    array = (prof_attrs *) malloc(sizeof(prof_attrs) * num_of_comms);
     if (array == NULL) {
-        mcpt_abort("malloc error for send buffer Rank: %d\n",rank);
+        mcpt_abort("malloc error for send buffer Rank: %d\n", rank);
     }
-    if ( rank == 0 ){
+    if (rank == 0) {
         recv_buffer =
-            (prof_attrs *)malloc(sizeof(prof_attrs) * num_of_comms * size);
+                (prof_attrs *) malloc(sizeof(prof_attrs) * num_of_comms * size);
         if (recv_buffer == NULL) {
-            mcpt_abort("malloc error for receive buffer Rank: %d\n",rank);
+            mcpt_abort("malloc error for receive buffer Rank: %d\n", rank);
         }
     }
 
 
-
-    MPI_Datatype types[7] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT64_T, MPI_INT,
-    MPI_UINT32_T, MPI_UINT64_T, MPI_DOUBLE };
-    int blocklen[7] = {NAMELEN,1,1,1,NUM_OF_PRIMS,NUM_OF_PRIMS,NUM_OF_PRIMS};
+    MPI_Datatype types[7] = {MPI_CHAR, MPI_UINT64_T, MPI_UINT64_T, MPI_INT,
+                             MPI_UINT32_T, MPI_UINT64_T, MPI_DOUBLE};
+    int blocklen[7] = {NAMELEN, 1, 1, 1, NUM_OF_PRIMS, NUM_OF_PRIMS, NUM_OF_PRIMS};
     MPI_Aint displacements[7];
     MPI_Aint base_address;
     MPI_Datatype profiler_data;
@@ -2246,48 +2234,27 @@ _Finalize(void)
     PMPI_Type_create_struct(7, blocklen, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
-    // for ( i = 0; i < num_of_comms; i++ ){
-    //     if ( local_comms[i] != NULL ){
 
-    //         /* We can use memcpy here */
-    //         /* memcpy(&array[i], local_comms[i], sizeof(prof_attrs)); */
-    //         strcpy(array[i].name, local_comms[i]->name);
-    //         array[i].bytes = local_comms[i]->bytes;
-    //         array[i].msgs= local_comms[i]->msgs;
-    //         array[i].size = local_comms[i]->size;
-    //         for ( k=0; k<NUM_OF_PRIMS; k++ ){
-    //             array[i].prims[k] = local_comms[i]->prims[k];
-    //             array[i].prim_bytes[k] =local_comms[i]->prim_bytes[k];
-    //             array[i].time_info[k] = local_comms[i]->time_info[k];
-    //         }
-    //     }
-    //     else{
-    //         strcpy(array[i].name, "NULL");
-    //         /* memset(&array[i], 0, sizeof(prof_attrs)); */
-    //         array[i].msgs = 0;
-    //         array[i].bytes = 0;
-    //         array[i].size = 0;
-    //         /* We can use memset here */
-    //         for ( k=0; k<NUM_OF_PRIMS; k++ ){
-    //             array[i].prims[k] = 0;
-    //             array[i].prim_bytes[k] = 0;
-    //             array[i].time_info[k] = 0.0;
-    //         }
-    //     }
-    // }
-    for (i = 0; i < local_communicators.size(); i++) {
-            /* We can use memcpy here */
-            /* memcpy(&array[i], local_communicators[i], sizeof(prof_attrs)); */
-            strcpy(array[i].name, local_communicators[i]->name);
-            array[i].bytes = local_communicators[i]->bytes;
-            array[i].msgs= local_communicators[i]->msgs;
-            array[i].size = local_communicators[i]->size;
-            for ( k=0; k<NUM_OF_PRIMS; k++ ){
-                array[i].prims[k] = local_communicators[i]->prims[k];
-                array[i].prim_bytes[k] =local_communicators[i]->prim_bytes[k];
-                array[i].time_info[k] = local_communicators[i]->time_info[k];
-            }
+    for (i = 0; i < num_of_comms; i++) {
+         memcpy(&array[i], local_communicators[i], sizeof(prof_attrs));
     }
+//        strcpy(array[i].name, local_communicators[i]->name);
+//        array[i].bytes = local_communicators[i]->bytes;
+//        array[i].msgs = local_communicators[i]->msgs;
+//        array[i].size = local_communicators[i]->size;
+//        memcpy(array[i].prims, local_communicators[i]->prims, sizeof(uint32_t) * NUM_OF_PRIMS);
+//        memcpy(array[i].prim_bytes, local_communicators[i]->prim_bytes, sizeof(uint64_t) * NUM_OF_PRIMS);
+//        memcpy(array[i].time_info, local_communicators[i]->time_info, sizeof(double) * NUM_OF_PRIMS);
+//            strcpy(array[i].name, local_communicators[i]->name);
+//            array[i].bytes = local_communicators[i]->bytes;
+//            array[i].msgs= local_communicators[i]->msgs;
+//            array[i].size = local_communicators[i]->size;
+//            for ( k=0; k<NUM_OF_PRIMS; k++ ){
+//                array[i].prims[k] = local_communicators[i]->prims[k];
+//                array[i].prim_bytes[k] =local_communicators[i]->prim_bytes[k];
+//                array[i].time_info[k] = local_communicators[i]->time_info[k];
+//            }
+//    }
 
     MPI_Get_processor_name(proc_name, &len);
 
@@ -2305,9 +2272,12 @@ _Finalize(void)
     }
 
     PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
+
     PMPI_Gather(&total_time, 1, MPI_DOUBLE, alltimes,1, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
-    PMPI_Gather(array, num_of_comms * sizeof(prof_attrs), MPI_BYTE, recv_buffer,
-                num_of_comms * sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
+
+    PMPI_Gather(array, num_of_comms, profiler_data, recv_buffer,
+                num_of_comms, profiler_data, 0, MPI_COMM_WORLD);
+
     PMPI_Barrier(MPI_COMM_WORLD);
     if ( rank == 0 ){
 
@@ -2610,7 +2580,8 @@ _Finalize(void)
     }
 
     PMPI_Type_free(&profiler_data);
-    //free(array);
+    MPI_Barrier(MPI_COMM_WORLD);
+    free(array);
     //Table_free(&request_tab);
 
     return PMPI_Finalize();
