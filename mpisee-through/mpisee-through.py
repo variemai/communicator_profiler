@@ -79,7 +79,7 @@ def print_times(elapsed_time, mpi_times):
     max_ratio_rank = ranks[ratios.index(max_ratio)]
     min_ratio_rank = ranks[ratios.index(min_ratio)]
 
-    print_decoration(BOLD)
+    print_decoration(GREEN)
     print(f"Overall Timing Statistics for {len(ratios)} MPI Processes (Ranks in MPI_COMM_WORLD)")
     print_decoration(RESET)
     print(f"Maximum Total Time: {max_value}s (MPI Rank: {max_rank})")
@@ -126,6 +126,9 @@ def print_mapping(mapping):
         else:
             node_to_procs[node] = [proc_rank]
 
+    print_decoration(GREEN)
+    print("Mapping of MPI ranks to Compute Nodes")
+    print_decoration(RESET)
     for node, proc_list in node_to_procs.items():
 
         print(f"{node}: {compact_proc_list(proc_list)}")
@@ -235,6 +238,9 @@ def print_cct(table, comm_to_procs, comm_limit):
         else len(comm_to_procs)
     )
     nb_comm_printed = 0
+    print_decoration(GREEN)
+    print("Statistics Per Communicator")
+    print_decoration(RESET)
     for comm in comm_to_procs.keys():
         if nb_comm_printed >= comm_limit:
             break
