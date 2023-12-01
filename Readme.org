@@ -1,5 +1,8 @@
 #+title: Readme
 
+* Introduction
+You friendly neighborhood MPI Communicator-centric profiler.
+
 * Build
 ** Requirements
 1. C/C++ compiler
@@ -20,3 +23,19 @@
   - The default output file is named ~per_process_data.csv~
 - To get a summary of the results parse the output file with the ~mpisee-through.py~ script located in ~mpisee-through~ folder
   - ~/path/to/mpisee-through.py -cct /path/to/outfile.csv~
+
+* Cite
+If you found this useful please cite:
+[[https://ieeexplore.ieee.org/document/9835659][Link to IEEE Xplore]]
+** Bibtex
+#+begin_src bibtex
+@INPROCEEDINGS{mpisee,
+  author={Vardas, Ioannis and Hunold, Sascha and Ajanohoun, Jordy I. and Träff, Jesper Larsson},
+  booktitle={2022 IEEE International Parallel and Distributed Processing Symposium Workshops (IPDPSW)},
+  title={mpisee: MPI Profiling for Communication and Communicator Structure},
+  year={2022},
+  volume={},
+  number={},
+  pages={520-529},
+  doi={10.1109/IPDPSW55747.2022.00092}}
+#+end_src
