@@ -2300,10 +2300,26 @@ _Finalize(void) {
         int r =-1;
         int p = 0;
         FILE *fpp = NULL;
-        char *env_var = getenv("MCPT");
-        /* if ( env_var  && (strcmp(env_var, "p") == 0 )){ */
+        // char * env_var=NULL:
+        const char *env_var = getenv("MPISEE_OUTFILE");
+        char *outfile;
         p = 1;
-        fpp = fopen("per_process_data.csv", "w");
+        if (env_var != NULL) {
+          fpp = fopen(env_var, "w");
+          if (fpp == NULL) {
+            mcpt_abort("Error opening outfile: %s\n",env_var);
+
+          }
+          outfile = strdup(env_var);
+        }
+        else{
+          fpp = fopen("per_process_data.csv", "w");
+          if (fpp == NULL) {
+            mcpt_abort("Error opening outfile: per_process_data.csv\n");
+
+          }
+          outfile = strdup("per_process_data.csv");
+        }
         ptr = proc_names;
         PMPI_Get_library_version(version, &resultlen);
         /* Remove line breaks in MPI version string, as it may create bugs during parsing. */
@@ -2424,7 +2440,8 @@ _Finalize(void) {
                 }
             }
             fclose(fpp);
-            printf("Per process data file: per_process_data.csv\n");
+            free(outfile);
+            printf("Output File Written: %s\n",outfile);
         }
 
         total = j;
