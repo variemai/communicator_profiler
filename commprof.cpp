@@ -2439,9 +2439,9 @@ _Finalize(void) {
                     fprintf(fpp, ",");
                 }
             }
+            printf("Output File Written: %s\n",outfile);
             fclose(fpp);
             free(outfile);
-            printf("Output File Written: %s\n",outfile);
         }
 
         total = j;
