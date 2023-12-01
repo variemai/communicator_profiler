@@ -2035,7 +2035,7 @@ F77_MPI_WAITANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
                 MPI_Status  *status , MPI_Fint *ierr)
 {
     int ret,i;
-    MPI_Request *c_array_of_requests;
+    MPI_Request *c_array_of_requests = NULL;
     //c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
     //assert(c_array_of_requests);
     for (i = 0; i < *count; i++) {
@@ -2163,7 +2163,7 @@ F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
 {
 
     int ret,i;
-    MPI_Request *c_array_of_requests;
+    MPI_Request *c_array_of_requests = NULL;
     //c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
     //assert(c_array_of_requests != NULL);
     for (i = 0; i < *count; i++) {
