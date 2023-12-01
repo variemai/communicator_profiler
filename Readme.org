@@ -1,0 +1,19 @@
+#+title: Readme
+
+* Build
+** Requirements
+1. C/C++ compiler
+3. CMake version > 3.10
+4. MPI Library (Open MPI, MPICH, CrayMPICH, MVAPICH, IntelMPI)
+** Basic build
+1. ~git clone https://github.com/variemai/communicator_profiler.git && cd communicator_profiler~
+2. ~mkdir build && cd build~
+3. ~cmake .. && make -j~
+You might need to define the compiler if it is not detected e.g.: ~-DMPI_CXX_COMPILER=mpicxx~
+* Usage
+- To profile your MPI application make sure it is compiled with the same MPI library as mpisee
+- ~LD_PRELOAD=/path/to/libmpisee.so MPISEE_OUTFILE=/path/to/outputfile.csv <mpi launcher> <args> /path/to/exec <args>~
+  - ~MPISEE_OUTFILE~ defines the output file of the profiler.
+  - if ~MPISEE_OUTFILE~ is not set the output file is named ~per_process_data.csv~
+- To get a summary of the results parse the output file with the ~mpisee-through.py~ script located in ~mpisee-through~ folder
+  - ~/path/to/mpisee-through.py -cct /path/to/outfile.csv~
