@@ -382,9 +382,9 @@ MPI_Init(int *argc, char ***argv)
 int
 MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
 {
-    int ret;
+    int ret,r;
     int comms,rank,min_rank;
-    char *buf;
+    char *buf = NULL;
     prof_attrs *communicator;
     ret = PMPI_Comm_create(comm, group, newcomm);
     /*
@@ -404,9 +404,20 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
     /* Use the parent's name as a prefix for the newly created communicator */
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*16);
+    buf = (char *)malloc(sizeof(char) * 16);
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
     /* Append prefix+suffix and initialize the data for the new communicator */
-    sprintf(buf,"_c%d.%d",my_coms,min_rank);
+    // sprintf(buf, "_c%d.%d", my_coms, min_rank);
+    r = snprintf(buf, 16, "_c%d.%d", my_coms, min_rank);
+    //truncation error handling
+    if (r < 0 || r >= 16) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
     init_comm(buf, &communicator, comm, newcomm);
     free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
@@ -443,9 +454,9 @@ F77_MPI_COMM_CREATE(MPI_Fint  * comm, MPI_Fint  * group, MPI_Fint  *comm_out ,
 int
 MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 {
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf = NULL;
     int rank, min_rank;
     /* Call the actual split */
     ret = PMPI_Comm_split(comm, color, key, newcomm);
@@ -469,9 +480,20 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
     /* Use the parent's name as a prefix for the newly created communicator */
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*16);
+    buf = (char *)malloc(sizeof(char) * 16);
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
     /* Suffix of the new communicator with the two ids */
-    sprintf(buf,"_s%d.%d",comms,min_rank);
+    r = snprintf(buf, 16, "_s%d.%d", my_coms, min_rank);
+    //truncation error handling
+    if (r < 0 || r >= 16) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    // sprintf(buf, "_s%d.%d", my_coms, min_rank);
     /* Append prefix+suffix and initialize the data for the new communicator */
     init_comm(buf, &communicator, comm, newcomm);
     free(buf);
@@ -499,17 +521,30 @@ F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
 int
 MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 {
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf = NULL;
     ret = PMPI_Comm_dup(comm, newcomm);
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*8);
-    sprintf(buf,"_d%d",my_coms);
+    buf = (char *)malloc(sizeof(char) * 8);
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 8, "_d%d", my_coms);
+    //truncation error handling
+    if (r < 0 || r >= 8) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    /* Append prefix+suffix and initialize the data for the new communicator */
+    // sprintf(buf,"_d%d",my_coms);
     init_comm(buf, &communicator, comm, newcomm);
     free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
@@ -537,9 +572,9 @@ int
 MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
 {
 
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf=NULL;
     ret = PMPI_Comm_idup(comm, newcomm, request);
 
 // #ifdef OMPI_MAJOR_VERSION
@@ -554,8 +589,21 @@ MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*8);
-    sprintf(buf,"_i%d",my_coms);
+    buf = (char *)malloc(sizeof(char) * 8);
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 8, "_i%d", my_coms);
+    //truncation error handling
+    if (r < 0 || r >= 8) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    /* Append prefix+suffix and initialize the data for the new communicator */
+    // sprintf(buf,"_i%d",my_coms);
     init_comm(buf, &communicator, comm, newcomm);
 
     free(buf);
@@ -569,16 +617,30 @@ int
 MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
                 const int *periods, int reorder, MPI_Comm *comm_cart)
 {
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf = NULL;
     ret = PMPI_Cart_create(old_comm, ndims, dims, periods, reorder, comm_cart);
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, old_comm);
     my_coms = comms;
     /* Should we have an if condition here to check if comm_cart is null? */
     communicator = get_comm_name(old_comm);
-    buf = (char*)malloc(8*sizeof(char));
-    sprintf(buf,"_a%d",my_coms);
+    buf = (char *)malloc(8 * sizeof(char));
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 8, "_a%d", my_coms);
+    //truncation error handling
+    if (r < 0 || r >= 8) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    /* Append prefix+suffix and initialize the data for the new communicator */
+
+    // sprintf(buf,"_a%d",my_coms);
     init_comm(buf, &communicator, old_comm, comm_cart);
     free(buf);
     PMPI_Comm_set_attr(*comm_cart, namekey(), communicator);
@@ -607,9 +669,9 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, const int  *dims,
 int
 MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
 {
-    int ret, my_rank;
+    int ret, my_rank,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf=NULL;
     int id,min_rank;
     ret = PMPI_Cart_sub(comm, remain_dims, new_comm);
     PMPI_Allreduce(&my_coms, &id, 1, MPI_INT, MPI_MAX, comm);
@@ -620,8 +682,21 @@ MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
     PMPI_Allreduce(&my_rank, &min_rank, 1, MPI_INT , MPI_MIN, *new_comm);
     my_coms = id;
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_b%d.%d",id,min_rank);
+    buf = (char *)malloc(sizeof(char) * 16);
+
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 16, "_b%d.%d", my_coms,min_rank);
+    //truncation error handling
+    if (r < 0 || r >= 16) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    // sprintf(buf,"_b%d.%d",id,min_rank);
     init_comm(buf, &communicator, comm, new_comm);
     PMPI_Comm_set_attr(*new_comm, namekey(), communicator);
     return ret;
@@ -648,9 +723,9 @@ int
 MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
                  const int *edges, int reorder, MPI_Comm *comm_graph)
 {
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf=NULL;
 
     ret = PMPI_Graph_create(comm_old, nnodes, index, edges, reorder, comm_graph);
 
@@ -658,8 +733,22 @@ MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
     my_coms = comms;
 
     communicator = get_comm_name(comm_old);
-    buf = (char*)malloc(8*sizeof(char));
-    sprintf(buf,"_r%d",my_coms);
+    buf = (char *)malloc(8 * sizeof(char));
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 8, "_r%d", my_coms);
+    //truncation error handling
+    if (r < 0 || r >= 8) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    /* Append prefix+suffix and initialize the data for the new communicator */
+
+    // sprintf(buf,"_r%d",my_coms);
     init_comm(buf, &communicator, comm_old, comm_graph);
     free(buf);
 
@@ -699,17 +788,31 @@ MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int *nodes,
                       const int *weights, MPI_Info info, int reorder,
                       MPI_Comm *newcomm)
 {
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf=NULL;
     ret = PMPI_Dist_graph_create(comm_old, n, nodes, degrees, targets, weights, info, reorder, newcomm);
 
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm_old);
     my_coms = comms;
 
     communicator = get_comm_name(comm_old);
-    buf = (char*)malloc(8*sizeof(char));
-    sprintf(buf,"_g%d",my_coms);
+    buf = (char *)malloc(8 * sizeof(char));
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 8, "_g%d", my_coms);
+    //truncation error handling
+    if (r < 0 || r >= 8) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    /* Append prefix+suffix and initialize the data for the new communicator */
+
+    // sprintf(buf,"_g%d",my_coms);
     init_comm(buf, &communicator, comm_old, newcomm);
     free(buf);
 
@@ -721,9 +824,9 @@ MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int *nodes,
 int
 MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
                     MPI_Comm *newcomm){
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf=NULL;
     int rank, min_rank;
 
     ret = PMPI_Comm_split_type(comm, split_type, key, info, newcomm);
@@ -736,8 +839,20 @@ MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
     }
     PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_t%d.%d",comms,min_rank);
+    buf = (char *)malloc(sizeof(char) * 16);
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 16, "_b%d.%d", my_coms,min_rank);
+    //truncation error handling
+    if (r < 0 || r >= 16) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    // sprintf(buf,"_t%d.%d",comms,min_rank);
     init_comm(buf, &communicator, comm, newcomm);
     free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
@@ -1920,7 +2035,7 @@ F77_MPI_WAITANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
                 MPI_Status  *status , MPI_Fint *ierr)
 {
     int ret,i;
-    MPI_Request *c_array_of_requests;
+    MPI_Request *c_array_of_requests = NULL;
     //c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
     //assert(c_array_of_requests);
     for (i = 0; i < *count; i++) {
@@ -2048,7 +2163,7 @@ F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
 {
 
     int ret,i;
-    MPI_Request *c_array_of_requests;
+    MPI_Request *c_array_of_requests = NULL;
     //c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
     //assert(c_array_of_requests != NULL);
     for (i = 0; i < *count; i++) {
@@ -2168,20 +2283,18 @@ F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
 
 static int
 _Finalize(void) {
-    FILE *fp;
     prof_attrs *array = NULL;
     int rank, size;
-    int i, j, k, found, len;
+    int i, j, k, len;
     prof_attrs *recv_buffer = NULL;
     prof_attrs dummy;
     char **names, **unames;
-    int total, num_of_comms, resultlen;
-    uint64_t *bytes, *ubytes, *prims_bytes, *uprims_bytes;
-    uint32_t *prims, *uprims;
-    uint64_t *msgs, *umsgs;
-    double *time_info, *utime_info;
-    /* time_t t; */
-    int *sizes, *usizes;
+    int  num_of_comms, resultlen;
+    uint64_t *bytes, *prims_bytes;
+    uint32_t *prims;
+    uint64_t *msgs;
+    double *time_info;
+    int *sizes;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names = NULL;
@@ -2444,144 +2557,6 @@ _Finalize(void) {
             free(outfile);
         }
 
-        total = j;
-
-        if ( env_var  && (strcmp(env_var, "p") == 0 )){
-            fp = fopen("profiler_data.csv","w");
-            ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total);
-            umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total);
-            usizes = (int *) malloc (sizeof(int)*total);
-            uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS);
-            uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*NUM_OF_PRIMS);
-            utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS);
-
-
-            memset(ubytes, 0, sizeof(uint64_t )*total);
-            memset(umsgs, 0, sizeof(uint64_t )*total);
-            memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS);
-            memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS);
-            memset(usizes, 0, sizeof(int)*total);
-            /* memset(utime_info, 0, sizeof(double)*total*NUM_OF_PRIMS); */
-            for ( i = 0; i<total*NUM_OF_PRIMS; i++)
-                utime_info[i] = 0.0;
-
-            num_of_comms = 0;
-            j = 0;
-            for ( i=0; i<total; i++ ){
-                /* Build the global communicator tree */
-                found = 0;
-                for ( k =0; k<total; k++ ){
-                    if ( strcmp(names[i], unames[k] ) == 0 ){
-                        found = 1;
-                    }
-                }
-                if ( !found ){
-                    strcpy(unames[j], names[i]);
-                    j++;
-                    num_of_comms++;
-                }
-            }
-            for ( i = 0; i<num_of_comms; i++){
-                for ( j=0; j<total; j++ ){
-                    if ( strcmp(unames[i], names[j]) == 0 ){
-                        ubytes[i]+= bytes[j];
-                        umsgs[i]+= msgs[j];
-                        usizes[i]=sizes[j];
-                        for ( k =0; k<NUM_OF_PRIMS; k++){
-                            if ( k >= Sendrecv ){
-                                /* acculumate the bytes instead of taking the max after talks with jesper */
-                                uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k];
-
-                                if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){
-                                    uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k];
-                                }
-                            }
-                            else{
-                                uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k];
-                                uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k];
-                            }
-                            /* DO NOT accumulate timing info take MAX */
-                            if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){
-                                utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k];
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (fp == NULL){
-                fprintf(stderr, "Failed to open output file: profiler_stats.txt\n");
-                mcpt_abort("Aborting\n");
-            }
-            fprintf(fp, "#'MPI LIBRARY' '%s'\n",version);
-            fprintf(fp, "#'Processes' '%d'\n",size);
-            fprintf(fp, "#'Run command' ");
-            fprintf(fp, "'%s",av[0]);
-            for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
-                fprintf(fp, " %s",av[i]);
-            }
-            fprintf(fp, "'\n");
-
-            fprintf(fp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
-            fprintf(fp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
-            if ( env_var ){
-                fprintf(fp, "#'mpisee env' '%s'\n", env_var);
-            }
-            else{
-                fprintf(fp, "#'mpisee env'\n");
-            }
-            time(&date);
-            tmp = ctime(&date);
-            fprintf(fp, "#'Profile date' ");
-            fprintf(fp, "'%c",*tmp);
-            tmp++;
-            while ( *tmp != '\n' ){
-                fprintf(fp, "%c",*tmp);
-                tmp++;
-            }
-            fprintf(fp, "'\n");
-            fprintf(fp, "#'Num of REAL comms' '%d'\n",num_of_comms);
-            fprintf(fp, "Comm,Size,Calls,");
-            /* free(date); */
-            for (k = 0; k<NUM_OF_PRIMS; k++){
-                fprintf(fp, "%s_Calls,",prim_names[k]);
-                fprintf(fp, "%s_Volume,",prim_names[k]);
-                if ( k == NUM_OF_PRIMS -1 )
-                    fprintf(fp, "%s_Time",prim_names[k]);
-                else
-                    fprintf(fp, "%s_Time,",prim_names[k]);
-            }
-            fprintf(fp,"\n");
-            for ( i =0; i<num_of_comms; i++ ){
-                /* if ( strcmp(unames[i], "NULL") !=0 ){ */
-                fprintf(fp,"%s(%d),%d,%" PRIu64 ",",unames[i],usizes[i],usizes[i],umsgs[i]);
-                for ( k =0; k<NUM_OF_PRIMS; k++ ){
-                    fprintf(fp, "%u,",uprims[i*NUM_OF_PRIMS+k]);
-                    if ( uprims[i*NUM_OF_PRIMS+k] > 0 )
-                        fprintf(fp, "%" PRIu64 ",",uprims_bytes[i*NUM_OF_PRIMS+k]);
-                    else
-                        fprintf(fp, "0.0,");
-                    if ( k == NUM_OF_PRIMS-1 )
-                        fprintf(fp, "%lf",utime_info[i*NUM_OF_PRIMS+k]);
-                    else
-                        fprintf(fp, "%lf,",utime_info[i*NUM_OF_PRIMS+k]);
-                }
-                fprintf(fp,"\n");
-                /* } */
-            }
-            printf("MCPT File: profiler_data.csv\n");
-            for ( i =0; i<total; i++ ){
-                free(unames[i]);
-            }
-            free(unames);
-            free(ubytes);
-            free(umsgs);
-            free(uprims);
-            free(uprims_bytes);
-            free(utime_info);
-            free(recv_buffer);
-            fclose(fp);
-        }
 
         for ( i =0; i<num_of_comms*size; i++ ){
             free(names[i]);
