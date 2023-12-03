@@ -209,7 +209,7 @@ _MPI_Init(int *argc, char ***argv){
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
-        printf("MPI_Init: MPI Communicator Profiling Tool\nProfiling application\
+        printf("MPI_Init: mpisee Profiling Tool\nProfiling application\
  %s\n",appname);
  #ifdef MPICH_NAME
         printf("MPICH library used\n");
@@ -268,7 +268,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
-        printf("MPI_Init_thread: MPI Communicator Profiling Tool\nProfiling\
+        printf("MPI_Init_thread: mpisee Profiling Tool\nProfiling\
 application %s\n",appname);
         fflush(stdout);
  #ifdef MPICH_NAME
