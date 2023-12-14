@@ -1,6 +1,7 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <cstdint>
 #include <mpi.h>
 #include <stdint.h>
 #include <unistd.h>
@@ -10,6 +11,9 @@
 #define MAX_ARG_STRING_SIZE 4096
 #define MAX_ARGS 1024
 #define MAX_ARG_SIZE 64
+#define NUM_BUCKETS 7
+// Buckets for message sizes
+const uint32_t buckets[NUM_BUCKETS-1] = {7,10,13,16,20,25};
 
 enum primitives{
 Send,           /* DO NOT ADD ANYHTING BEFORE THIS */
@@ -50,6 +54,15 @@ Iscatter,
 Ibarrier   /* DO NOT ADD ANYTHING AFTER THIS */
 };
 
+typedef struct communicator_attributes_msgsizes{
+    char name[NAMELEN];
+    int size;
+    uint32_t prims[NUM_OF_PRIMS];
+    uint64_t prim_bytes[NUM_OF_PRIMS];
+    double time_info[NUM_OF_PRIMS];
+    double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS];
+    uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
+}comm_attrs_msgsizes;
 
 typedef struct profiler_attributes{
     char name[NAMELEN];
