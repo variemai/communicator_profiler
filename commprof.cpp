@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <cstddef>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <mpi.h>
@@ -99,7 +100,7 @@ get_comm_name(MPI_Comm comm)
 void
 init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm){
     size_t length;
-    int comm_size,i;
+    int comm_size,i,j;
     if ( buf == NULL || communicator == NULL ||
          comm == MPI_COMM_NULL || newcomm == NULL){
         mcpt_abort("Newcomm called with NULL\n");
@@ -115,6 +116,11 @@ init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
         (*communicator)->prims[i] = 0;
         (*communicator)->prim_bytes[i] = 0;
         (*communicator)->time_info[i] = 0.0;
+        for (j = 0; j < NUM_BUCKETS; j++) {
+            (*communicator)->buckets_time[i][j] = 0.0;
+            (*communicator)->buckets_msgs[i][j] = 0;
+        }
+
     }
     // local_comms[local_cid] = *communicator;
     local_communicators.push_back(*communicator);
@@ -125,11 +131,46 @@ init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
     return;
 }
 
+//Change these values modify the buckets
+int choose_bucket(int64_t bytes) {
+    if (bytes < (1LL << 7)) {       // 1 << 7 is 128
+        return 0;
+    } else if (bytes < (1LL << 10)) { // 1 << 10 is 1024
+        return 1;
+    } else if (bytes < (1LL << 13)) { // 1 << 13 is 8192
+        return 2;
+    } else if (bytes < (1LL << 16)) { // 1 << 16 is 65536
+        return 3;
+    } else if (bytes < (1LL << 20)) { // 1 << 20 is 1048576
+        return 4;
+    } else if (bytes < (1LL << 25)) { // 1 << 25 is 33554432
+        return 5;
+    } else {
+        return 6; // For bytes >= 33554432
+    }
+  // The above is more optimized
+  // int index;
+  // int64_t tmp;
+  // for (index = 0; index < NUM_BUCKETS-1; index++) {
+  //   tmp = buckets[index];
+  //   tmp = 1 << tmp;
+  //   if (tmp > bytes) {
+  //       break;
+  //   }
+  //   if (index == (NUM_BUCKETS - 1) && (bytes > tmp)) {
+  //     index += 1;
+  //     break;
+  //   }
+  // }
+  // return index;
+}
+
+
 
 prof_attrs*
 profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
              double t_elapsed,int root){
-    int size,flag;
+    int size,flag,bucket_index;
     prof_attrs *communicator = NULL;
     int64_t sum = 0;
     /* int rank; */
@@ -153,12 +194,15 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
     else{
         sum = count;
     }
-    if ( flag ){
-        communicator->time_info[prim] += t_elapsed;
-        communicator->prims[prim] += 1;
+    if (flag) {
         communicator->msgs += 1;
         communicator->bytes += sum;
+        communicator->time_info[prim] += t_elapsed;
+        communicator->prims[prim] += 1;
         communicator->prim_bytes[prim] += sum;
+        bucket_index = choose_bucket(sum);
+        communicator->buckets_msgs[prim][bucket_index] += 1;
+        communicator->buckets_time[prim][bucket_index] += 1;
         /* if ( prim == Alltoallv ){ */
         /*     fprintf(dbg_file, "%ld \n",sum); */
         /* } */
