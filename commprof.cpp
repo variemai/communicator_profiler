@@ -2366,10 +2366,16 @@ _Finalize(void) {
     }
 
 
-    MPI_Datatype types[7] = {MPI_CHAR, MPI_UINT64_T, MPI_UINT64_T, MPI_INT,
-                             MPI_UINT32_T, MPI_UINT64_T, MPI_DOUBLE};
-    int blocklen[7] = {NAMELEN, 1, 1, 1, NUM_OF_PRIMS, NUM_OF_PRIMS, NUM_OF_PRIMS};
-    MPI_Aint displacements[7];
+    int blocklen[9] = {NAMELEN, 1, 1, 1, NUM_OF_PRIMS, NUM_OF_PRIMS, NUM_OF_PRIMS, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS};
+    MPI_Datatype types[9] = {MPI_CHAR, MPI_INT, MPI_UINT64_T, MPI_UINT64_T, MPI_UINT32_T, MPI_UINT64_T, MPI_DOUBLE, MPI_DOUBLE, MPI_UINT64_T};
+    MPI_Aint displacements[9];
+
+    // Create a dummy instance to calculate displacements
+
+    // MPI_Datatype types[7] = {MPI_CHAR, MPI_UINT64_T, MPI_UINT64_T, MPI_INT,
+    //                          MPI_UINT32_T, MPI_UINT64_T, MPI_DOUBLE};
+    // int blocklen[7] = {NAMELEN, 1, 1, 1, NUM_OF_PRIMS, NUM_OF_PRIMS, NUM_OF_PRIMS};
+    // MPI_Aint displacements[7];
     MPI_Aint base_address;
     MPI_Datatype profiler_data;
     PMPI_Get_address(&dummy, &base_address);
@@ -2387,8 +2393,10 @@ _Finalize(void) {
     displacements[4] = MPI_Aint_diff(displacements[4], base_address);
     displacements[5] = MPI_Aint_diff(displacements[5], base_address);
     displacements[6] = MPI_Aint_diff(displacements[6], base_address);
+    MPI_Get_address(&dummy.buckets_time, &displacements[7]);
+    MPI_Get_address(&dummy.buckets_msgs, &displacements[8]);
 
-    PMPI_Type_create_struct(7, blocklen, displacements, types, &profiler_data);
+    PMPI_Type_create_struct(9, blocklen, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
 
