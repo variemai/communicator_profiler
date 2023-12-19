@@ -2285,16 +2285,16 @@ static int
 _Finalize(void) {
     prof_attrs *array = NULL;
     int rank, size;
-    int i, j, k, len;
+    int i, k, len;
     prof_attrs *recv_buffer = NULL;
     prof_attrs dummy;
-    char **names, **unames;
+    // char **names, **unames;
     int  num_of_comms, resultlen;
-    uint64_t *bytes, *prims_bytes;
-    uint32_t *prims;
-    uint64_t *msgs;
-    double *time_info;
-    int *sizes;
+    // uint64_t *bytes, *prims_bytes;
+    // uint32_t *prims;
+    // uint64_t *msgs;
+    // double *time_info;
+    // int *sizes;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names = NULL;
@@ -2396,20 +2396,20 @@ _Finalize(void) {
 
         time_t date;
         char *tmp;
-        names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
-        memset(names, 0, sizeof(char*)*num_of_comms*size);
-        unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
-        bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
-        msgs = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
-        sizes = (int *) malloc (sizeof(int )*num_of_comms*size);
-        prims = (uint32_t*) malloc ( sizeof(uint32_t)*num_of_comms*size*
-                                     NUM_OF_PRIMS );
-        prims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size
-                                           *NUM_OF_PRIMS);
-        time_info = (double*) malloc ( sizeof(double)*num_of_comms*size*
-                                       NUM_OF_PRIMS );
+        // names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
+        // memset(names, 0, sizeof(char*)*num_of_comms*size);
+        // unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
+        // bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
+        // msgs = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
+        // sizes = (int *) malloc (sizeof(int )*num_of_comms*size);
+        // prims = (uint32_t*) malloc ( sizeof(uint32_t)*num_of_comms*size*
+        //                              NUM_OF_PRIMS );
+        // prims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size
+        //                                    *NUM_OF_PRIMS);
+        // time_info = (double*) malloc ( sizeof(double)*num_of_comms*size*
+        //                                NUM_OF_PRIMS );
 
-        j = 0;
+        // j = 0;
         int r =-1;
         int p = 0;
         FILE *fpp = NULL;
@@ -2509,35 +2509,35 @@ _Finalize(void) {
                 r++;
             }
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
-                unames[j] = strdup("NULL");
+                // unames[j] = strdup("NULL");
                 /* Use memcpy instead of loop */
-                names[j]=strdup(recv_buffer[i].name);
-                bytes[j] = recv_buffer[i].bytes;
-                msgs[j] = recv_buffer[i].msgs;
-                sizes[j] = recv_buffer[i].size;
+                // names[j]=strdup(recv_buffer[i].name);
+                // bytes[j] = recv_buffer[i].bytes;
+                // msgs[j] = recv_buffer[i].msgs;
+                // sizes[j] = recv_buffer[i].size;
                 if( p )
-                    fprintf(fpp, "%d,%s,%d,%lu,%lu,",r,names[j],sizes[j],bytes[j],msgs[j]);
+                    fprintf(fpp, "%d,%s,%d,%llu,%llu,",r,recv_buffer[i].name,recv_buffer[i].size,recv_buffer[i].bytes,recv_buffer[i].msgs);
                 /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
                 for ( k =0; k<NUM_OF_PRIMS; k++){
-                    prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
-                    prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k];
-                    time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k];
-                    mpi_time+=time_info[j*NUM_OF_PRIMS+k];
+                //     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
+                //     prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k];
+                //     time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k];
+                    mpi_time+=recv_buffer[i].time_info[k];
                     if ( p ){
-                        fprintf(fpp, "%u,",prims[j*NUM_OF_PRIMS+k]);
-                        if ( prims[j*NUM_OF_PRIMS+k] > 0 )
-                            fprintf(fpp, "%" PRIu64 ",",prims_bytes[j*NUM_OF_PRIMS+k]);
+                        fprintf(fpp, "%u,",recv_buffer[i].prims[k]);
+                        if ( recv_buffer[i].prims[k] > 0 )
+                            fprintf(fpp, "%" PRIu64 ",",recv_buffer[i].prim_bytes[k]);
                         else
                             fprintf(fpp, "0.0,");
                         if ( k == NUM_OF_PRIMS-1 )
-                            fprintf(fpp, "%lf",time_info[j*NUM_OF_PRIMS+k]);
+                            fprintf(fpp, "%lf",recv_buffer[i].time_info[k]);
                         else
-                            fprintf(fpp, "%lf,",time_info[j*NUM_OF_PRIMS+k]);
+                            fprintf(fpp, "%lf,",recv_buffer[i].time_info[k]);
                     }
                 }
                 if ( p )
                     fprintf(fpp,"\n");
-                j++;
+                // j++;
             }
         }
         mpi_times.push_back(mpi_time);
@@ -2558,15 +2558,15 @@ _Finalize(void) {
         }
 
 
-        for ( i =0; i<num_of_comms*size; i++ ){
-            free(names[i]);
-        }
-        free(names);
-        free(prims_bytes);
-        free(bytes);
-        free(msgs);
-        free(prims);
-        free(time_info);
+        // for ( i =0; i<num_of_comms*size; i++ ){
+        //     free(names[i]);
+        // }
+        // free(names);
+        // free(prims_bytes);
+        // free(bytes);
+        // free(msgs);
+        // free(prims);
+        // free(time_info);
         free(alltimes);
         free(proc_names);
     }
