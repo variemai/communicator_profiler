@@ -2411,12 +2411,10 @@ _Finalize(void) {
 
         // j = 0;
         int r =-1;
-        int p = 0;
         FILE *fpp = NULL;
         // char * env_var=NULL:
         const char *env_var = getenv("MPISEE_OUTFILE");
         char *outfile;
-        p = 1;
         if (env_var != NULL) {
           fpp = fopen(env_var, "w");
           if (fpp == NULL) {
@@ -2515,47 +2513,41 @@ _Finalize(void) {
                 // bytes[j] = recv_buffer[i].bytes;
                 // msgs[j] = recv_buffer[i].msgs;
                 // sizes[j] = recv_buffer[i].size;
-                if( p )
-                    fprintf(fpp, "%d,%s,%d,%" PRIu64 ",%" PRIu64 ",",r,recv_buffer[i].name,recv_buffer[i].size,recv_buffer[i].bytes,recv_buffer[i].msgs);
+                fprintf(fpp, "%d,%s,%d,%" PRIu64 ",%" PRIu64 ",",r,recv_buffer[i].name,recv_buffer[i].size,recv_buffer[i].bytes,recv_buffer[i].msgs);
                 /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
                 for ( k =0; k<NUM_OF_PRIMS; k++){
                 //     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
                 //     prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k];
                 //     time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k];
                     mpi_time+=recv_buffer[i].time_info[k];
-                    if ( p ){
-                        fprintf(fpp, "%u,",recv_buffer[i].prims[k]);
-                        if ( recv_buffer[i].prims[k] > 0 )
-                            fprintf(fpp, "%" PRIu64 ",",recv_buffer[i].prim_bytes[k]);
-                        else
-                            fprintf(fpp, "0.0,");
-                        if ( k == NUM_OF_PRIMS-1 )
-                            fprintf(fpp, "%lf",recv_buffer[i].time_info[k]);
-                        else
-                            fprintf(fpp, "%lf,",recv_buffer[i].time_info[k]);
-                    }
+                    fprintf(fpp, "%u,",recv_buffer[i].prims[k]);
+                    if ( recv_buffer[i].prims[k] > 0 )
+                        fprintf(fpp, "%" PRIu64 ",",recv_buffer[i].prim_bytes[k]);
+                    else
+                        fprintf(fpp, "0.0,");
+                    if ( k == NUM_OF_PRIMS-1 )
+                        fprintf(fpp, "%lf",recv_buffer[i].time_info[k]);
+                    else
+                        fprintf(fpp, "%lf,",recv_buffer[i].time_info[k]);
                 }
-                if ( p )
-                    fprintf(fpp,"\n");
+                fprintf(fpp,"\n");
                 // j++;
             }
         }
         mpi_times.push_back(mpi_time);
-        if( p ){
-            fprintf(fpp, "#'MPI Time (Rank Time)',");
-            for (size_t it=0; it < mpi_times.size(); it++) {
-                fprintf(fpp, "%lu %lf",it,mpi_times[it]);
-                if ( it == mpi_times.size()-1 ){
-                    fprintf(fpp, "\n");
-                }
-                else{
-                    fprintf(fpp, ",");
-                }
+        fprintf(fpp, "#'MPI Time (Rank Time)',");
+        for (size_t it=0; it < mpi_times.size(); it++) {
+            fprintf(fpp, "%lu %lf",it,mpi_times[it]);
+            if ( it == mpi_times.size()-1 ){
+                fprintf(fpp, "\n");
             }
-            printf("Output File Written: %s\n",outfile);
-            fclose(fpp);
-            free(outfile);
+            else{
+                fprintf(fpp, ",");
+            }
         }
+        printf("Output File Written: %s\n",outfile);
+        fclose(fpp);
+        free(outfile);
 
 
         // for ( i =0; i<num_of_comms*size; i++ ){
