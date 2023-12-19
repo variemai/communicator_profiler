@@ -15,11 +15,7 @@
 #include <vector>
 #include "commprof.h"
 #include <algorithm>
-
-#ifdef OMPI_MAJOR_VERSION
 #include "symbols.h"
-#endif
-
 #include <inttypes.h>
 
 int prof_enabled = 1;
