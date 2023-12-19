@@ -2516,7 +2516,7 @@ _Finalize(void) {
                 // msgs[j] = recv_buffer[i].msgs;
                 // sizes[j] = recv_buffer[i].size;
                 if( p )
-                    fprintf(fpp, "%d,%s,%d,%" PRIu64 ",%" PRIu64,r,recv_buffer[i].name,recv_buffer[i].size,recv_buffer[i].bytes,recv_buffer[i].msgs);
+                    fprintf(fpp, "%d,%s,%d,%" PRIu64 ",%" PRIu64 ",",r,recv_buffer[i].name,recv_buffer[i].size,recv_buffer[i].bytes,recv_buffer[i].msgs);
                 /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
                 for ( k =0; k<NUM_OF_PRIMS; k++){
                 //     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
