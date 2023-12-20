@@ -19,13 +19,10 @@
 #include <inttypes.h>
 
 int prof_enabled = 1;
-// prof_attrs **local_data = NULL;
-// prof_attrs **local_comms = NULL;
 int local_cid= 0;
 int my_coms = 1;
 int ac;
 char *av[MAX_ARGS];
-//Table_T request_tab;
 std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 std::vector<prof_attrs*> local_communicators;
 
@@ -2392,23 +2389,8 @@ _Finalize(void) {
 
         time_t date;
         char *tmp;
-        // names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
-        // memset(names, 0, sizeof(char*)*num_of_comms*size);
-        // unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
-        // bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
-        // msgs = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size);
-        // sizes = (int *) malloc (sizeof(int )*num_of_comms*size);
-        // prims = (uint32_t*) malloc ( sizeof(uint32_t)*num_of_comms*size*
-        //                              NUM_OF_PRIMS );
-        // prims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size
-        //                                    *NUM_OF_PRIMS);
-        // time_info = (double*) malloc ( sizeof(double)*num_of_comms*size*
-        //                                NUM_OF_PRIMS );
-
-        // j = 0;
         int r =-1;
         FILE *fpp = NULL;
-        // char * env_var=NULL:
         const char *env_var = getenv("MPISEE_OUTFILE");
         char *outfile;
         if (env_var != NULL) {
@@ -2440,13 +2422,11 @@ _Finalize(void) {
         fprintf(fpp, "#'MPI LIBRARY' '%s'\n",version);
         fprintf(fpp, "#'Processes' '%d'\n",size);
         fprintf(fpp, "#'Run command' ");
-        // if (av != NULL){
         fprintf(fpp, "'%s",av[0]);
         for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
             fprintf(fpp, " %s",av[i]);
         }
         fprintf(fpp, "'\n");
-        // }
         fprintf(fpp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
         fprintf(fpp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
         if ( env_var ){
@@ -2503,18 +2483,8 @@ _Finalize(void) {
                 r++;
             }
             if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
-                // unames[j] = strdup("NULL");
-                /* Use memcpy instead of loop */
-                // names[j]=strdup(recv_buffer[i].name);
-                // bytes[j] = recv_buffer[i].bytes;
-                // msgs[j] = recv_buffer[i].msgs;
-                // sizes[j] = recv_buffer[i].size;
                 fprintf(fpp, "%d,%s,%d,%" PRIu64 ",%" PRIu64 ",",r,recv_buffer[i].name,recv_buffer[i].size,recv_buffer[i].bytes,recv_buffer[i].msgs);
-                /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
                 for ( k =0; k<NUM_OF_PRIMS; k++){
-                //     prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k];
-                //     prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k];
-                //     time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k];
                     mpi_time+=recv_buffer[i].time_info[k];
                     fprintf(fpp, "%u,",recv_buffer[i].prims[k]);
                     if ( recv_buffer[i].prims[k] > 0 )
@@ -2527,7 +2497,6 @@ _Finalize(void) {
                         fprintf(fpp, "%lf,",recv_buffer[i].time_info[k]);
                 }
                 fprintf(fpp,"\n");
-                // j++;
             }
         }
         mpi_times.push_back(mpi_time);
@@ -2544,17 +2513,6 @@ _Finalize(void) {
         printf("Output File Written: %s\n",outfile);
         fclose(fpp);
         free(outfile);
-
-
-        // for ( i =0; i<num_of_comms*size; i++ ){
-        //     free(names[i]);
-        // }
-        // free(names);
-        // free(prims_bytes);
-        // free(bytes);
-        // free(msgs);
-        // free(prims);
-        // free(time_info);
         free(alltimes);
         free(proc_names);
     }
@@ -2562,7 +2520,6 @@ _Finalize(void) {
     PMPI_Type_free(&profiler_data);
     MPI_Barrier(MPI_COMM_WORLD);
     free(array);
-    //Table_free(&request_tab);
 
     return PMPI_Finalize();
 }
