@@ -10,6 +10,7 @@ static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
    return 0;
 }
 
+
 // Function to execute SQL command
 void executeSQL(sqlite3* db, const char* sql, const char* name) {
     char* errMsg = nullptr;
@@ -37,6 +38,41 @@ void executeSQL(sqlite3* db, const std::string& sql, const char* name) {
 }
 
 
+int getCommId(sqlite3* db, const std::string& commName) {
+    sqlite3_stmt* stmt;
+    int commId = -1;  // Default to an invalid ID
+    // Prepare SQL query to select the ID from comms where name and size match
+    std::string sql = "SELECT id FROM comms WHERE name = '" + commName + "'";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, commName.c_str(), -1, SQLITE_STATIC);
+
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            commId = sqlite3_column_int(stmt, 0);  // Get the id from the query result
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+    }
+    return commId; // return the retrieved ID
+}
+
+int getMappingId(sqlite3* db, const std::string& machineName) {
+    sqlite3_stmt* stmt;
+    int mappingId = -1;  // Default to an invalid ID
+
+    std::string sql = "SELECT id FROM mapping WHERE machine = ?";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, machineName.c_str(), -1, SQLITE_STATIC);
+
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            mappingId = sqlite3_column_int(stmt, 0);  // Get the id from the query result
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+    }
+    return mappingId;
+}
 
 void createTables(sqlite3* db) {
 
@@ -125,36 +161,39 @@ int main(int argc, char* argv[]) {
 
   createTables(db);
 
-      insertIntoMappings(db, "machine1");
-    insertIntoMappings(db, "machine2");
+  insertIntoMappings(db, "machine1");
+  insertIntoMappings(db, "machine2");
 
-    // Insert test data into comms
-    insertIntoComms(db, "comm1", "1024");
-    insertIntoComms(db, "comm2", "2048");
+  // Insert test data into comms
+  std::string world = "W";
+  std::string comm1 = "W1";
+  std::string comm2 = "W2";
+  insertIntoComms(db, world, "2");
+  insertIntoComms(db, comm1, "1");
+  insertIntoComms(db, comm2, "1");
 
-    // Insert test data into operations
-    insertIntoOperations(db, "MPI_Send");
-    insertIntoOperations(db, "MPI_Recv");
-    insertIntoOperations(db, "MPI_Allreduce");
-    insertIntoOperations(db, "MPI_Bcast");
+  // Insert test data into operations
+  insertIntoOperations(db, "MPI_Send");
+  insertIntoOperations(db, "MPI_Recv");
+  insertIntoOperations(db, "MPI_Allreduce");
+  insertIntoOperations(db, "MPI_Bcast");
 
-    // Insert test data into data for rank 0
-    insertIntoData(db, 0, 1, 1, 1, 128, 64, 10, 0.001); // MPI_Send
-    insertIntoData(db, 0, 2, 2, 2, 256, 128, 5, 0.002); // MPI_Recv
-    insertIntoData(db, 0, 1, 1, 3, 512, 256, 8, 0.003); // MPI_Allreduce
-    insertIntoData(db, 0, 2, 2, 4, 1024, 512, 3, 0.004); // MPI_Bcast
+  // Insert test data into data for rank 0
+  insertIntoData(db, 0, 1, 1, 1, 128, 64, 10, 0.001); // MPI_Send
+  insertIntoData(db, 0, 2, 2, 2, 256, 128, 5, 0.002); // MPI_Recv
+  insertIntoData(db, 0, 1, 1, 3, 512, 256, 8, 0.003); // MPI_Allreduce
+  insertIntoData(db, 0, 2, 2, 4, 1024, 512, 3, 0.004); // MPI_Bcast
 
-    // Insert test data into data for rank 1
-    insertIntoData(db, 1, 1, 1, 1, 128, 64, 15, 0.005); // MPI_Send
-    insertIntoData(db, 1, 2, 2, 2, 256, 128, 7, 0.006); // MPI_Recv
-    insertIntoData(db, 1, 1, 1, 3, 512, 256, 10, 0.007); // MPI_Allreduce
-    insertIntoData(db, 1, 2, 2, 4, 1024, 512, 5, 0.008); // MPI_Bcast
+  // Insert test data into data for rank 1
+  insertIntoData(db, 1, 1, 1, 1, 128, 64, 15, 0.005); // MPI_Send
+  insertIntoData(db, 1, 2, 2, 2, 256, 128, 7, 0.006); // MPI_Recv
+  insertIntoData(db, 1, 1, 1, 3, 512, 256, 10, 0.007); // MPI_Allreduce
+  insertIntoData(db, 1, 2, 2, 4, 1024, 512, 5, 0.008); // MPI_Bcast
 
-    sqlite3_close(db);
-
-
-
+  std::cout << getCommId(db, world) << '\n';
   sqlite3_close(db);
+
+
   return 0;
 }
 
