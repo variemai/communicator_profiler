@@ -1100,12 +1100,7 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
         ret = PMPI_Bcast(buffer, count, datatype, root, comm);
         t_elapsed = MPI_Wtime() - t_elapsed;
         PMPI_Comm_rank(comm, &rank);
-        if ( rank == root ){
-            sum = 0;
-        }
-        else {
-            sum = count;
-        }
+        sum = count;
         profile_this(comm,sum,datatype,Bcast,t_elapsed,root);
     }
     else{
@@ -1144,22 +1139,7 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
         t_elapsed = MPI_Wtime() - t_elapsed;
 
         PMPI_Comm_rank(comm, &rank);
-        if ( rank == root ){
-            sum = 0;
-        }
-        else {
-            sum = count;
-        }
-//#ifndef MPICH_NAME
-        /*
-#ifndef MPICH_API_PUBLIC
-        Table_put(request_tab, request, comm);
-#else
-        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-        *com = comm;
-        Table_put(request_tab, request, com);
-#endif
-*/
+        sum = count;
         profile_this(comm,sum,datatype,Ibcast,t_elapsed,root);
     }
     else{
@@ -1238,15 +1218,6 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
         t_elapsed =  MPI_Wtime();
         ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        /*
-#ifndef MPICH_API_PUBLIC
-        Table_put(request_tab, request, comm);
-#else
-        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-        *com = comm;
-        Table_put(request_tab, request, com);
-#endif
-*/
 
         profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
     }

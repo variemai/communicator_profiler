@@ -27,35 +27,38 @@ void executeSQL(sqlite3* db, const char* sql, const char* name) {
 // Function to create database and tables
 void createTables(sqlite3* db) {
 
-    // Create Metrics Table
-    const char* createMetricsTable =
-        "CREATE TABLE IF NOT EXISTS metrics ("
-        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "metric_name TEXT, "
-        "metric_unit TEXT);";
-    executeSQL(db, createMetricsTable, "Metrics");
-
     // Create Mapping Table
-    const char* createMappingTable =
-        "CREATE TABLE IF NOT EXISTS mapping ("
-        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "mapping_description TEXT);";
-    executeSQL(db, createMappingTable, "Mapping");
+    const char *MappingTable = "CREATE TABLE IF NOT EXISTS mapping ("
+                               "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                               "machine TEXT);";
+
+    executeSQL(db, MappingTable, "Mapping");
+
+    // Create Comms Table
+    const char *CommsTable = "CREATE TABLE IF NOT EXISTS comms ("
+                             "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                             "name TEXT, "
+                             "size TEXT);";
+
+    executeSQL(db, CommsTable, "Communicator");
 
     // Create Data Table
-    const char* createDataTable =
-        "CREATE TABLE IF NOT EXISTS data ("
-        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "rank INTEGER, "
-        "mapping_id INTEGER, "
-        "metric_id INTEGER, "
-        "value REAL, "
-        "FOREIGN KEY (mapping_id) REFERENCES mapping (id), "
-        "FOREIGN KEY (metric_id) REFERENCES metrics (id));";
-    executeSQL(db, createDataTable, "Data");
+    const char *DataTable = "CREATE TABLE IF NOT EXISTS data ("
+                            "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+                            "rank INTEGER, "
+                            "mapping_id INTEGER, "
+                            "comm_id INTEGER, "
+        "operation_id, INTEGER, "
+        "buffer_size_max INTEGER, "
+        "buffer_size_min INTEGER, "
+        "calls INTEGER, "
+        "time REAL, "
+        "FOREIGN KEY (operation_id) REFERENCES operations (id), "
+        "FOREIGN KEY (comm_id) REFERENCES comms (id), "
+        "FOREIGN KEY (mapping_id) REFERENCES mapping (id));";
 
-    // Close database
-    sqlite3_close(db);
+    executeSQL(db, DataTable, "Data");
+
 }
 
 
