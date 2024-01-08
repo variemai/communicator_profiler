@@ -1,5 +1,7 @@
 #include <iostream>
 #include <sqlite3.h>
+#include <string>
+#include "utils.h"
 
 static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
    int i;
@@ -8,6 +10,58 @@ static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
    }
    printf("\n");
    return 0;
+}
+
+int countTable(sqlite3 *db, const std::string& tablename) {
+    sqlite3_stmt* stmt;
+    int count = 0;
+    std::string checkSql = "SELECT COUNT(*) FROM " + tablename;
+    sqlite3_prepare_v2(db, checkSql.c_str(), -1, &stmt, nullptr);
+
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
+    }
+    sqlite3_finalize(stmt);
+    return count;
+}
+
+
+void printDataDetails(sqlite3* db) {
+    sqlite3_stmt* stmt;
+
+    std::string sql = "SELECT d.rank, m.machine, c.name, c.size, o.operation, "
+                      "d.buffer_size_min, d.buffer_size_max, d.calls, d.time "
+                      "FROM data d "
+                      "JOIN mappings m ON d.rank = m.id "
+                      "JOIN comms c ON d.comm_id = c.id "
+                      "JOIN operations o ON d.operation_id = o.id";
+
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int rank = sqlite3_column_int(stmt, 0);
+            const char* machine = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            const char* commName = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+            const char* commSize = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+            const char* operation = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+            int bufferSizeMin = sqlite3_column_int(stmt, 5);
+            int bufferSizeMax = sqlite3_column_int(stmt, 6);
+            int calls = sqlite3_column_int(stmt, 7);
+            double time = sqlite3_column_double(stmt, 8);
+
+            std::cout << "Rank: " << rank
+                      << ", Machine: " << (machine ? machine : "NULL")
+                      << ", Comm Name: " << (commName ? commName : "NULL")
+                      << ", Comm Size: " << (commSize ? commSize : "NULL")
+                      << ", Operation: " << (operation ? operation : "NULL")
+                      << ", Buffer Size Min: " << bufferSizeMin
+                      << ", Buffer Size Max: " << bufferSizeMax
+                      << ", Calls: " << calls
+                      << ", Time: " << time << std::endl;
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+    }
 }
 
 
@@ -60,7 +114,7 @@ int getMappingId(sqlite3* db, const std::string& machineName) {
     sqlite3_stmt* stmt;
     int mappingId = -1;  // Default to an invalid ID
 
-    std::string sql = "SELECT id FROM mapping WHERE machine = ?";
+    std::string sql = "SELECT id FROM mappings WHERE machine = '" + machineName + "'";
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
         sqlite3_bind_text(stmt, 1, machineName.c_str(), -1, SQLITE_STATIC);
 
@@ -103,7 +157,6 @@ void createTables(sqlite3* db) {
         "CREATE TABLE IF NOT EXISTS data ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT, "
         "rank INTEGER, "
-        "mapping_id INTEGER, "
         "comm_id INTEGER, "
         "operation_id INTEGER, "
         "buffer_size_max INTEGER, "
@@ -112,43 +165,82 @@ void createTables(sqlite3* db) {
         "time REAL, "
         "FOREIGN KEY (operation_id) REFERENCES operations (id), "
         "FOREIGN KEY (comm_id) REFERENCES comms (id), "
-        "FOREIGN KEY (mapping_id) REFERENCES mappings (id));";
+        "FOREIGN KEY (rank) REFERENCES mappings (id));";
     executeSQL(db, DataTable, "Data");
 }
 
 // Function to insert into mappings
-void insertIntoMappings(sqlite3* db, const std::string& machine) {
-    std::string sql = "INSERT INTO mappings (machine) VALUES ('" + machine + "')";
-    executeSQL(db, sql, "INSERT INTO mappings");
+void insertIntoMappings(sqlite3 *db, const std::string &machine) {
+  int count;
+  count = countTable(db, "mappings");
+  std::string insertSql;
+  if (count == 0) {
+    // The table is empty, insert with id = 0
+    insertSql = "INSERT INTO mappings (id, machine) VALUES (0, '" + machine + "')";
+  } else {
+    // The table is not empty, let SQLite auto-increment the id
+    insertSql = "INSERT INTO mappings (machine) VALUES ('" + machine + "')";
+  }
+
+  executeSQL(db, insertSql, "INSERT INTO mappings");
 }
 
-// Function to insert into comms
-void insertIntoComms(sqlite3* db, const std::string& name, const std::string& size) {
-    std::string sql = "INSERT INTO comms (name, size) VALUES ('" + name + "', '" + size + "')";
-    executeSQL(db, sql,"INSERT INTO comms" );
+
+
+// Functions to insert into comms
+void insertIntoComms(sqlite3 *db, const std::string &name,
+                     const std::string &size) {
+  int count;
+  count = countTable(db, "comms");
+  std::string insertSql;
+  if (count == 0) {
+    // The table is empty, insert with id = 0
+    insertSql = "INSERT INTO comms (id, name, size) VALUES (0, '" + name + "', '" + size + "')";
+  } else {
+    // The table is not empty, let SQLite auto-increment the id
+    insertSql = "INSERT INTO comms (name, size) VALUES ('" + name + "', '" + size + "')";
+  }
+    executeSQL(db, insertSql,"INSERT INTO comms" );
 }
 
-// Function to insert into operations
+// Functions to insert into operations
 void insertIntoOperations(sqlite3* db, const std::string& operation) {
-    std::string sql = "INSERT INTO operations (operation) VALUES ('" + operation + "')";
-    executeSQL(db, sql, "INSERT INTO operations");
+  int count;
+  count = countTable(db, "operations");
+  std::string insertSql;
+  if (count == 0) {
+    insertSql = "INSERT INTO operations (id, operation) VALUES (0, '" + operation + "')";
+  } else {
+    insertSql = "INSERT INTO operations (operation) VALUES ('" + operation + "')";
+
+  }
+  executeSQL(db, insertSql, "INSERT INTO operations");
 }
 
-// Function to insert into data
-void insertIntoData(sqlite3* db, int rank, int mappingId, int commId, int operationId, int bufferSizeMax, int bufferSizeMin, int calls, double time) {
-    std::string sql = "INSERT INTO data (rank, mapping_id, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES ("
-                      + std::to_string(rank) + ", " + std::to_string(mappingId) + ", " + std::to_string(commId) + ", "
+// Functions to insert into data
+void insertIntoData(sqlite3* db, int rank, int commId, int operationId, int bufferSizeMax, int bufferSizeMin, int calls, double time) {
+  int count;
+  count = countTable(db, "operations");
+  std::string insertSql;
+  if (count == 0) {
+    insertSql = "INSERT INTO data (id, rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES (0, "
+                      + std::to_string(rank) + ", " + std::to_string(commId) + ", "
                       + std::to_string(operationId) + ", " + std::to_string(bufferSizeMax) + ", "
                       + std::to_string(bufferSizeMin) + ", " + std::to_string(calls) + ", " + std::to_string(time) + ")";
-    executeSQL(db, sql, "INSERT INTO data");
+
+  } else {
+    insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES ("
+                      + std::to_string(rank) + ", " + std::to_string(commId) + ", "
+                      + std::to_string(operationId) + ", " + std::to_string(bufferSizeMax) + ", "
+                      + std::to_string(bufferSizeMin) + ", " + std::to_string(calls) + ", " + std::to_string(time) + ")";
+  }
+  executeSQL(db, insertSql, "INSERT INTO data");
 }
-
-
 
 int main(int argc, char* argv[]) {
   sqlite3 *db;
   char *zErrMsg = 0;
-  int rc;
+  int rc,i;
 
   // Open database
   rc = sqlite3_open("test_mpi_data.db", &db);
@@ -173,27 +265,33 @@ int main(int argc, char* argv[]) {
   insertIntoComms(db, comm2, "1");
 
   // Insert test data into operations
-  insertIntoOperations(db, "MPI_Send");
-  insertIntoOperations(db, "MPI_Recv");
-  insertIntoOperations(db, "MPI_Allreduce");
-  insertIntoOperations(db, "MPI_Bcast");
+  for (i = 0; i<NUM_OF_PRIMS ; i++ ) {
+    insertIntoOperations(db, prim_names[i]);
+  }
+  // insertIntoOperations(db, "MPI_Send");
+  // insertIntoOperations(db, "MPI_Recv");
+  // insertIntoOperations(db, "MPI_Allreduce");
+  // insertIntoOperations(db, "MPI_Bcast");
 
   // Insert test data into data for rank 0
-  insertIntoData(db, 0, 1, 1, 1, 128, 64, 10, 0.001); // MPI_Send
-  insertIntoData(db, 0, 2, 2, 2, 256, 128, 5, 0.002); // MPI_Recv
-  insertIntoData(db, 0, 1, 1, 3, 512, 256, 8, 0.003); // MPI_Allreduce
-  insertIntoData(db, 0, 2, 2, 4, 1024, 512, 3, 0.004); // MPI_Bcast
+  insertIntoData(db, 0, 0, Send, 128, 64, 10, 0.001); // MPI_Send
+  insertIntoData(db, 0, 0, Recv, 256, 128, 5, 0.002); // MPI_Recv
+  insertIntoData(db, 0, 1, Allreduce, 512, 256, 8, 0.003); // MPI_Allreduce
+  insertIntoData(db, 0, 1, Bcast, 1024, 512, 3, 0.004); // MPI_Bcast
 
   // Insert test data into data for rank 1
-  insertIntoData(db, 1, 1, 1, 1, 128, 64, 15, 0.005); // MPI_Send
-  insertIntoData(db, 1, 2, 2, 2, 256, 128, 7, 0.006); // MPI_Recv
-  insertIntoData(db, 1, 1, 1, 3, 512, 256, 10, 0.007); // MPI_Allreduce
-  insertIntoData(db, 1, 2, 2, 4, 1024, 512, 5, 0.008); // MPI_Bcast
+  insertIntoData(db, 1, 0, Send, 128, 64, 15, 0.005); // MPI_Send
+  insertIntoData(db, 1, 0, Recv, 256, 128, 7, 0.006); // MPI_Recv
+  insertIntoData(db, 1, 2, Allreduce, 512, 256, 10, 0.007); // MPI_Allreduce
+  insertIntoData(db, 1, 2, Bcast, 1024, 512, 5, 0.008); // MPI_Bcast
 
-  std::cout << getCommId(db, world) << '\n';
+  printDataDetails(db);
+
+  // std::cout << getCommId(db, world) << '\n';
+  // char *machname = "machine2";
+  // std::cout << getMappingId(db, machname) << '\n';
+
   sqlite3_close(db);
-
-
   return 0;
 }
 
