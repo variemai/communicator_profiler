@@ -188,20 +188,63 @@ void insertIntoMappings(sqlite3 *db, const std::string &machine) {
 
 
 // Functions to insert into comms
-void insertIntoComms(sqlite3 *db, const std::string &name,
-                     const std::string &size) {
-  int count;
-  count = countTable(db, "comms");
-  std::string insertSql;
-  if (count == 0) {
-    // The table is empty, insert with id = 0
-    insertSql = "INSERT INTO comms (id, name, size) VALUES (0, '" + name + "', '" + size + "')";
-  } else {
-    // The table is not empty, let SQLite auto-increment the id
-    insertSql = "INSERT INTO comms (name, size) VALUES ('" + name + "', '" + size + "')";
-  }
-    executeSQL(db, insertSql,"INSERT INTO comms" );
+// void insertIntoComms(sqlite3 *db, const std::string &name,
+//                      const std::string &size) {
+//   int count;
+
+//   count = countTable(db, "comms");
+//   std::string insertSql;
+//   if (count == 0) {
+//     // The table is empty, insert with id = 0
+//     insertSql = "INSERT INTO comms (id, name, size) VALUES (0, '" + name + "', '" + size + "')";
+//   } else {
+//     // The table is not empty, let SQLite auto-increment the id
+//     sqlite3_stmt *stmt;
+//     std::string checkSql = "SELECT COUNT(*) FROM comms WHERE name = '" + name + "'";
+//     sqlite3_prepare_v2(db, checkSql.c_str(), -1, &stmt, nullptr);
+//     sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
+//     count = -1;
+//     count = sqlite3_column_int(stmt, 0);
+//     // If the entry does not exist, insert it
+//     if ( count == 0 ){
+//       insertSql = "INSERT INTO comms (name, size) VALUES ('" + name + "', '" +
+//                   size + "')";
+//     } else {
+//       std::cout << "Entry with name '" << name
+//                 << "' already exists in comms table." << std::endl;
+//       return;
+//     }
+//   }
+//     executeSQL(db, insertSql,"INSERT INTO comms" );
+// }
+
+void insertIntoComms(sqlite3 *db, const std::string &name, const std::string &size) {
+    sqlite3_stmt *stmt;
+    std::string checkSql = "SELECT COUNT(*) FROM comms WHERE name = ?";
+    sqlite3_prepare_v2(db, checkSql.c_str(), -1, &stmt, nullptr);
+    sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
+
+    int count = -1;
+    if (sqlite3_step(stmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(stmt, 0);
+    }
+    sqlite3_finalize(stmt);
+
+    // If the entry does not exist, insert it
+    if (count == 0) {
+        std::string insertSql;
+        // Check if it's the first entry to set id to 0
+        if (countTable(db, "comms") == 0) {
+            insertSql = "INSERT INTO comms (id, name, size) VALUES (0, '" + name + "', '" + size + "')";
+        } else {
+            insertSql = "INSERT INTO comms (name, size) VALUES ('" + name + "', '" + size + "')";
+        }
+        executeSQL(db, insertSql, "INSERT INTO comms");
+    } else {
+        std::cout << "Entry with name '" << name << "' already exists in comms table." << std::endl;
+    }
 }
+
 
 // Functions to insert into operations
 void insertIntoOperations(sqlite3* db, const std::string& operation) {
@@ -263,6 +306,7 @@ int main(int argc, char* argv[]) {
   insertIntoComms(db, world, "2");
   insertIntoComms(db, comm1, "1");
   insertIntoComms(db, comm2, "1");
+  insertIntoComms(db, world, "2");
 
   // Insert test data into operations
   for (i = 0; i<NUM_OF_PRIMS ; i++ ) {
