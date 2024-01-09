@@ -2,11 +2,17 @@ cmake_minimum_required(VERSION 3.10)
 project(mpisee VERSION 1.0 DESCRIPTION "mpisee: A communicator-centric profiler")
 
 find_package(MPI REQUIRED CXX)
+find_package(SQLite3 REQUIRED)
 
 set(CMAKE_CXX_COMPILER mpicxx)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g -Wall")
 
 add_library(mpisee SHARED commprof.cpp utils.cpp)
+add_executable(create_db create_db.cpp utils.cpp)
+target_link_libraries(create_db PRIVATE ${SQLite3_LIBRARIES})
+target_include_directories(create_db PRIVATE ${SQLite3_INCLUDE_DIRS})
+target_include_directories(create_db PRIVATE ${MPI_CXX_INCLUDE_DIRS})
+target_link_libraries(create_db PRIVATE ${MPI_CXX_LIBRARIES})
 target_include_directories(mpisee PRIVATE ${MPI_CXX_INCLUDE_DIRS})
 target_link_libraries(mpisee PRIVATE ${MPI_CXX_LIBRARIES})
 
