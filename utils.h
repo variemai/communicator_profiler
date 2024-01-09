@@ -57,6 +57,11 @@ Ibarrier   /* DO NOT ADD ANYTHING AFTER THIS */
 typedef struct communicator_attributes_msgsizes{
     char name[NAMELEN];
     int size;
+    // uint64_t bytes;
+    // uint64_t msgs;
+    // uint32_t prims[NUM_OF_PRIMS];
+    // uint64_t prim_bytes[NUM_OF_PRIMS];
+    // double time_info[NUM_OF_PRIMS];
     uint32_t prims[NUM_OF_PRIMS];
     uint64_t prim_bytes[NUM_OF_PRIMS];
     double time_info[NUM_OF_PRIMS];
@@ -67,11 +72,6 @@ typedef struct communicator_attributes_msgsizes{
 typedef struct profiler_attributes{
     char name[NAMELEN];
     int size;
-    uint64_t bytes;
-    uint64_t msgs;
-    uint32_t prims[NUM_OF_PRIMS];
-    uint64_t prim_bytes[NUM_OF_PRIMS];
-    double time_info[NUM_OF_PRIMS];
     double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS];
     uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
 }prof_attrs;

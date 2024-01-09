@@ -191,7 +191,8 @@ void insertMetadata(sqlite3 *db, char *mpi_lib, int size,
   setMetadata(db, "MPI Library", lib);
   setMetadata(db, "Processes", sz);
   setMetadata(db, "Run command", combinedString);
-  setMetadata(db, "mpisee Version", mpisee_date);
+  setMetadata(db, "mpisee version", mpisee_version);
+  setMetadata(db, "mpisee build date", mpisee_date);
   setMetadata(db, "Profile date", profile_date);
 
 }
@@ -311,7 +312,7 @@ void insertIntoMappings(sqlite3 *db, const std::string &machine) {
 //     executeSQL(db, insertSql,"INSERT INTO comms" );
 // }
 
-void insertIntoComms(sqlite3 *db, const std::string &name, const std::string &size) {
+void insertIntoComms(sqlite3 *db, const std::string &name, int size) {
     sqlite3_stmt *stmt;
     std::string checkSql = "SELECT COUNT(*) FROM comms WHERE name = ?";
     sqlite3_prepare_v2(db, checkSql.c_str(), -1, &stmt, nullptr);
@@ -328,9 +329,11 @@ void insertIntoComms(sqlite3 *db, const std::string &name, const std::string &si
         std::string insertSql;
         // Check if it's the first entry to set id to 0
         if (countTable(db, "comms") == 0) {
-            insertSql = "INSERT INTO comms (id, name, size) VALUES (0, '" + name + "', '" + size + "')";
+          insertSql = "INSERT INTO comms (id, name, size) VALUES (0, '" + name +
+            "', '" + std::to_string(size) + "')";
         } else {
-            insertSql = "INSERT INTO comms (name, size) VALUES ('" + name + "', '" + size + "')";
+          insertSql = "INSERT INTO comms (name, size) VALUES ('" + name +
+            "', '" + std::to_string(size) + "')";
         }
         executeSQL(db, insertSql, "INSERT INTO comms");
     } else {
