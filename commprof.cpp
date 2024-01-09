@@ -2487,14 +2487,14 @@ _Finalize(void) {
                         maxsize = (1 << (buckets[j]));
                     }
                     if (recv_buffer[i].buckets_msgs[k][j] > 0) {
-                      std::cout << r << " " << commId << " "
-                                << recv_buffer[i].buckets_msgs[k][j] << ", "
-                                << recv_buffer[i].buckets_time[k][j] << ", "
-                                << minsize << "-" << maxsize << "\n";
+                      // std::cout << r << " " << commId << " "
+                      //           << recv_buffer[i].buckets_msgs[k][j] << ", "
+                      //           << recv_buffer[i].buckets_time[k][j] << ", "
+                      //           << minsize << "-" << maxsize << "\n";
 
-                        // insertIntoData(db, r, commId, k, maxsize, minsize,
-                        //                recv_buffer[i].buckets_msgs[k][j],
-                        //                recv_buffer[i].buckets_time[k][j]);
+                        insertIntoData(db, r, commId, k, maxsize, minsize,
+                                       recv_buffer[i].buckets_msgs[k][j],
+                                       recv_buffer[i].buckets_time[k][j]);
                     }
 
                 }
@@ -2595,8 +2595,8 @@ _Finalize(void) {
         printf("Database File Written: %s\n", outfile);
 
         printMetadata(db);
-        printCommsTable(db);
-        // printData(db);
+        //printCommsTable(db);
+        printData(db);
         sqlite3_close(db);
 
         free(outfile);
