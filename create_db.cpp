@@ -104,18 +104,6 @@ void printData(sqlite3* db) {
 }
 
 
-// Function to execute SQL command
-void executeSQL(sqlite3* db, const char* sql, const char* name) {
-    char* errMsg = nullptr;
-    int rc = sqlite3_exec(db, sql, nullptr, nullptr, &errMsg);
-
-    if (rc != SQLITE_OK) {
-        std::cerr << "SQL error: " << errMsg << std::endl;
-        sqlite3_free(errMsg);
-    } else {
-        std::cout << name << " successfully" << std::endl;
-    }
-}
 
 // Function to execute SQL command
 void executeSQL(sqlite3* db, const std::string& sql, const char* name) {
@@ -167,6 +155,32 @@ int getMappingId(sqlite3* db, const std::string& machineName) {
     return mappingId;
 }
 
+void setMetadata(sqlite3 *db, const std::string &key,
+                 const std::string &value) {
+
+  std::string sql = "INSERT INTO metadata (key, value) VALUES ('" + key +
+                    "', '" + value + "')";
+
+    executeSQL(db, sql, "Metadata");
+}
+
+void printMetadata(sqlite3* db) {
+    sqlite3_stmt* stmt;
+    std::string sql = "SELECT key, value FROM metadata";
+    std::cout << "Printing Metadata\n";
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+      while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char *key =
+            reinterpret_cast<const char *>(sqlite3_column_text(stmt, 0));
+
+        const char *value =
+            reinterpret_cast<const char *>(sqlite3_column_text(stmt, 1));
+        std::cout << key << ": " << value << '\n';
+      }
+    }
+    sqlite3_finalize(stmt);
+}
+
 void createTables(sqlite3* db) {
 
     // Create Mapping Table
@@ -176,12 +190,19 @@ void createTables(sqlite3* db) {
         "machine TEXT);";
     executeSQL(db, MappingTable, "Mappings Table created");
 
+    // Create Metadata Table
+    const char* Metadata =
+        "CREATE TABLE IF NOT EXISTS metadata ("
+        "key TEXT PRIMARY KEY, "
+        "value TEXT);";
+    executeSQL(db, Metadata, "Metadata Table created");
+
     // Create MPI Operations Table
     const char* MPIOpsTable =
         "CREATE TABLE IF NOT EXISTS operations ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT, "
         "operation TEXT);";
-    executeSQL(db, MPIOpsTable, "MPI Operations Table");
+    executeSQL(db, MPIOpsTable, "MPI Operations Table created ");
 
     // Create Comms Table
     const char* CommsTable =
@@ -205,7 +226,7 @@ void createTables(sqlite3* db) {
         "FOREIGN KEY (operation_id) REFERENCES operations (id), "
         "FOREIGN KEY (comm_id) REFERENCES comms (id), "
         "FOREIGN KEY (rank) REFERENCES mappings (id));";
-    executeSQL(db, DataTable, "Data");
+    executeSQL(db, DataTable, "Data Table created");
 }
 
 // Function to insert into mappings
@@ -335,6 +356,21 @@ int main(int argc, char* argv[]) {
 
   createTables(db);
 
+  setMetadata(db, "MPI Library", "OpenMPI 4.1.4");
+  setMetadata(db, "Run command", "./miniAMR 4 4 2 10 2 5");
+  // Get current time as a time_point
+  auto now = std::chrono::system_clock::now();
+
+  // Convert time_point to time_t for easier manipulation
+  std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+
+  // Convert time_t to string representation
+  std::string now_str = std::ctime(&now_time_t);
+
+  // Print the date and time
+  std::cout << now_str; // This will print the date and time in a standard format
+  setMetadata(db, "Profile Date", now_str);
+
   insertIntoMappings(db, "machine1");
   insertIntoMappings(db, "machine2");
 
@@ -369,6 +405,7 @@ int main(int argc, char* argv[]) {
   insertIntoData(db, 1, 2, Bcast, 1024, 512, 5, 0.008); // MPI_Bcast
 
   // printDataDetails(db);
+  printMetadata(db);
   printData(db);
 
   // std::cout << getCommId(db, world) << '\n';
