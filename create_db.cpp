@@ -170,7 +170,8 @@ void insertMetadata(sqlite3 *db, char *mpi_lib, int size,
   std::string mpisee_date =
       std::string(build_date) + ", " + std::string(build_time);
 
-  std::string env_var = env;
+  if( env != NULL )
+    std::string env_var = env;
   std::string combinedString;
   for (int i = 0; i < ac && i< MAX_ARGS && cmd[i] != NULL; ++i) {
     if (i > 0) {
