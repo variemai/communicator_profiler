@@ -2456,7 +2456,7 @@ _Finalize(void) {
             insertIntoMappings(db, proc_name);
             ptr+=MPI_MAX_PROCESSOR_NAME;
         }
-        // std::cout << "size*num_of_comms = " << size * num_of_comms << '\n';
+        std::cout << "size*num_of_comms = " << size * num_of_comms << '\n';
         // for (i = 0; i < size * num_of_comms; i++) {
 
         //     if (strcmp(recv_buffer[i].name, "NULL") != 0) {
@@ -2489,21 +2489,6 @@ _Finalize(void) {
         //         }
         //     }
         // }
-            //     fprintf(fpp, "%d,%s,%d,%" PRIu64 ",%" PRIu64 ",",r,recv_buffer[i].name,recv_buffer[i].size,recv_buffer[i].bytes,recv_buffer[i].msgs);
-            //     for ( k =0; k<NUM_OF_PRIMS; k++){
-            //         mpi_time+=recv_buffer[i].time_info[k];
-            //         fprintf(fpp, "%u,",recv_buffer[i].prims[k]);
-            //         if ( recv_buffer[i].prims[k] > 0 )
-            //             fprintf(fpp, "%" PRIu64 ",",recv_buffer[i].prim_bytes[k]);
-            //         else
-            //             fprintf(fpp, "0.0,");
-            //         if ( k == NUM_OF_PRIMS-1 )
-            //             fprintf(fpp, "%lf",recv_buffer[i].time_info[k]);
-            //         else
-            //             fprintf(fpp, "%lf,",recv_buffer[i].time_info[k]);
-            //     }
-            //     fprintf(fpp,"\n");
-            // }
 
         // fprintf(fpp, "#'MPI LIBRARY' '%s'\n", version);
         // fprintf(fpp, "#'Processes' '%d'\n",size);
