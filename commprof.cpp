@@ -2280,7 +2280,6 @@ _Finalize(void) {
     int rank, size;
     int i, k, j, len;
     prof_attrs *recv_buffer = NULL;
-    prof_attrs dummy;
     // char **names, **unames;
     int  num_of_comms, resultlen;
     // uint64_t *bytes, *prims_bytes;
@@ -2342,6 +2341,7 @@ _Finalize(void) {
     MPI_Aint base, displacements[4];
     int blocklengths[4] = {NAMELEN, 1, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS};
     MPI_Datatype types[4] = {MPI_CHAR, MPI_INT, MPI_DOUBLE, MPI_UINT64_T};
+    prof_attrs dummy;
 
     // Create a dummy instance to calculate displacements
     MPI_Get_address(&dummy, &base);
@@ -2397,10 +2397,10 @@ _Finalize(void) {
         for (i = 0; i < num_of_comms; i++) {
           for (j = 0; j < NUM_OF_PRIMS; j++) {
             for (k = 0; k < NUM_BUCKETS; k++) {
-              std::cout << local_communicators[i]->name << ", "
-                        << local_communicators[i]->buckets_msgs[j][k] << ","
-                        << local_communicators[i]->buckets_msgs[j][k] << '\n';
-
+                if ( array[i].buckets_msgs[j][k] )
+                    std::cout << array[i].name << ", "
+                              << array[i].buckets_msgs[j][k] << ","
+                              << array[i].buckets_time[j][k] << '\n';
             }
           }
         }
