@@ -18,6 +18,8 @@
 #include <algorithm>
 #include "symbols.h"
 #include <inttypes.h>
+#include "create_db.h"
+#include <iostream>
 
 int prof_enabled = 1;
 int local_cid= 0;
@@ -2438,28 +2440,29 @@ _Finalize(void) {
 
     PMPI_Barrier(MPI_COMM_WORLD);
     if ( rank == 0 ){
-
-        time_t date;
-        char *tmp;
-        int r =-1;
-        FILE *fpp = NULL;
+        int rc;
+        sqlite3 *db = NULL;
         const char *env_var = getenv("MPISEE_OUTFILE");
         char *outfile;
         if (env_var != NULL) {
-          fpp = fopen(env_var, "w");
-          if (fpp == NULL) {
-            mcpt_abort("Error opening outfile: %s\n",env_var);
-
+          rc = sqlite3_open(env_var, &db);
+          if (rc) {
+              std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
+              return 1;
+          } else {
+              std::cout << "Opened database successfully" << std::endl;
           }
           outfile = strdup(env_var);
         }
         else{
-          fpp = fopen("per_process_data.csv", "w");
-          if (fpp == NULL) {
-            mcpt_abort("Error opening outfile: per_process_data.csv\n");
-
+          rc = sqlite3_open("mpisee_profile.db", &db);
+          if (rc) {
+              std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
+              return 1;
+          } else {
+              std::cout << "Opened database successfully" << std::endl;
           }
-          outfile = strdup("per_process_data.csv");
+          outfile = strdup("mpisee_profile.db");
         }
         ptr = proc_names;
         PMPI_Get_library_version(version, &resultlen);
@@ -2471,99 +2474,107 @@ _Finalize(void) {
                 version[i] = ' ';
             }
         }
-        fprintf(fpp, "#'MPI LIBRARY' '%s'\n",version);
-        fprintf(fpp, "#'Processes' '%d'\n",size);
-        fprintf(fpp, "#'Run command' ");
-        fprintf(fpp, "'%s",av[0]);
-        for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
-            fprintf(fpp, " %s",av[i]);
-        }
-        fprintf(fpp, "'\n");
-        fprintf(fpp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
-        fprintf(fpp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
-        if ( env_var ){
-            fprintf(fpp, "#'mpisee env' '%s'\n", env_var);
-        }
-        else{
-            fprintf(fpp, "#'mpisee env'\n");
-        }
-        time(&date);
-        tmp = ctime(&date);
-        fprintf(fpp, "#'Profile date' ");
-        fprintf(fpp, "'%c",*tmp);
-        tmp++;
-        while ( *tmp != '\n' ){
-            fprintf(fpp, "%c",*tmp);
-            tmp++;
-        }
-        fprintf(fpp, "'\n");
-        fprintf(fpp,"#'Mapping:");
-        for ( i =0; i<size; i++ ){
-            if ( ptr != NULL ){
-                snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, "%s", ptr);
-            }
-            if ( i != size-1 )
-                fprintf(fpp, "%d %s,",i,proc_name);
-            else
-                fprintf(fpp, "%d %s\n",i,proc_name);
-            ptr+=MPI_MAX_PROCESSOR_NAME;
-        }
-        fprintf(fpp,"#'Time elapsed for each process:,");
-        for ( i =0; i<size; i++ ){
-            if ( i != size-1 )
-                fprintf(fpp, "%d %lf,",i,alltimes[i]);
-            else
-                fprintf(fpp, "%d %lf\n",i,alltimes[i]);
-        }
-        fprintf(fpp, "Rank,Comm,Size,Volume,Calls,");
-        for (k = 0; k<NUM_OF_PRIMS; k++){
-            fprintf(fpp, "%s_Calls,",prim_names[k]);
-            fprintf(fpp, "%s_Volume,",prim_names[k]);
-            if ( k == NUM_OF_PRIMS -1 )
-                fprintf(fpp, "%s_Time",prim_names[k]);
-            else
-                fprintf(fpp, "%s_Time,",prim_names[k]);
-        }
-        fprintf(fpp,"\n");
+        createTables(db);
+        insertMetadata(db, version, size, av, ac, mpisee_major_version,
+                       mpisee_minor_version, mpisee_build_date,
+                       mpisee_build_time, env_var);
 
-        for ( i =0; i<size*num_of_comms; i++ ){
-            if ( i % num_of_comms == 0  ){
-                if ( r > -1 ){ //r is initialized to -1
-                    mpi_times.push_back(mpi_time);
-                    mpi_time = 0.0;
-                }
-                r++;
-            }
-            if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
-                fprintf(fpp, "%d,%s,%d,%" PRIu64 ",%" PRIu64 ",",r,recv_buffer[i].name,recv_buffer[i].size,recv_buffer[i].bytes,recv_buffer[i].msgs);
-                for ( k =0; k<NUM_OF_PRIMS; k++){
-                    mpi_time+=recv_buffer[i].time_info[k];
-                    fprintf(fpp, "%u,",recv_buffer[i].prims[k]);
-                    if ( recv_buffer[i].prims[k] > 0 )
-                        fprintf(fpp, "%" PRIu64 ",",recv_buffer[i].prim_bytes[k]);
-                    else
-                        fprintf(fpp, "0.0,");
-                    if ( k == NUM_OF_PRIMS-1 )
-                        fprintf(fpp, "%lf",recv_buffer[i].time_info[k]);
-                    else
-                        fprintf(fpp, "%lf,",recv_buffer[i].time_info[k]);
-                }
-                fprintf(fpp,"\n");
-            }
-        }
-        mpi_times.push_back(mpi_time);
-        fprintf(fpp, "#'MPI Time (Rank Time)',");
-        for (size_t it=0; it < mpi_times.size(); it++) {
-            fprintf(fpp, "%lu %lf",it,mpi_times[it]);
-            if ( it == mpi_times.size()-1 ){
-                fprintf(fpp, "\n");
-            }
-            else{
-                fprintf(fpp, ",");
-            }
-        }
-        printf("Output File Written: %s\n",outfile);
-        fclose(fpp);
+        // fprintf(fpp, "#'MPI LIBRARY' '%s'\n", version);
+        // fprintf(fpp, "#'Processes' '%d'\n",size);
+        // fprintf(fpp, "#'Run command' ");
+        // fprintf(fpp, "'%s",av[0]);
+        // for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
+        //     fprintf(fpp, " %s",av[i]);
+        // }
+        // fprintf(fpp, "'\n");
+        // fprintf(fpp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
+        // fprintf(fpp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
+        // if ( env_var ){
+        //     fprintf(fpp, "#'mpisee env' '%s'\n", env_var);
+        // }
+        // else{
+        //     fprintf(fpp, "#'mpisee env'\n");
+        // }
+        // time(&date);
+        // tmp = ctime(&date);
+        // fprintf(fpp, "#'Profile date' ");
+        // fprintf(fpp, "'%c",*tmp);
+        // tmp++;
+        // while ( *tmp != '\n' ){
+        //     fprintf(fpp, "%c",*tmp);
+        //     tmp++;
+        // }
+        // fprintf(fpp, "'\n");
+        // fprintf(fpp,"#'Mapping:");
+        // for ( i =0; i<size; i++ ){
+        //     if ( ptr != NULL ){
+        //         snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, "%s", ptr);
+        //     }
+        //     if ( i != size-1 )
+        //         fprintf(fpp, "%d %s,",i,proc_name);
+        //     else
+        //         fprintf(fpp, "%d %s\n",i,proc_name);
+        //     ptr+=MPI_MAX_PROCESSOR_NAME;
+        // }
+        // fprintf(fpp,"#'Time elapsed for each process:,");
+        // for ( i =0; i<size; i++ ){
+        //     if ( i != size-1 )
+        //         fprintf(fpp, "%d %lf,",i,alltimes[i]);
+        //     else
+        //         fprintf(fpp, "%d %lf\n",i,alltimes[i]);
+        // }
+        // fprintf(fpp, "Rank,Comm,Size,Volume,Calls,");
+        // for (k = 0; k<NUM_OF_PRIMS; k++){
+        //     fprintf(fpp, "%s_Calls,",prim_names[k]);
+        //     fprintf(fpp, "%s_Volume,",prim_names[k]);
+        //     if ( k == NUM_OF_PRIMS -1 )
+        //         fprintf(fpp, "%s_Time",prim_names[k]);
+        //     else
+        //         fprintf(fpp, "%s_Time,",prim_names[k]);
+        // }
+        // fprintf(fpp,"\n");
+
+        // for ( i =0; i<size*num_of_comms; i++ ){
+        //     if ( i % num_of_comms == 0  ){
+        //         if ( r > -1 ){ //r is initialized to -1
+        //             mpi_times.push_back(mpi_time);
+        //             mpi_time = 0.0;
+        //         }
+        //         r++;
+        //     }
+        //     if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
+        //         fprintf(fpp, "%d,%s,%d,%" PRIu64 ",%" PRIu64 ",",r,recv_buffer[i].name,recv_buffer[i].size,recv_buffer[i].bytes,recv_buffer[i].msgs);
+        //         for ( k =0; k<NUM_OF_PRIMS; k++){
+        //             mpi_time+=recv_buffer[i].time_info[k];
+        //             fprintf(fpp, "%u,",recv_buffer[i].prims[k]);
+        //             if ( recv_buffer[i].prims[k] > 0 )
+        //                 fprintf(fpp, "%" PRIu64 ",",recv_buffer[i].prim_bytes[k]);
+        //             else
+        //                 fprintf(fpp, "0.0,");
+        //             if ( k == NUM_OF_PRIMS-1 )
+        //                 fprintf(fpp, "%lf",recv_buffer[i].time_info[k]);
+        //             else
+        //                 fprintf(fpp, "%lf,",recv_buffer[i].time_info[k]);
+        //         }
+        //         fprintf(fpp,"\n");
+        //     }
+        // }
+        // mpi_times.push_back(mpi_time);
+        // fprintf(fpp, "#'MPI Time (Rank Time)',");
+        // for (size_t it=0; it < mpi_times.size(); it++) {
+        //     fprintf(fpp, "%lu %lf",it,mpi_times[it]);
+        //     if ( it == mpi_times.size()-1 ){
+        //         fprintf(fpp, "\n");
+        //     }
+        //     else{
+        //         fprintf(fpp, ",");
+        //     }
+        // }
+        printf("Database File Written: %s\n", outfile);
+
+        printMetadata(db);
+        sqlite3_close(db);
+
         free(outfile);
         free(alltimes);
         free(proc_names);

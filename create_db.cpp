@@ -4,15 +4,8 @@
 #include <iomanip>
 #include <sstream>
 #include "utils.h"
+#include "create_db.h"
 
-static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
-   int i;
-   for(i = 0; i<argc; i++) {
-      printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
-   }
-   printf("\n");
-   return 0;
-}
 
 int countTable(sqlite3 *db, const std::string& tablename) {
     sqlite3_stmt* stmt;
@@ -158,11 +151,49 @@ int getMappingId(sqlite3* db, const std::string& machineName) {
 void setMetadata(sqlite3 *db, const std::string &key,
                  const std::string &value) {
 
+
   std::string sql = "INSERT INTO metadata (key, value) VALUES ('" + key +
                     "', '" + value + "')";
 
     executeSQL(db, sql, "Metadata");
 }
+
+void insertMetadata(sqlite3 *db, char *mpi_lib, int size,
+                    char *cmd[MAX_ARGS], int ac, int mpisee_major_v, int mpisee_minor_v,
+                    char *build_date, char *build_time, const char *env) {
+  std::string lib = mpi_lib;
+  std::string sz = std::to_string(size);
+  std::string mpisee_version =
+      std::to_string(mpisee_major_v) + "." + std::to_string(mpisee_minor_v);
+
+  std::string mpisee_date =
+      std::string(build_date) + ", " + std::string(build_time);
+
+  std::string env_var = env;
+  std::string combinedString;
+  for (int i = 0; i < ac && i< MAX_ARGS && cmd[i] != NULL; ++i) {
+    if (i > 0) {
+      combinedString += " ";
+    }
+    combinedString += cmd[i];
+  }
+
+  auto now = std::chrono::system_clock::now();
+
+  // Convert time_point to time_t for easier manipulation
+  std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
+
+  // Convert time_t to string representation
+  std::string profile_date = std::ctime(&now_time_t);
+
+  setMetadata(db, "MPI Library", lib);
+  setMetadata(db, "Processes", sz);
+  setMetadata(db, "Run command", combinedString);
+  setMetadata(db, "mpisee Version", mpisee_date);
+  setMetadata(db, "Profile date", profile_date);
+
+}
+
 
 void printMetadata(sqlite3* db) {
     sqlite3_stmt* stmt;
@@ -340,9 +371,9 @@ void insertIntoData(sqlite3* db, int rank, int commId, int operationId, int buff
   executeSQL(db, insertSql, "INSERT INTO data");
 }
 
+/*
 int main(int argc, char* argv[]) {
   sqlite3 *db;
-  char *zErrMsg = 0;
   int rc,i;
 
   // Open database
@@ -415,31 +446,4 @@ int main(int argc, char* argv[]) {
   sqlite3_close(db);
   return 0;
 }
-
-// int main(int argc, char* argv[]) {
-//    sqlite3 *db;
-//    char *zErrMsg = 0;
-//    int rc;
-//    char *sql;
-
-
-//    if( rc ) {
-//       fprintf(stderr, "Can't open database: %s\n", sqlite3_errmsg(db));
-//       return(0);
-//    } else {
-//       fprintf(stderr, "Opened database successfully\n");
-//    }
-
-
-//    /* Execute SQL statement */
-//    rc = sqlite3_exec(db, sql, callback, 0, &zErrMsg);
-
-//    if( rc != SQLITE_OK ){
-//       fprintf(stderr, "SQL error: %s\n", zErrMsg);
-//       sqlite3_free(zErrMsg);
-//    } else {
-//       fprintf(stdout, "Records created successfully\n");
-//    }
-//    sqlite3_close(db);
-//    return 0;
-// }
+*/
