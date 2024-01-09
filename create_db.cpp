@@ -107,9 +107,10 @@ void executeSQL(sqlite3* db, const std::string& sql, const char* name) {
     if (rc != SQLITE_OK) {
         std::cerr << "SQL error: " << errMsg << std::endl;
         sqlite3_free(errMsg);
-    } else {
-        std::cout << name << " successfully" << std::endl;
     }
+    // } else {
+    //     std::cout << name << " successfully" << std::endl;
+    // }
 }
 
 

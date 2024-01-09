@@ -2456,7 +2456,7 @@ _Finalize(void) {
             insertIntoMappings(db, proc_name);
             ptr+=MPI_MAX_PROCESSOR_NAME;
         }
-
+        std::cout << "size*num_of_comms = " << size * num_of_comms << '\n';
         for (i = 0; i < size * num_of_comms; i++) {
 
             if (strcmp(recv_buffer[i].name, "NULL") != 0) {
