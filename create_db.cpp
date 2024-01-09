@@ -1,6 +1,8 @@
 #include <iostream>
 #include <sqlite3.h>
 #include <string>
+#include <iomanip>
+#include <sstream>
 #include "utils.h"
 
 static int callback(void *NotUsed, int argc, char **argv, char **azColName) {
@@ -52,11 +54,48 @@ void printDataDetails(sqlite3* db) {
                       << ", Machine: " << (machine ? machine : "NULL")
                       << ", Comm Name: " << (commName ? commName : "NULL")
                       << ", Comm Size: " << (commSize ? commSize : "NULL")
-                      << ", Operation: " << (operation ? operation : "NULL")
-                      << ", Buffer Size Min: " << bufferSizeMin
-                      << ", Buffer Size Max: " << bufferSizeMax
+                      << ", MPI Operation: " << (operation ? operation : "NULL")
+                      << ", Buffer Size: " << bufferSizeMin << " - " << bufferSizeMax
                       << ", Calls: " << calls
                       << ", Time: " << time << std::endl;
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+    }
+}
+
+
+void printData(sqlite3* db) {
+    sqlite3_stmt* stmt;
+
+    std::string sql = "SELECT c.name, c.size, d.rank, o.operation, "
+                      "d.buffer_size_min, d.buffer_size_max, d.calls, d.time "
+                      "FROM data d "
+                      "JOIN comms c ON d.comm_id = c.id "
+                      "JOIN operations o ON d.operation_id = o.id "
+                      "ORDER BY c.name";  // Order by Comm Name
+
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+        // Print header
+        std::cout << std::left << std::setw(15) << "Comm Name" << std::setw(15) << "Comm Size"
+                  << std::setw(10) << "Rank" << std::setw(20) << "Operation"
+                  << std::setw(25) << "Buffer Size Range" << std::setw(15) << "Calls"
+                  << std::setw(20) << "Time" << std::endl;
+
+        // Print rows
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+          std::stringstream bufferSizeStream;
+            bufferSizeStream << sqlite3_column_int(stmt, 4) << " - " << sqlite3_column_int(stmt, 5);
+            std::string bufferSize = bufferSizeStream.str();
+
+            std::cout << std::left << std::setw(15) << reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0))
+                      << std::setw(15) << reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1))
+                      << std::setw(10) << sqlite3_column_int(stmt, 2)
+                      << std::setw(20) << reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3))
+                      << std::setw(25) << bufferSize //sqlite3_column_int(stmt, 4) << " - " << sqlite3_column_int(stmt, 5)
+                      << std::setw(15) << sqlite3_column_int(stmt, 6)
+                      << std::setw(20) << sqlite3_column_double(stmt, 7) << std::endl;
         }
         sqlite3_finalize(stmt);
     } else {
@@ -329,7 +368,8 @@ int main(int argc, char* argv[]) {
   insertIntoData(db, 1, 2, Allreduce, 512, 256, 10, 0.007); // MPI_Allreduce
   insertIntoData(db, 1, 2, Bcast, 1024, 512, 5, 0.008); // MPI_Bcast
 
-  printDataDetails(db);
+  // printDataDetails(db);
+  printData(db);
 
   // std::cout << getCommId(db, world) << '\n';
   // char *machname = "machine2";
