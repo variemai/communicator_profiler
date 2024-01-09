@@ -2456,39 +2456,34 @@ _Finalize(void) {
             insertIntoMappings(db, proc_name);
             ptr+=MPI_MAX_PROCESSOR_NAME;
         }
-        std::cout << "size*num_of_comms = " << size * num_of_comms << '\n';
-        // for (i = 0; i < size * num_of_comms; i++) {
+        for (i = 0; i < num_of_comms; i++) {
+            insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
+            commId = getCommId(db, recv_buffer[i].name);
+            if (i % num_of_comms == 0) {
+                r++;
+            }
+            for (k = 0; k < NUM_OF_PRIMS; k++) {
+                for (j = 0; j < NUM_BUCKETS; j++) {
+                    if (j == NUM_BUCKETS - 1){
+                        minsize = 1 << buckets[j];
+                        maxsize = INT_MAX;
+                    }
+                    else if (j == 0) {
+                        minsize = 0;
+                        maxsize = 1 << buckets[j];
+                    } else {
+                        minsize = 1 << buckets[j - 1];
+                        maxsize = 1 << buckets[j];
+                    }
+                    if ( recv_buffer[i].buckets_msgs[k][j] > 0 ){
+                        insertIntoData(db, r, commId, k, maxsize, minsize,
+                                       recv_buffer[i].buckets_msgs[k][j],
+                                       recv_buffer[i].buckets_time[k][j]);
+                    }
 
-        //     if (strcmp(recv_buffer[i].name, "NULL") != 0) {
-        //         insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
-        //         commId = getCommId(db, recv_buffer[i].name);
-
-        //         if (i % num_of_comms == 0) {
-        //             r++;
-        //         }
-        //         for (k = 0; k < NUM_OF_PRIMS; k++) {
-        //           for (j = 0; j < NUM_BUCKETS; j++) {
-        //               if (j == NUM_BUCKETS - 1){
-        //                 minsize = 1 << buckets[j];
-        //                 maxsize = INT_MAX;
-        //               }
-        //               else if (j == 0) {
-        //                 minsize = 0;
-        //                 maxsize = 1 << buckets[j];
-        //               } else {
-        //                 minsize = 1 << buckets[j - 1];
-        //                 maxsize = 1 << buckets[j];
-        //               }
-        //               if ( recv_buffer[i].buckets_msgs[k][j] > 0 ){
-        //                 insertIntoData(db, r, commId, k, maxsize, minsize,
-        //                                recv_buffer[i].buckets_msgs[k][j],
-        //                                recv_buffer[i].buckets_time[k][j]);
-        //               }
-
-        //             }
-        //         }
-        //     }
-        // }
+                }
+            }
+        }
 
         // fprintf(fpp, "#'MPI LIBRARY' '%s'\n", version);
         // fprintf(fpp, "#'Processes' '%d'\n",size);
