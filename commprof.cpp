@@ -2278,7 +2278,7 @@ static int
 _Finalize(void) {
     prof_attrs *array = NULL;
     int rank, size;
-    int i, k, len;
+    int i, k, j, len;
     prof_attrs *recv_buffer = NULL;
     prof_attrs dummy;
     // char **names, **unames;
@@ -2393,6 +2393,17 @@ _Finalize(void) {
         if (alltimes == NULL) {
             mcpt_abort("malloc error for alltimes buffer Rank: %d\n",rank);
         }
+        // iterate over local_communicators to see if they have something meaningful
+        for (i = 0; i < num_of_comms; i++) {
+          for (j = 0; j < NUM_OF_PRIMS; j++) {
+            for (k = 0; k < NUM_BUCKETS; k++) {
+              std::cout << local_communicators[i]->name << ", "
+                        << local_communicators[i]->buckets_msgs[j][k] << ","
+                        << local_communicators[i]->buckets_msgs[j][k] << '\n';
+
+            }
+          }
+        }
     }
 
     PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
@@ -2404,7 +2415,7 @@ _Finalize(void) {
 
     PMPI_Barrier(MPI_COMM_WORLD);
     if ( rank == 0 ){
-        int rc,j,commId,maxsize,minsize;
+        int rc,commId,maxsize,minsize;
         sqlite3 *db = NULL;
         const char *env_var = getenv("MPISEE_OUTFILE");
         char *outfile;
@@ -2462,28 +2473,28 @@ _Finalize(void) {
             if (i % num_of_comms == 0) {
                 r++;
             }
-            for (k = 0; k < NUM_OF_PRIMS; k++) {
-                for (j = 0; j < NUM_BUCKETS; j++) {
-                    if (j == NUM_BUCKETS - 1){
-                        minsize = 1 << buckets[j];
-                        maxsize = INT_MAX;
-                    }
-                    else if (j == 0) {
-                        minsize = 0;
-                        maxsize = 1 << buckets[j];
-                    } else {
-                        minsize = 1 << buckets[j - 1];
-                        maxsize = 1 << buckets[j];
-                    }
-                    if (recv_buffer[i].buckets_msgs[k][j] > 0) {
-                        std::cout << r << " " << commId << " " << recv_buffer[i].buckets_msgs[k][j] << recv_buffer[i].buckets_time[k][j] << "" << minsize << "-" << maxsize << "\n";
-                        // insertIntoData(db, r, commId, k, maxsize, minsize,
-                        //                recv_buffer[i].buckets_msgs[k][j],
-                        //                recv_buffer[i].buckets_time[k][j]);
-                    }
+            // for (k = 0; k < NUM_OF_PRIMS; k++) {
+            //     for (j = 0; j < NUM_BUCKETS; j++) {
+            //         if (j == NUM_BUCKETS - 1){
+            //             minsize = 1 << buckets[j];
+            //             maxsize = INT_MAX;
+            //         }
+            //         else if (j == 0) {
+            //             minsize = 0;
+            //             maxsize = 1 << buckets[j];
+            //         } else {
+            //             minsize = 1 << buckets[j - 1];
+            //             maxsize = 1 << buckets[j];
+            //         }
+            //         if (recv_buffer[i].buckets_msgs[k][j] > 0) {
+            //             std::cout << r << " " << commId << " " << recv_buffer[i].buckets_msgs[k][j] << recv_buffer[i].buckets_time[k][j] << "" << minsize << "-" << maxsize << "\n";
+            //             insertIntoData(db, r, commId, k, maxsize, minsize,
+            //                            recv_buffer[i].buckets_msgs[k][j],
+            //                            recv_buffer[i].buckets_time[k][j]);
+            //         }
 
-                }
-            }
+            //     }
+            // }
         }
 
         // fprintf(fpp, "#'MPI LIBRARY' '%s'\n", version);
