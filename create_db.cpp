@@ -337,9 +337,10 @@ void insertIntoComms(sqlite3 *db, const std::string &name, int size) {
             "', '" + std::to_string(size) + "')";
         }
         executeSQL(db, insertSql, "INSERT INTO comms");
-    } else {
-        std::cout << "Entry with name '" << name << "' already exists in comms table." << std::endl;
     }
+    // else {
+    //     std::cout << "Entry with name '" << name << "' already exists in comms table." << std::endl;
+    // }
 }
 
 

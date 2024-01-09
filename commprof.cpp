@@ -2473,28 +2473,28 @@ _Finalize(void) {
             if (i % num_of_comms == 0) {
                 r++;
             }
-            // for (k = 0; k < NUM_OF_PRIMS; k++) {
-            //     for (j = 0; j < NUM_BUCKETS; j++) {
-            //         if (j == NUM_BUCKETS - 1){
-            //             minsize = 1 << buckets[j];
-            //             maxsize = INT_MAX;
-            //         }
-            //         else if (j == 0) {
-            //             minsize = 0;
-            //             maxsize = 1 << buckets[j];
-            //         } else {
-            //             minsize = 1 << buckets[j - 1];
-            //             maxsize = 1 << buckets[j];
-            //         }
-            //         if (recv_buffer[i].buckets_msgs[k][j] > 0) {
-            //             std::cout << r << " " << commId << " " << recv_buffer[i].buckets_msgs[k][j] << recv_buffer[i].buckets_time[k][j] << "" << minsize << "-" << maxsize << "\n";
-            //             insertIntoData(db, r, commId, k, maxsize, minsize,
-            //                            recv_buffer[i].buckets_msgs[k][j],
-            //                            recv_buffer[i].buckets_time[k][j]);
-            //         }
+            for (k = 0; k < NUM_OF_PRIMS; k++) {
+                for (j = 0; j < NUM_BUCKETS-1; j++) {
+                    if (j == NUM_BUCKETS - 2){
+                        minsize = (1 << (buckets[j]));
+                        maxsize = INT_MAX;
+                    }
+                    else if (j == 0) {
+                        minsize = 0;
+                        maxsize = (1 << (buckets[j]));
+                    } else {
+                        minsize = (1 << (buckets[j - 1]));
+                        maxsize = (1 << (buckets[j]));
+                    }
+                    if (recv_buffer[i].buckets_msgs[k][j] > 0) {
+                        std::cout << r << " " << commId << " " << recv_buffer[i].buckets_msgs[k][j] << recv_buffer[i].buckets_time[k][j] << "" << minsize << "-" << maxsize << "\n";
+                        // insertIntoData(db, r, commId, k, maxsize, minsize,
+                        //                recv_buffer[i].buckets_msgs[k][j],
+                        //                recv_buffer[i].buckets_time[k][j]);
+                    }
 
-            //     }
-            // }
+                }
+            }
         }
 
         // fprintf(fpp, "#'MPI LIBRARY' '%s'\n", version);
