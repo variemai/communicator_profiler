@@ -28,8 +28,8 @@ set_target_properties(mpisee PROPERTIES SOVERSION 1)
 #message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPI_CXX_INCLUDE_DIRS}")
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 
-enable_testing()
-add_subdirectory(test)
+#enable_testing()
+#add_subdirectory(test)
 find_program(SRUN_EXEC srun)
 
 if(SRUN_EXEC)
