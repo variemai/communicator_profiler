@@ -30,4 +30,6 @@ int getCommId(sqlite3 *db, const std::string &commName);
 
 void printData(sqlite3* db);
 
+void printCommsTable(sqlite3 *db);
+
 #endif

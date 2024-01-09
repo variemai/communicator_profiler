@@ -377,6 +377,29 @@ void insertIntoData(sqlite3* db, int rank, int commId, int operationId, int buff
   executeSQL(db, insertSql, "INSERT INTO data");
 }
 
+void printCommsTable(sqlite3* db) {
+    sqlite3_stmt* stmt;
+
+    // SQL query to select all records from the comms table
+    std::string sql = "SELECT id, name, size FROM comms";
+
+    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+        std::cout << "Contents of comms table:" << std::endl;
+        std::cout << "ID\tName\tSize" << std::endl;
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int id = sqlite3_column_int(stmt, 0);
+            std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            std::string size = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+
+            std::cout << id << "\t" << name << "\t" << size << std::endl;
+        }
+        sqlite3_finalize(stmt);
+    } else {
+        std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
+    }
+}
+
+
 /*
 int main(int argc, char* argv[]) {
   sqlite3 *db;

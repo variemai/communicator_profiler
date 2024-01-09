@@ -2394,16 +2394,16 @@ _Finalize(void) {
             mcpt_abort("malloc error for alltimes buffer Rank: %d\n",rank);
         }
         // iterate over local_communicators to see if they have something meaningful
-        for (i = 0; i < num_of_comms; i++) {
-          for (j = 0; j < NUM_OF_PRIMS; j++) {
-            for (k = 0; k < NUM_BUCKETS; k++) {
-                if ( array[i].buckets_msgs[j][k] )
-                    std::cout << array[i].name << ", "
-                              << array[i].buckets_msgs[j][k] << ","
-                              << array[i].buckets_time[j][k] << '\n';
-            }
-          }
-        }
+        // for (i = 0; i < num_of_comms; i++) {
+        //   for (j = 0; j < NUM_OF_PRIMS; j++) {
+        //     for (k = 0; k < NUM_BUCKETS; k++) {
+        //         if ( array[i].buckets_msgs[j][k] )
+        //             std::cout << array[i].name << ", "
+        //                       << array[i].buckets_msgs[j][k] << ","
+        //                       << array[i].buckets_time[j][k] << '\n';
+        //     }
+        //   }
+        // }
     }
 
     PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
@@ -2467,7 +2467,7 @@ _Finalize(void) {
             insertIntoMappings(db, proc_name);
             ptr+=MPI_MAX_PROCESSOR_NAME;
         }
-        for (i = 0; i < num_of_comms; i++) {
+        for (i = 0; i < num_of_comms*size; i++) {
             insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
             commId = getCommId(db, recv_buffer[i].name);
             if (i % num_of_comms == 0) {
@@ -2591,6 +2591,7 @@ _Finalize(void) {
         printf("Database File Written: %s\n", outfile);
 
         printMetadata(db);
+        printCommsTable(db);
         // printData(db);
         sqlite3_close(db);
 
