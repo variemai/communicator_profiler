@@ -16,7 +16,7 @@
 const uint32_t buckets[NUM_BUCKETS-1] = {7,10,13,16,20,25};
 
 enum primitives{
-Send,           /* DO NOT ADD ANYHTING BEFORE THIS */
+Send,
 Recv,
 Isend,
 Irecv,
@@ -51,7 +51,7 @@ Iallreduce,
 Ibcast,
 Ialltoall,
 Iscatter,
-Ibarrier   /* DO NOT ADD ANYTHING AFTER THIS */
+Ibarrier
 };
 
 typedef struct communicator_attributes_msgsizes{

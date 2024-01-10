@@ -2374,7 +2374,7 @@ _Finalize(void) {
 
         printMetadata(db);
         //printCommsTable(db);
-        printData(db);
+        //printData(db);
         sqlite3_close(db);
 
         free(outfile);
