@@ -2347,6 +2347,7 @@ _Finalize(void) {
             powers_of_2[i] = 1 << buckets[i];
         }
 
+        std::cout << "Writing the main data table" << "\n";
         for (i = 0; i < num_of_comms*size; i++) {
             insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
             commId = getCommId(db, recv_buffer[i].name);
