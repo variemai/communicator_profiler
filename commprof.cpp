@@ -2290,6 +2290,7 @@ _Finalize(void) {
     PMPI_Barrier(MPI_COMM_WORLD);
     if ( rank == 0 ){
         int rc,commId,maxsize,minsize;
+        int powers_of_2[NUM_BUCKETS - 1];
         sqlite3 *db = NULL;
         const char *env_var = getenv("MPISEE_OUTFILE");
         char *outfile;
@@ -2341,6 +2342,11 @@ _Finalize(void) {
             insertIntoMappings(db, proc_name);
             ptr+=MPI_MAX_PROCESSOR_NAME;
         }
+        // Precompute powers of 2 for each bucket
+        for (int i = 0; i < NUM_BUCKETS - 1; i++) {
+            powers_of_2[i] = 1 << buckets[i];
+        }
+
         for (i = 0; i < num_of_comms*size; i++) {
             insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
             commId = getCommId(db, recv_buffer[i].name);
@@ -2348,20 +2354,19 @@ _Finalize(void) {
                 r++;
             }
             for (k = 0; k < NUM_OF_PRIMS; k++) {
-                for (j = 0; j < NUM_BUCKETS-1; j++) {
-                    if (j == NUM_BUCKETS - 2){
-                        minsize = (1 << (buckets[j]));
-                        maxsize = INT_MAX;
-                    }
-                    else if (j == 0) {
-                        minsize = 0;
-                        maxsize = (1 << (buckets[j]));
-                    } else {
-                        minsize = (1 << (buckets[j - 1]));
-                        maxsize = (1 << (buckets[j]));
-                    }
+                // Handle the first bucket separately
+                minsize = 0;
+                maxsize = powers_of_2[0];
+                if (recv_buffer[i].buckets_msgs[k][0] > 0) {
+                    insertIntoData(db, r, commId, k, maxsize, minsize,
+                                   recv_buffer[i].buckets_msgs[k][0],
+                                   recv_buffer[i].buckets_time[k][0]);
+                }
+                for (j = 1; j < NUM_BUCKETS-1; j++) {
+                    minsize = powers_of_2[j - 1];
+                    maxsize = (j == NUM_BUCKETS - 2) ? INT_MAX : powers_of_2[j];
                     if (recv_buffer[i].buckets_msgs[k][j] > 0) {
-                            insertIntoData(db, r, commId, k, maxsize, minsize,
+                        insertIntoData(db, r, commId, k, maxsize, minsize,
                                        recv_buffer[i].buckets_msgs[k][j],
                                        recv_buffer[i].buckets_time[k][j]);
                     }
