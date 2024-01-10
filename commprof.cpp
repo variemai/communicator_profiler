@@ -1150,16 +1150,6 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
         else {
             sum = count;
         }
-//#ifndef MPICH_NAME
-        /*
-#ifndef MPICH_API_PUBLIC
-        Table_put(request_tab, request, comm);
-#else
-        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-        *com = comm;
-        Table_put(request_tab, request, com);
-#endif
-*/
         profile_this(comm,sum,datatype,Ibcast,t_elapsed,root);
     }
     else{
@@ -1238,15 +1228,6 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
         t_elapsed =  MPI_Wtime();
         ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        /*
-#ifndef MPICH_API_PUBLIC
-        Table_put(request_tab, request, comm);
-#else
-        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-        *com = comm;
-        Table_put(request_tab, request, com);
-#endif
-*/
 
         profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
     }
@@ -1929,22 +1910,6 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
                 return ret;
             }
         }
-        /* comm = Table_get(request_tab, &array_of_requests[0]); */
-        /* if ( comm == NULL ){ */
-        /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-        /*     return ret; */
-        /* } */
-// #ifndef MPICH_API_PUBLIC
-        /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
-// #else
-//         for ( i =0; i<count; i++ ){
-//             comm = Table_get(request_tab, &array_of_requests[i]);
-//             if ( comm != NULL ){
-//                 profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
-//                 return ret;
-//             }
-//         }
-// #endif
     }
     else{
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
@@ -1998,23 +1963,6 @@ MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *s
                 break;
             }
         }
-        /* comm = Table_get(request_tab, &array_of_requests[0]); */
-        /* if ( comm == NULL ){ */
-        /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-        /*     return ret; */
-        /* } */
-// #ifndef MPICH_API_PUBLIC
-        /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
-
-// #else
-//         for ( i =0; i<count; i++ ){
-//             comm = Table_get(request_tab, &array_of_requests[i]);
-//             if ( comm != NULL ){
-//                 profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
-//                 break;
-//             }
-//         }
-// #endif
     }
     else{
         ret = PMPI_Waitany(count, array_of_requests,index,status);
@@ -2123,23 +2071,6 @@ MPI_Testany(int count, MPI_Request *array_of_requests, int *index, int *flag, MP
                 break;
             }
         }
-        /* comm = Table_get(request_tab, &array_of_requests[0]); */
-        /* if ( comm == NULL ){ */
-        /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-        /*     return ret; */
-        /* } */
-// #ifndef MPICH_API_PUBLIC
-        /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
-
-// #else
-//         for ( i =0; i<count; i++ ){
-//             comm = Table_get(request_tab, &array_of_requests[i]);
-//             if ( comm != NULL ){
-//                 profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
-//                 break;
-//             }
-//         }
-// #endif
     }
     else{
         ret = PMPI_Testany(count, array_of_requests, index, flag, status);
@@ -2244,14 +2175,7 @@ MPI_Comm_free(MPI_Comm *comm)
             // com_info is not present in the vector
             mcpt_abort("Comm_free on invalid communicator\n");
         }
-        // for ( i = 0; i<local_cid; i++ ){
-        //     if ( com_info == local_comms[i] )
-        //         break;
-        // }
-        // if ( i == local_cid  )
-        //     mcpt_abort("Comm_free on invalid communicator\n");
-        // local_comms[i] = (prof_attrs*) malloc (sizeof(prof_attrs));
-        // memcpy(local_comms[i], com_info, sizeof(prof_attrs));
+
     }else {
         mcpt_abort("Comm free: Comm_get_attr did not find communicator\n");
     }
@@ -2314,29 +2238,6 @@ _Finalize(void) {
     }
 
 
-    // int blocklen[9] = {NAMELEN, 1, 1, 1, NUM_OF_PRIMS, NUM_OF_PRIMS, NUM_OF_PRIMS, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS};
-    // MPI_Datatype types[9] = {MPI_CHAR, MPI_INT, MPI_UINT64_T, MPI_UINT64_T, MPI_UINT32_T, MPI_UINT64_T, MPI_DOUBLE, MPI_DOUBLE, MPI_UINT64_T};
-    // MPI_Aint displacements[9];
-
-    // MPI_Aint base_address;
-    // MPI_Datatype profiler_data;
-    // PMPI_Get_address(&dummy, &base_address);
-    // PMPI_Get_address(&dummy.name[0], &displacements[0]);
-    // PMPI_Get_address(&dummy.bytes, &displacements[1]);
-    // PMPI_Get_address(&dummy.msgs, &displacements[2]);
-    // PMPI_Get_address(&dummy.size, &displacements[3]);
-    // PMPI_Get_address(&dummy.prims[0], &displacements[4]);
-    // PMPI_Get_address(&dummy.prim_bytes[0], &displacements[5]);
-    // PMPI_Get_address(&dummy.time_info[0], &displacements[6]);
-    // MPI_Get_address(&dummy.buckets_time, &displacements[7]);
-    // MPI_Get_address(&dummy.buckets_msgs, &displacements[8]);
-
-    // for (int i = 0; i < 9; i++) {
-    //     displacements[i] = MPI_Aint_diff(displacements[i], base_address);
-    // }
-
-    // PMPI_Type_create_struct(9, blocklen, displacements, types, &profiler_data);
-
     MPI_Datatype profiler_data;
     MPI_Aint base, displacements[4];
     int blocklengths[4] = {NAMELEN, 1, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS};
@@ -2362,23 +2263,6 @@ _Finalize(void) {
     for (i = 0; i < num_of_comms; i++) {
          memcpy(&array[i], local_communicators[i], sizeof(prof_attrs));
     }
-//        strcpy(array[i].name, local_communicators[i]->name);
-//        array[i].bytes = local_communicators[i]->bytes;
-//        array[i].msgs = local_communicators[i]->msgs;
-//        array[i].size = local_communicators[i]->size;
-//        memcpy(array[i].prims, local_communicators[i]->prims, sizeof(uint32_t) * NUM_OF_PRIMS);
-//        memcpy(array[i].prim_bytes, local_communicators[i]->prim_bytes, sizeof(uint64_t) * NUM_OF_PRIMS);
-//        memcpy(array[i].time_info, local_communicators[i]->time_info, sizeof(double) * NUM_OF_PRIMS);
-//            strcpy(array[i].name, local_communicators[i]->name);
-//            array[i].bytes = local_communicators[i]->bytes;
-//            array[i].msgs= local_communicators[i]->msgs;
-//            array[i].size = local_communicators[i]->size;
-//            for ( k=0; k<NUM_OF_PRIMS; k++ ){
-//                array[i].prims[k] = local_communicators[i]->prims[k];
-//                array[i].prim_bytes[k] =local_communicators[i]->prim_bytes[k];
-//                array[i].time_info[k] = local_communicators[i]->time_info[k];
-//            }
-//    }
 
     MPI_Get_processor_name(proc_name, &len);
 
@@ -2394,17 +2278,7 @@ _Finalize(void) {
             mcpt_abort("malloc error for alltimes buffer Rank: %d\n",rank);
         }
         // iterate over local_communicators to see if they have something meaningful
-        // for (i = 0; i < num_of_comms; i++) {
-        //   for (j = 0; j < NUM_OF_PRIMS; j++) {
-        //     for (k = 0; k < NUM_BUCKETS; k++) {
-        //         if ( array[i].buckets_msgs[j][k] )
-        //             std::cout << array[i].name << ", "
-        //                       << array[i].buckets_msgs[j][k] << ","
-        //                       << array[i].buckets_time[j][k] << '\n';
-        //     }
-        //   }
-        // }
-    }
+     }
 
     PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
 
@@ -2487,12 +2361,7 @@ _Finalize(void) {
                         maxsize = (1 << (buckets[j]));
                     }
                     if (recv_buffer[i].buckets_msgs[k][j] > 0) {
-                      // std::cout << r << " " << commId << " "
-                      //           << recv_buffer[i].buckets_msgs[k][j] << ", "
-                      //           << recv_buffer[i].buckets_time[k][j] << ", "
-                      //           << minsize << "-" << maxsize << "\n";
-
-                        insertIntoData(db, r, commId, k, maxsize, minsize,
+                            insertIntoData(db, r, commId, k, maxsize, minsize,
                                        recv_buffer[i].buckets_msgs[k][j],
                                        recv_buffer[i].buckets_time[k][j]);
                     }
@@ -2501,97 +2370,6 @@ _Finalize(void) {
             }
         }
 
-        // fprintf(fpp, "#'MPI LIBRARY' '%s'\n", version);
-        // fprintf(fpp, "#'Processes' '%d'\n",size);
-        // fprintf(fpp, "#'Run command' ");
-        // fprintf(fpp, "'%s",av[0]);
-        // for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
-        //     fprintf(fpp, " %s",av[i]);
-        // }
-        // fprintf(fpp, "'\n");
-        // fprintf(fpp, "#'mpisee Version' '%d.%d'\n",mpisee_major_version,mpisee_minor_version);
-        // fprintf(fpp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time);
-        // if ( env_var ){
-        //     fprintf(fpp, "#'mpisee env' '%s'\n", env_var);
-        // }
-        // else{
-        //     fprintf(fpp, "#'mpisee env'\n");
-        // }
-        // time(&date);
-        // tmp = ctime(&date);
-        // fprintf(fpp, "#'Profile date' ");
-        // fprintf(fpp, "'%c",*tmp);
-        // tmp++;
-        // while ( *tmp != '\n' ){
-        //     fprintf(fpp, "%c",*tmp);
-        //     tmp++;
-        // }
-        // fprintf(fpp, "'\n");
-        // fprintf(fpp,"#'Mapping:");
-        // for ( i =0; i<size; i++ ){
-        //     if ( ptr != NULL ){
-        //         snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, "%s", ptr);
-        //     }
-        //     if ( i != size-1 )
-        //         fprintf(fpp, "%d %s,",i,proc_name);
-        //     else
-        //         fprintf(fpp, "%d %s\n",i,proc_name);
-        //     ptr+=MPI_MAX_PROCESSOR_NAME;
-        // }
-        // fprintf(fpp,"#'Time elapsed for each process:,");
-        // for ( i =0; i<size; i++ ){
-        //     if ( i != size-1 )
-        //         fprintf(fpp, "%d %lf,",i,alltimes[i]);
-        //     else
-        //         fprintf(fpp, "%d %lf\n",i,alltimes[i]);
-        // }
-        // fprintf(fpp, "Rank,Comm,Size,Volume,Calls,");
-        // for (k = 0; k<NUM_OF_PRIMS; k++){
-        //     fprintf(fpp, "%s_Calls,",prim_names[k]);
-        //     fprintf(fpp, "%s_Volume,",prim_names[k]);
-        //     if ( k == NUM_OF_PRIMS -1 )
-        //         fprintf(fpp, "%s_Time",prim_names[k]);
-        //     else
-        //         fprintf(fpp, "%s_Time,",prim_names[k]);
-        // }
-        // fprintf(fpp,"\n");
-
-        // for ( i =0; i<size*num_of_comms; i++ ){
-        //     if ( i % num_of_comms == 0  ){
-        //         if ( r > -1 ){ //r is initialized to -1
-        //             mpi_times.push_back(mpi_time);
-        //             mpi_time = 0.0;
-        //         }
-        //         r++;
-        //     }
-        //     if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
-        //         fprintf(fpp, "%d,%s,%d,%" PRIu64 ",%" PRIu64 ",",r,recv_buffer[i].name,recv_buffer[i].size,recv_buffer[i].bytes,recv_buffer[i].msgs);
-        //         for ( k =0; k<NUM_OF_PRIMS; k++){
-        //             mpi_time+=recv_buffer[i].time_info[k];
-        //             fprintf(fpp, "%u,",recv_buffer[i].prims[k]);
-        //             if ( recv_buffer[i].prims[k] > 0 )
-        //                 fprintf(fpp, "%" PRIu64 ",",recv_buffer[i].prim_bytes[k]);
-        //             else
-        //                 fprintf(fpp, "0.0,");
-        //             if ( k == NUM_OF_PRIMS-1 )
-        //                 fprintf(fpp, "%lf",recv_buffer[i].time_info[k]);
-        //             else
-        //                 fprintf(fpp, "%lf,",recv_buffer[i].time_info[k]);
-        //         }
-        //         fprintf(fpp,"\n");
-        //     }
-        // }
-        // mpi_times.push_back(mpi_time);
-        // fprintf(fpp, "#'MPI Time (Rank Time)',");
-        // for (size_t it=0; it < mpi_times.size(); it++) {
-        //     fprintf(fpp, "%lu %lf",it,mpi_times[it]);
-        //     if ( it == mpi_times.size()-1 ){
-        //         fprintf(fpp, "\n");
-        //     }
-        //     else{
-        //         fprintf(fpp, ",");
-        //     }
-        // }
         printf("Database File Written: %s\n", outfile);
 
         printMetadata(db);
