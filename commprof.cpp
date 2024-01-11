@@ -2399,15 +2399,17 @@ _Finalize(void) {
 
                 }
             }
-            if (i % num_of_comms == (num_of_comms-1)) {
-                executeBatchInsert(db, entries);
-                entries.clear();
-            }
+            // if (i % num_of_comms == (num_of_comms-1)) {
+            //     executeBatchInsert(db, entries);
+            //     entries.clear();
+            // }
         }
-        if (!entries.empty()) {
-            executeBatchInsert(db, entries);
-            entries.clear();
-        }
+        executeBatchInsert(db, entries);
+        entries.clear();
+        // if (!entries.empty()) {
+        //     executeBatchInsert(db, entries);
+        //     entries.clear();
+        // }
         t = MPI_Wtime() - t;
 
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
