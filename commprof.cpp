@@ -2416,7 +2416,6 @@ _Finalize(void) {
             // }
         }
         executeBatchInsert(db, entries);
-        entries.clear();
         // if (!entries.empty()) {
         //     executeBatchInsert(db, entries);
         //     entries.clear();

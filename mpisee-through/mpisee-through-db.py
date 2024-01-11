@@ -2,6 +2,8 @@
 import argparse
 import sqlite3
 import re
+import os
+import sys
 
 def parse_enum_from_header(header_path):
     with open(header_path, 'r') as file:
@@ -229,11 +231,20 @@ def print_data_by_comm(db_path, comm):
             conn.close()
 
 
-def print_data_by_bufsize(dbpath, min=0, max=2147483647):
-    # Connect to the SQLite database
-    conn = sqlite3.connect(dbpath)
-    cursor = conn.cursor()
 
+def print_data_by_time(dbpath,order=1,num_of_rows=0,rank_list=[],*args):
+    # SQL query
+    sql = """
+    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
+           d.calls, d.time
+    FROM data d
+    JOIN comms c ON d.comm_id = c.id
+    JOIN operations o ON d.operation_id = o.id
+    WHERE d.time >= ? AND d.time <= ?
+    """
+    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,*args)
+
+def print_data_by_bufsize(dbpath,order=1,num_of_rows=0,rank_list=[],*args):
     # SQL query
     sql = """
     SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
@@ -242,114 +253,8 @@ def print_data_by_bufsize(dbpath, min=0, max=2147483647):
     JOIN comms c ON d.comm_id = c.id
     JOIN operations o ON d.operation_id = o.id
     WHERE d.buffer_size_min >= ? AND d.buffer_size_max <= ?
-    ORDER BY c.name
     """
-
-    try:
-        # Execute the query
-        cursor.execute(sql,(min,max))
-
-        # Print header
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
-              f"{'Buffer Size Range':<25}{'Calls':<15}{'Time':<20}")
-
-        # Print rows
-        for row in cursor.fetchall():
-            name, size, rank, operation, buf_min, buf_max, calls, time = row
-            buffer_size = f"{buf_min} - {buf_max}"
-            print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
-                  f"{buffer_size:<25}{calls:<15}{time:<20}")
-
-    except sqlite3.Error as e:
-        print("Failed to read data from SQLite table", e)
-    finally:
-        # Close the database connection
-        if conn:
-            conn.close()
-
-def print_data_by_time(dbpath, min=0.0, max=0.0):
-    # Connect to the SQLite database
-    conn = sqlite3.connect(dbpath)
-    cursor = conn.cursor()
-
-    if max == 0.0:
-        cursor.execute("SELECT MAX(time) FROM data")
-        max = cursor.fetchone()[0]
-
-    # SQL query
-    sql = """
-    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
-           d.calls, d.time
-    FROM data d
-    JOIN comms c ON d.comm_id = c.id
-    JOIN operations o ON d.operation_id = o.id
-    WHERE d.time >= ? AND d.time <= ?
-    ORDER BY c.name
-    """
-
-    try:
-        # Execute the query
-        cursor.execute(sql,(min,max))
-
-        # Print header
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
-              f"{'Buffer Size Range':<25}{'Calls':<15}{'Time':<20}")
-
-        # Print rows
-        for row in cursor.fetchall():
-            name, size, rank, operation, buf_min, buf_max, calls, time = row
-            buffer_size = f"{buf_min} - {buf_max}"
-            print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
-                  f"{buffer_size:<25}{calls:<15}{time:<20}")
-
-    except sqlite3.Error as e:
-        print("Failed to read data from SQLite table", e)
-    finally:
-        # Close the database connection
-        if conn:
-            conn.close()
-
-def print_data_by_time_sort_desc(dbpath, min=0.0, max=0.0):
-    # Connect to the SQLite database
-    conn = sqlite3.connect(dbpath)
-    cursor = conn.cursor()
-
-    if max == 0.0:
-        cursor.execute("SELECT MAX(time) FROM data")
-        max = cursor.fetchone()[0]
-
-    # SQL query
-    sql = """
-    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
-           d.calls, d.time
-    FROM data d
-    JOIN comms c ON d.comm_id = c.id
-    JOIN operations o ON d.operation_id = o.id
-    WHERE d.time >= ? AND d.time <= ?
-    ORDER BY c.name
-    """
-
-    try:
-        # Execute the query
-        cursor.execute(sql,(min,max))
-
-        # Print header
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
-              f"{'Buffer Size Range':<25}{'Calls':<15}{'Time':<20}")
-
-        # Print rows
-        for row in cursor.fetchall():
-            name, size, rank, operation, buf_min, buf_max, calls, time = row
-            buffer_size = f"{buf_min} - {buf_max}"
-            print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
-                  f"{buffer_size:<25}{calls:<15}{time:<20}")
-
-    except sqlite3.Error as e:
-        print("Failed to read data from SQLite table", e)
-    finally:
-        # Close the database connection
-        if conn:
-            conn.close()
+    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,*args)
 
 def  print_data_collectives(dbpath,order=1,num_of_rows=0,rank_list=[],*args):
     sql = """
@@ -379,11 +284,24 @@ def main():
     parser.add_argument("-c","--collectives", action='store_true', required=False, help="Show only collective MPI operations.")
     parser.add_argument("-r","--ranks", type=str, required=False, help="Show the data of specific MPI ranks.")
     parser.add_argument("-b","--buffsize", type=str, required=False, help="Show the data for a specific buffer size range defined as min:max.")
+    parser.add_argument("-t","--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
     parser.add_argument("-n","--nresults", required=False, type=int, default=0, help="Show the first N results. By default all are printed.")
     parser.add_argument("-s","--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
     args = parser.parse_args()
 
     header_path = '../utils.h'
+
+    # Path to the script file (this script)
+    script_path = os.path.abspath(__file__)
+
+    # Directory where the script is located
+    script_dir = os.path.dirname(script_path)
+
+    # Path to the header file, relative to the script location
+    header_path = os.path.join(script_dir, '../utils.h')
+
+    # Normalize the path to resolve any ".." components
+    header_path = os.path.normpath(header_path)
     enum_primitives = parse_enum_from_header(header_path)
 
     db_path = args.db_path
@@ -408,6 +326,22 @@ def main():
         buffsizemax = 2147483647
         buffsizemin = 0
 
+    if args.time:
+        tmp = args.time.split(':')[0]
+        if ( len(tmp) > 0 ):
+            timemin = float(args.time.split(':')[0])
+        else:
+            timemin = 0
+        tmp = args.time.split(':')[1]
+        if ( len(tmp) > 0 ):
+            timemax = float(args.time.split(':')[1])
+        else:
+            timemax = sys.float_info.max
+    else:
+        timemax = -1
+        timemin = sys.float_info.max
+
+
 
     #print_data_by_rank(db_path,0)
 
@@ -424,7 +358,9 @@ def main():
     elif args.collectives:
         print_data_collectives(db_path,args.sort,args.nresults,rank_list,buffsizemin,buffsizemax,enum_primitives['Bcast'])
     elif args.buffsize:
-        print_data_by_bufsize(db_path, max=buffsizemax, min=buffsizemin)
+        print_data_by_bufsize(db_path,args.sort,args.nresults,rank_list,buffsizemin,buffsizemax)
+    elif args.time:
+        print_data_by_time(db_path,args.sort,args.nresults,rank_list,timemin,timemax)
     else:
         print_all_data(db_path)
 
