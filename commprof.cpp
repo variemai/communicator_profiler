@@ -2347,38 +2347,41 @@ _Finalize(void) {
             powers_of_2[i] = 1 << buckets[i];
         }
 
+        std::vector<DataEntry> entries;
         std::cout << "Writing the main data table" << "\n";
         for (i = 0; i < num_of_comms*size; i++) {
-            insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
-            commId = getCommId(db, recv_buffer[i].name);
+            commId = insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
             if (i % num_of_comms == 0) {
-                r++;
-            }
-            for (k = 0; k < NUM_OF_PRIMS; k++) {
-                // Handle the first bucket separately
-                minsize = 0;
-                maxsize = powers_of_2[0];
-                if (recv_buffer[i].buckets_msgs[k][0] > 0) {
-                    insertIntoData(db, r, commId, k, maxsize, minsize,
-                                   recv_buffer[i].buckets_msgs[k][0],
-                                   recv_buffer[i].buckets_time[k][0]);
-                }
-                for (j = 1; j < NUM_BUCKETS-1; j++) {
-                    minsize = powers_of_2[j - 1];
-                    maxsize = (j == NUM_BUCKETS - 2) ? INT_MAX : powers_of_2[j];
-                    if (recv_buffer[i].buckets_msgs[k][j] > 0) {
-                        insertIntoData(db, r, commId, k, maxsize, minsize,
-                                       recv_buffer[i].buckets_msgs[k][j],
-                                       recv_buffer[i].buckets_time[k][j]);
-                    }
+              r++;
+              for (k = 0; k < NUM_OF_PRIMS; k++) {
+                  // Handle the first bucket separately
+                  minsize = 0;
+                  maxsize = powers_of_2[0];
+                  if (recv_buffer[i].buckets_msgs[k][0] > 0) {
+                      insertIntoDataEntry(entries, r, commId, k, maxsize, minsize,
+                                          recv_buffer[i].buckets_msgs[k][0],
+                                          recv_buffer[i].buckets_time[k][0]);
+                  }
+                  for (j = 1; j < NUM_BUCKETS-1; j++) {
+                      minsize = powers_of_2[j - 1];
+                      maxsize = (j == NUM_BUCKETS - 2) ? INT_MAX : powers_of_2[j];
+                      if (recv_buffer[i].buckets_msgs[k][j] > 0) {
+                        insertIntoDataEntry(entries, r, commId, k, maxsize,
+                                            minsize,
+                                            recv_buffer[i].buckets_msgs[k][j],
+                                            recv_buffer[i].buckets_time[k][j]);
+                      }
 
-                }
+                  }
+            }
+            executeBatchInsert(db, entries); // Perform batch insert after processing each i iteration
+            entries.clear(); // Clear the vector for reuse in the next iteration
             }
         }
 
         printf("Database File Written: %s\n", outfile);
 
-        printMetadata(db);
+        //printMetadata(db);
         //printCommsTable(db);
         //printData(db);
         sqlite3_close(db);

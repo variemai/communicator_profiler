@@ -14,7 +14,7 @@ void createTables(sqlite3 *db);
 
 void insertIntoMappings(sqlite3 *db, const std::string &machine);
 
-void insertIntoComms(sqlite3 *db, const std::string &name, int size);
+int insertIntoComms(sqlite3 *db, const std::string &name, int size);
 
 void insertIntoOperations(sqlite3 *db, const std::string &operation);
 
@@ -27,6 +27,12 @@ void insertMetadata(sqlite3 *db, char *mpi_lib, int size, char *cmd[MAX_ARGS],
                     char *build_date, char *build_time, const char *env);
 
 int getCommId(sqlite3 *db, const std::string &commName);
+
+void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
+                         int operationId, int bufferSizeMax, int bufferSizeMin,
+                         int calls, double time);
+
+void executeBatchInsert(sqlite3 *db, const std::vector<DataEntry> &entries);
 
 void printData(sqlite3* db);
 

@@ -243,8 +243,8 @@ void createTables(sqlite3* db) {
     const char* CommsTable =
         "CREATE TABLE IF NOT EXISTS comms ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "name TEXT, "
-        "size TEXT);";
+        "name TEXT UNIQUE, "
+        "size INTEGER);";
     executeSQL(db, CommsTable, "Communicator Table created");
 
     // Create Data Table
@@ -281,67 +281,29 @@ void insertIntoMappings(sqlite3 *db, const std::string &machine) {
 }
 
 
+int insertIntoComms(sqlite3 *db, const std::string &name, int size ) {
+    // Insert or ignore based on unique name
+    int commId = 0;
+    sqlite3_stmt *insertStmt;
+    sqlite3_stmt *getIdStmt;
+    std::string insertSql = "INSERT OR IGNORE INTO comms (name, size) VALUES (?, ?)";
+    std::string getIdSql = "SELECT id FROM comms WHERE name = ?";
+    sqlite3_prepare_v2(db, insertSql.c_str(), -1, &insertStmt, nullptr);
+    sqlite3_bind_text(insertStmt, 1, name.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(insertStmt, 2, size);
+    sqlite3_step(insertStmt);
+    sqlite3_finalize(insertStmt);
 
-// Functions to insert into comms
-// void insertIntoComms(sqlite3 *db, const std::string &name,
-//                      const std::string &size) {
-//   int count;
-
-//   count = countTable(db, "comms");
-//   std::string insertSql;
-//   if (count == 0) {
-//     // The table is empty, insert with id = 0
-//     insertSql = "INSERT INTO comms (id, name, size) VALUES (0, '" + name + "', '" + size + "')";
-//   } else {
-//     // The table is not empty, let SQLite auto-increment the id
-//     sqlite3_stmt *stmt;
-//     std::string checkSql = "SELECT COUNT(*) FROM comms WHERE name = '" + name + "'";
-//     sqlite3_prepare_v2(db, checkSql.c_str(), -1, &stmt, nullptr);
-//     sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
-//     count = -1;
-//     count = sqlite3_column_int(stmt, 0);
-//     // If the entry does not exist, insert it
-//     if ( count == 0 ){
-//       insertSql = "INSERT INTO comms (name, size) VALUES ('" + name + "', '" +
-//                   size + "')";
-//     } else {
-//       std::cout << "Entry with name '" << name
-//                 << "' already exists in comms table." << std::endl;
-//       return;
-//     }
-//   }
-//     executeSQL(db, insertSql,"INSERT INTO comms" );
-// }
-
-void insertIntoComms(sqlite3 *db, const std::string &name, int size) {
-    sqlite3_stmt *stmt;
-    std::string checkSql = "SELECT COUNT(*) FROM comms WHERE name = ?";
-    sqlite3_prepare_v2(db, checkSql.c_str(), -1, &stmt, nullptr);
-    sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
-
-    int count = -1;
-    if (sqlite3_step(stmt) == SQLITE_ROW) {
-        count = sqlite3_column_int(stmt, 0);
+    // Get the ID of the comm
+    sqlite3_prepare_v2(db, getIdSql.c_str(), -1, &getIdStmt, nullptr);
+    sqlite3_bind_text(getIdStmt, 1, name.c_str(), -1, SQLITE_STATIC);
+    if (sqlite3_step(getIdStmt) == SQLITE_ROW) {
+        commId = sqlite3_column_int(getIdStmt, 0);
     }
-    sqlite3_finalize(stmt);
-
-    // If the entry does not exist, insert it
-    if (count == 0) {
-        std::string insertSql;
-        // Check if it's the first entry to set id to 0
-        if (countTable(db, "comms") == 0) {
-          insertSql = "INSERT INTO comms (id, name, size) VALUES (0, '" + name +
-            "', '" + std::to_string(size) + "')";
-        } else {
-          insertSql = "INSERT INTO comms (name, size) VALUES ('" + name +
-            "', '" + std::to_string(size) + "')";
-        }
-        executeSQL(db, insertSql, "INSERT INTO comms");
-    }
-    // else {
-    //     std::cout << "Entry with name '" << name << "' already exists in comms table." << std::endl;
-    // }
+    sqlite3_finalize(getIdStmt);
+    return commId;
 }
+
 
 
 // Functions to insert into operations
@@ -360,23 +322,41 @@ void insertIntoOperations(sqlite3* db, const std::string& operation) {
 
 // Functions to insert into data
 void insertIntoData(sqlite3* db, int rank, int commId, int operationId, int bufferSizeMax, int bufferSizeMin, int calls, double time) {
-  // int count;
-  // count = countTable(db, "operations");
   std::string insertSql;
-  // if (count == 0) {
-  //   insertSql = "INSERT INTO data (id, rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES (0, "
-  //                     + std::to_string(rank) + ", " + std::to_string(commId) + ", "
-  //                     + std::to_string(operationId) + ", " + std::to_string(bufferSizeMax) + ", "
-  //                     + std::to_string(bufferSizeMin) + ", " + std::to_string(calls) + ", " + std::to_string(time) + ")";
-
-  // } else {
-    insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES ("
+  insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES ("
                       + std::to_string(rank) + ", " + std::to_string(commId) + ", "
                       + std::to_string(operationId) + ", " + std::to_string(bufferSizeMax) + ", "
                       + std::to_string(bufferSizeMin) + ", " + std::to_string(calls) + ", " + std::to_string(time) + ")";
-  // }
   executeSQL(db, insertSql, "INSERT INTO data");
 }
+
+void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
+                         int operationId, int bufferSizeMax, int bufferSizeMin,
+                         int calls, double time) {
+    DataEntry entry = {rank, commId, operationId, bufferSizeMax, bufferSizeMin, calls, time};
+    entries.push_back(entry);
+}
+
+void executeBatchInsert(sqlite3* db, const std::vector<DataEntry>& entries) {
+    // Start transaction
+    executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
+
+    for (const auto& entry : entries) {
+        std::string insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES ("
+                                + std::to_string(entry.rank) + ", "
+                                + std::to_string(entry.commId) + ", "
+                                + std::to_string(entry.operationId) + ", "
+                                + std::to_string(entry.bufferSizeMax) + ", "
+                                + std::to_string(entry.bufferSizeMin) + ", "
+                                + std::to_string(entry.calls) + ", "
+                                + std::to_string(entry.time) + ")";
+        executeSQL(db, insertSql, "INSERT INTO data");
+    }
+
+    // Commit transaction
+    executeSQL(db, "END TRANSACTION", "End Transaction");
+}
+
 
 void printCommsTable(sqlite3* db) {
     sqlite3_stmt* stmt;
