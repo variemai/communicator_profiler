@@ -2363,7 +2363,6 @@ _Finalize(void) {
         double t;
         t = MPI_Wtime();
         for (i = 0; i < num_of_comms*size; i++) {
-            // commId = insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
             commId = commIds[i];
             if (i % num_of_comms == 0) {
               r++;
@@ -2389,11 +2388,16 @@ _Finalize(void) {
 
                 }
             }
-            if (i % num_of_comms == 0) {
-                executeBatchInsert(db, entries); // Perform batch insert after processing each i iteration
-                entries.clear(); // Clear the vector for reuse in the next iteration
+            if (i % num_of_comms == (num_of_comms-1)) {
+                executeBatchInsert(db, entries);
+                entries.clear();
             }
         }
+        if (!entries.empty()) {
+            executeBatchInsert(db, entries);
+            entries.clear();
+        }
+
         t = MPI_Wtime() - t;
 
         std::cout << "Output database file " << outfile << ", time to write  = " << t << " seconds" << std::endl;
