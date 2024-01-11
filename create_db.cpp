@@ -360,21 +360,21 @@ void insertIntoOperations(sqlite3* db, const std::string& operation) {
 
 // Functions to insert into data
 void insertIntoData(sqlite3* db, int rank, int commId, int operationId, int bufferSizeMax, int bufferSizeMin, int calls, double time) {
-  int count;
-  count = countTable(db, "operations");
+  // int count;
+  // count = countTable(db, "operations");
   std::string insertSql;
-  if (count == 0) {
-    insertSql = "INSERT INTO data (id, rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES (0, "
-                      + std::to_string(rank) + ", " + std::to_string(commId) + ", "
-                      + std::to_string(operationId) + ", " + std::to_string(bufferSizeMax) + ", "
-                      + std::to_string(bufferSizeMin) + ", " + std::to_string(calls) + ", " + std::to_string(time) + ")";
+  // if (count == 0) {
+  //   insertSql = "INSERT INTO data (id, rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES (0, "
+  //                     + std::to_string(rank) + ", " + std::to_string(commId) + ", "
+  //                     + std::to_string(operationId) + ", " + std::to_string(bufferSizeMax) + ", "
+  //                     + std::to_string(bufferSizeMin) + ", " + std::to_string(calls) + ", " + std::to_string(time) + ")";
 
-  } else {
+  // } else {
     insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES ("
                       + std::to_string(rank) + ", " + std::to_string(commId) + ", "
                       + std::to_string(operationId) + ", " + std::to_string(bufferSizeMax) + ", "
                       + std::to_string(bufferSizeMin) + ", " + std::to_string(calls) + ", " + std::to_string(time) + ")";
-  }
+  // }
   executeSQL(db, insertSql, "INSERT INTO data");
 }
 
