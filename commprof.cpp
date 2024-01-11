@@ -206,6 +206,17 @@ MPI_Pcontrol(const int level, ...)
     return mpi_errno;
 }
 
+std::vector<std::string> convertToArrayOfStrings(char *proc_names, int size,
+                                                 int name_length) {
+    std::vector<std::string> machineNames;
+    for (int i = 0; i < size; ++i) {
+        std::string machineName(proc_names + i * name_length);
+        machineNames.push_back(machineName);
+    }
+    return machineNames;
+}
+
+
 int
 _MPI_Init(int *argc, char ***argv){
     int ret,rank,size;
@@ -2204,13 +2215,7 @@ _Finalize(void) {
     int rank, size;
     int i, k, j, len;
     prof_attrs *recv_buffer = NULL;
-    // char **names, **unames;
     int  num_of_comms, resultlen;
-    // uint64_t *bytes, *prims_bytes;
-    // uint32_t *prims;
-    // uint64_t *msgs;
-    // double *time_info;
-    // int *sizes;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names = NULL;
@@ -2298,20 +2303,20 @@ _Finalize(void) {
         if (env_var != NULL) {
           rc = sqlite3_open(env_var, &db);
           if (rc) {
-              std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
+              std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
               return 1;
           } else {
-              std::cout << "Opened database successfully" << std::endl;
+              std::cout << "mpise: Opened database successfully" << std::endl;
           }
           outfile = strdup(env_var);
         }
         else{
           rc = sqlite3_open("mpisee_profile.db", &db);
           if (rc) {
-              std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
+              std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
               return 1;
           } else {
-              std::cout << "Opened database successfully" << std::endl;
+              std::cout << "mpisee: Opened database successfully" << std::endl;
           }
           outfile = strdup("mpisee_profile.db");
         }
@@ -2333,15 +2338,21 @@ _Finalize(void) {
             insertIntoOperations(db, prim_names[i]);
         }
 
+        std::vector<std::string> machines =
+            convertToArrayOfStrings(proc_names, size, MPI_MAX_PROCESSOR_NAME);
+        BatchInsertIntoMappings(db, machines);
+        machines.clear();
+        machines.shrink_to_fit();
+        free(proc_names);
 
-        ptr = proc_names;
-        for (i = 0; i < size; i++) {
-            if ( ptr != NULL ){
-              snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, "%s", ptr);
-            }
-            insertIntoMappings(db, proc_name);
-            ptr+=MPI_MAX_PROCESSOR_NAME;
-        }
+        // ptr = proc_names;
+        // for (i = 0; i < size; i++) {
+        //     if ( ptr != NULL ){
+        //       snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, "%s", ptr);
+        //     }
+        //     insertIntoMappings(db, proc_name);
+        //     ptr+=MPI_MAX_PROCESSOR_NAME;
+        // }
         // Precompute powers of 2 for each bucket
         for (int i = 0; i < NUM_BUCKETS - 1; i++) {
             powers_of_2[i] = 1 << buckets[i];
@@ -2358,7 +2369,7 @@ _Finalize(void) {
 
 
         std::vector<DataEntry> entries;
-        std::cout << "Writing the main data table"
+        std::cout << "mpisee: Writing the main data table"
                   << std::endl;
         double t;
         t = MPI_Wtime();
@@ -2397,18 +2408,13 @@ _Finalize(void) {
             executeBatchInsert(db, entries);
             entries.clear();
         }
-
         t = MPI_Wtime() - t;
 
-        std::cout << "Output database file " << outfile << ", time to write  = " << t << " seconds" << std::endl;
-        //printMetadata(db);
-        //printCommsTable(db);
-        //printData(db);
+        std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
         sqlite3_close(db);
 
         free(outfile);
         free(alltimes);
-        free(proc_names);
     }
 
     PMPI_Type_free(&profiler_data);
