@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <mpi.h>
+#include <ostream>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -2348,7 +2349,9 @@ _Finalize(void) {
         }
 
         std::vector<DataEntry> entries;
-        std::cout << "Writing the main data table" << "\n";
+        std::cout << "Writing the main data table"
+                  << std::flush;
+
         for (i = 0; i < num_of_comms*size; i++) {
             commId = insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
             if (i % num_of_comms == 0) {
