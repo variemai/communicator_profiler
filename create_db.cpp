@@ -4,6 +4,7 @@
 #include <iomanip>
 #include <sstream>
 #include <chrono>
+#include <vector>
 #include "utils.h"
 #include "create_db.h"
 
