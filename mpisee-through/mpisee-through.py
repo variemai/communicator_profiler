@@ -27,6 +27,70 @@ REVERSE = "\033[;7m"
 
 # Function declarations
 
+def print_decoration(decoration):
+    if sys.stdout.isatty():
+        # the output is not redirected, we can use a fancy style:
+        sys.stdout.write(decoration)
+
+
+def ratio_to_percentage(ratio):
+    return f"{ratio * 100:.2f}%"
+
+def get_values(inlist):
+    ranks = []
+    values = []
+
+    # Flatten the list if its first element is a list
+    if isinstance(inlist[0], list):
+        inlist = inlist[0] + inlist[1:]
+
+    for entry in inlist[1:]:  # skipping the first informational string
+        rank, value = entry.split()
+        ranks.append(int(rank))
+        values.append(float(value))
+
+    max_value = max(values)
+    min_value = min(values)
+
+    max_rank = ranks[values.index(max_value)]
+    min_rank = ranks[values.index(min_value)]
+
+    return max_rank,max_value,min_rank,min_value
+
+
+def print_times(elapsed_time, mpi_times):
+    max_rank, max_value, min_rank, min_value = get_values(elapsed_time)
+    max_mpi_rank, max_mpi_time, min_mpi_rank, min_mpi_time = get_values(mpi_times)
+
+    ranks = []
+    ratios = []
+
+    mpi_times = mpi_times[0]+mpi_times[1:]
+    for i in range(1,len(elapsed_time)):  # skipping the first informational string
+        time = elapsed_time[i].split()[1]
+        mpi_time = mpi_times[i].split()[1]
+        ranks.append(int(i))
+        if time == 0:
+            return "Cannot compute ratio: Division by zero"
+        ratios.append(float(mpi_time)/float(time))
+    
+    max_ratio = max(ratios)
+    min_ratio = min(ratios)
+    max_ratio_rank = ranks[ratios.index(max_ratio)]
+    min_ratio_rank = ranks[ratios.index(min_ratio)]
+
+    print_decoration(GREEN)
+    print(f"Overall Timing Statistics for {len(ratios)} MPI Processes (Ranks in MPI_COMM_WORLD)")
+    print_decoration(RESET)
+    print(f"Maximum Total Time: {max_value}s (MPI Rank: {max_rank})")
+    print(f"Minimum Total Time: {min_value}s (MPI Rank: {min_rank})")
+    print(f"Maximum MPI Time: {max_mpi_time}s (MPI Rank: {max_mpi_rank})")
+    print(f"Minimum MPI Time: {min_mpi_time}s (MPI Rank: {min_mpi_rank})")
+    print(f"Maximum Percentage of MPI Time to Total Time: {ratio_to_percentage(max_ratio)} (MPI Rank: {max_ratio_rank})")
+    print(f"Minimum Percentage of MPI Time to Total Time: {ratio_to_percentage(min_ratio)} (MPI Rank: {min_ratio_rank})")
+    print("\n")
+
+
 
 def compact_proc_list(proc_list):
     proc_list.sort()
@@ -62,6 +126,9 @@ def print_mapping(mapping):
         else:
             node_to_procs[node] = [proc_rank]
 
+    print_decoration(GREEN)
+    print("Mapping of MPI ranks to Compute Nodes")
+    print_decoration(RESET)
     for node, proc_list in node_to_procs.items():
 
         print(f"{node}: {compact_proc_list(proc_list)}")
@@ -75,26 +142,29 @@ def prepare_data(file_path):
         for i in range(7): #skip those lines for now
             next(csv_file)
         mapping = next(csv_file)
-        next(csv_file)                    #skip also this line
+        time_elapsed = next(csv_file)                    #skip also this line
         index_to_colname = next(csv_file)
         colname_to_index = {
             index_to_colname[i]: i for i in range(0, len(index_to_colname))
         }
         raw_data = []
+        mpi_data = []
         for row in csv_file:
             row_parsed = []
-            for j in range(0, len(row)):
-                row_parsed.append(
-                    float(row[j]) if colname_to_index["Comm"] != j else row[j]
-                )
-
-            raw_data.append(row_parsed)
+            if '#' in row[0]:
+                mpi_data.append(row)
+            else:
+                for j in range(0, len(row)):
+                    row_parsed.append(
+                        float(row[j]) if colname_to_index["Comm"] != j else row[j]
+                    )
+                raw_data.append(row_parsed)
 
     data_groupBy_comm, comm_to_procs = groupBy_comm(raw_data, colname_to_index)
 
     table = create_table(data_groupBy_comm, colname_to_index, index_to_colname)
 
-    return table, mapping, comm_to_procs
+    return table, mapping, comm_to_procs, time_elapsed, mpi_data
 
 
 def groupBy_comm(data, colname_to_index):
@@ -168,6 +238,9 @@ def print_cct(table, comm_to_procs, comm_limit):
         else len(comm_to_procs)
     )
     nb_comm_printed = 0
+    print_decoration(GREEN)
+    print("Statistics Per Communicator")
+    print_decoration(RESET)
     for comm in comm_to_procs.keys():
         if nb_comm_printed >= comm_limit:
             break
@@ -175,16 +248,16 @@ def print_cct(table, comm_to_procs, comm_limit):
         comm_calls = list(filter(lambda x: x["comm"] == comm, table))
         comm_calls.sort(key=lambda x: x["call_mean"], reverse=True)
 
-        sys.stdout.write(BOLD)
+        print_decoration(BOLD)
         print("COMM".ljust(20) + "SIZE".ljust(10) + "PROCS")
-        sys.stdout.write(RESET)
+        print_decoration(RESET)
         print(
             f"{comm}".ljust(20)
             + f"{len(comm_to_procs[comm])}".ljust(10)
             + f"{compact_proc_list(comm_to_procs[comm])}",
             end="\n\n",
         )
-        sys.stdout.write(RESET)
+        print_decoration(RESET)
         print(
             "\t"
             + "Call".ljust(20)
@@ -291,10 +364,13 @@ def main():
     )
     args = my_parser.parse_args()
 
-    table, mapping, comm_to_procs = prepare_data(args.file_path)
+    table, mapping, comm_to_procs,elapsed_time,mpi_times = prepare_data(args.file_path)
 
     print_header()
     print_mapping(mapping)
+    print_times(elapsed_time,mpi_times)
+    #print_elapsed_time(elapsed_time)
+    #print_mpi_times(mpi_times)
 
     if args.cct:
         print_cct(table, comm_to_procs, args.cct_limit)

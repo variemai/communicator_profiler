@@ -1,20 +1,23 @@
 #ifndef UTILS_H_
 #define UTILS_H_
 
+#include <cstdint>
 #include <mpi.h>
 #include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <unistd.h>
-#include <stdarg.h>
-#include <string.h>
+#include <string>
 #define NAMELEN 256
 #define PRIMLEN 16
 #define NUM_OF_PRIMS 36
+#define MAX_ARG_STRING_SIZE 4096
+#define MAX_ARGS 1024
+#define MAX_ARG_SIZE 64
+#define NUM_BUCKETS 7
+// Buckets for message sizes
+const uint32_t buckets[NUM_BUCKETS-1] = {7,10,13,16,20,25};
 
 enum primitives{
-Send,           /* DO NOT ADD ANYHTING BEFORE THIS */
+Send,
 Recv,
 Isend,
 Irecv,
@@ -49,18 +52,29 @@ Iallreduce,
 Ibcast,
 Ialltoall,
 Iscatter,
-Ibarrier   /* DO NOT ADD ANYTHING AFTER THIS */
+Ibarrier
 };
 
+struct CommData {
+    std::string name;
+    int size;
+};
+
+struct DataEntry {
+    int rank;
+    int commId;
+    int operationId;
+    int bufferSizeMax;
+    int bufferSizeMin;
+    int calls;
+    double time;
+};
 
 typedef struct profiler_attributes{
     char name[NAMELEN];
-    uint64_t bytes;
-    uint64_t msgs;
     int size;
-    uint32_t prims[NUM_OF_PRIMS];
-    uint64_t prim_bytes[NUM_OF_PRIMS];
-    double time_info[NUM_OF_PRIMS];
+    double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS];
+    uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
 }prof_attrs;
 
 typedef struct request_data{
@@ -71,10 +85,14 @@ typedef struct request_data{
 /* Globals */
 extern char *appname;
 extern const char prim_names[][NUM_OF_PRIMS];
+extern int ac;
+extern char *av[MAX_ARGS];
 
-void mcpt_abort (char *fmt, ...);
+void mcpt_abort (const char *fmt, ...);
 
 void getProcCmdLine (int *ac, char **av);
 char * get_appname(void);
+
+void getRunCmd(int argc, char **argv);
 
 #endif // UTILS_H_

@@ -1,0 +1,30 @@
+#+title: Output Format
+#+options: toc:nil num:nil
+* Format of the output file of mpisee
+- The output csv file consists of lines that start with '#', with '#@', and the rest of the data that start with the MPI rank number.
+- Lines that start with '#' contain metadata information such as:
+  - Profile start date
+  - Profile end date
+  - MPI library version
+  - Application and arguments
+  - =mpisee= version
+  - =mpisee= environment vars
+- Lines that start with '#@' contain information of how to read the data lines and some data information:
+  - =#@mapping_l= Mapping of each process
+  - =#@metric_l= denotes the type of metric used for the specific line ("VOL, TIME, NCALLS")
+  - =#@msg_range_l= list of message ranges
+  - =#@metric_unit_l= denotes the unit for this metric (float,int)
+  - =#@comm_l= list of communicator names
+  - =#@comm_sz_l= list of communicator sizes - must correspond to the list of communicator names
+  - =#@call_l= list of MPI calls
+  - =#@rank_start_l= list of start timestamp for each rank
+  - =#@rank_end_l= list of end timestamp for each rank
+- Format of a data line:
+  "Rank", "Comm", "Call", "MsgSize", "Type", "Unit", "Val"
+  - Rank: the corresponding MPI ranks
+  - Comm: index to the communicator names list
+  - Call: index to the MPI call list
+  - MsgRange: index to the list of message ranges
+  - Type: index to type of metric used
+  - Unit: index to unit of metric used
+  - Val: Value

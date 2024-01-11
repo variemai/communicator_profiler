@@ -1,50 +1,55 @@
 #include "utils.h"
+#include <climits>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
 #include <mpi.h>
+#include <ostream>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <ctype.h>
 #include <time.h>
 #include <unistd.h>
-
-#ifndef MPICH_API_PUBLIC
+#include <cstdarg>
+#include <unordered_map>
+#include <vector>
+#include "commprof.h"
+#include <algorithm>
 #include "symbols.h"
-#endif
-
-#include "table.h"
-#include <inttypes.h>
-#include "commprofConfig.h"
-
-#define MAX_ARGS 1024
-#define MAX_DIMS 8
+#include "create_db.h"
+#include <iostream>
 
 int prof_enabled = 1;
-prof_attrs **local_data = NULL;
-prof_attrs **local_comms = NULL;
 int local_cid= 0;
 int my_coms = 1;
 int ac;
 char *av[MAX_ARGS];
-Table_T request_tab;
+std::unordered_map<MPI_Request, MPI_Comm> requests_map;
+std::vector<prof_attrs*> local_communicators;
 
 /* Tool date */
-char *mpisee_build_date = __DATE__;
-char *mpisee_build_time = __TIME__;
-double *times = NULL;           /* Start and end time of the application */
+int mpisee_major_version = 0;
+int mpisee_minor_version = 1;
+char mpisee_build_date[sizeof(__DATE__)] = __DATE__;
+char mpisee_build_time[sizeof(__TIME__)] = __TIME__;
+double total_time = 0.0;
 
-
-static int
+extern "C" {
+int
 namedel(MPI_Comm comm, int keyval, void *attr, void *s)
 {
   prof_attrs *com = (prof_attrs*)attr;
   free(com);
   return MPI_SUCCESS;
 }
+}
 
-static int
-namekey()
+extern "C" {
+int
+namekey(void)
 {
   // hidden key value for type attributes
   static int namekeyval = MPI_KEYVAL_INVALID;
@@ -55,7 +60,7 @@ namekey()
 
   return namekeyval;
 }
-
+}
 
 /*
  * Create a new communicator structure and add the parent
@@ -65,8 +70,12 @@ prof_attrs*
 get_comm_name(MPI_Comm comm)
 {
     int flag;
-    prof_attrs *communicator, *com_info;
+    prof_attrs *communicator = NULL, *com_info;
     communicator = (prof_attrs*) malloc(sizeof(prof_attrs));
+    if (communicator == NULL){
+        mcpt_abort("malloc get_comm_name failed\nAborting...\n");
+    }
+    memset(communicator, 0, sizeof(prof_attrs));
     if ( comm != MPI_COMM_WORLD ){
         PMPI_Comm_get_attr(comm, namekey(), &com_info, &flag);
         if ( flag ){
@@ -87,7 +96,7 @@ get_comm_name(MPI_Comm comm)
 void
 init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm){
     size_t length;
-    int comm_size,i;
+    int comm_size,i,j;
     if ( buf == NULL || communicator == NULL ||
          comm == MPI_COMM_NULL || newcomm == NULL){
         mcpt_abort("Newcomm called with NULL\n");
@@ -95,44 +104,68 @@ init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
     PMPI_Comm_size(*newcomm, &comm_size);
     length = strlen((*communicator)->name);
     strcpy(&(*communicator)->name[length], buf);
-    (*communicator)->bytes = 0;
-    (*communicator)->msgs = 0;
     (*communicator)->size = comm_size;
-    /* memset((*communicator)->prims, 0, NUM_OF_PRIMS*sizeof(int)); */
     for (i = 0; i < NUM_OF_PRIMS; i++) {
-        (*communicator)->prims[i] = 0;
-        (*communicator)->prim_bytes[i] = 0;
-        (*communicator)->time_info[i] = 0.0;
+        for (j = 0; j < NUM_BUCKETS; j++) {
+            (*communicator)->buckets_time[i][j] = 0.0;
+            (*communicator)->buckets_msgs[i][j] = 0;
+        }
+
     }
-    local_comms[local_cid] = *communicator;
-    /* communicators[my_coms] = *newcomm; */
-    /* Table_put(comm_tab, (*communicator)->name, *communicator); */
+    local_communicators.push_back(*communicator);
     my_coms++;
     local_cid++;
     return;
 }
 
+//Change these values modify the buckets
+int choose_bucket(int64_t bytes) {
+    // These numbers must correspond to the buckets variable
+    if (bytes < (1LL << 7)) {       // 1 << 7 is 128
+        return 0;
+    } else if (bytes < (1LL << 10)) { // 1 << 10 is 1024
+        return 1;
+    } else if (bytes < (1LL << 13)) { // 1 << 13 is 8192
+        return 2;
+    } else if (bytes < (1LL << 16)) { // 1 << 16 is 65536
+        return 3;
+    } else if (bytes < (1LL << 20)) { // 1 << 20 is 1048576
+        return 4;
+    } else if (bytes < (1LL << 25)) { // 1 << 25 is 33554432
+        return 5;
+    } else {
+        return 6; // For bytes >= 33554432
+    }
+  // The above is more optimized
+  // int index;
+  // int64_t tmp;
+  // for (index = 0; index < NUM_BUCKETS-1; index++) {
+  //   tmp = buckets[index];
+  //   tmp = 1 << tmp;
+  //   if (tmp > bytes) {
+  //       break;
+  //   }
+  //   if (index == (NUM_BUCKETS - 1) && (bytes > tmp)) {
+  //     index += 1;
+  //     break;
+  //   }
+  // }
+  // return index;
+}
+
+
 
 prof_attrs*
 profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
              double t_elapsed,int root){
-    int size,flag;
+    int size,flag,bucket_index;
     prof_attrs *communicator = NULL;
     int64_t sum = 0;
     /* int rank; */
     if ( comm == MPI_COMM_NULL  )
         return communicator;
     flag = 0;
-    /* for ( i=0; i< my_coms; i++){ */
-    /*     if ( comm == communicators[i] ) */
-    /*         break; */
-    /* } */
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
-    /* Table_get(comm_tab, communicator->name); */
-    /* for ( i =0; i< local_cid; i++ ){ */
-    /*     if ( strcmp(communicator->name, local_comms[i]->name) == 0 ) */
-    /*         break; */
-    /* } */
     if ( datatype != MPI_DATATYPE_NULL ){
         PMPI_Type_size(datatype, &size);
         sum = count * size;
@@ -140,15 +173,10 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
     else{
         sum = count;
     }
-    if ( flag ){
-        communicator->time_info[prim] += t_elapsed;
-        communicator->prims[prim] += 1;
-        communicator->msgs += 1;
-        communicator->bytes += sum;
-        communicator->prim_bytes[prim] += sum;
-        /* if ( prim == Alltoallv ){ */
-        /*     fprintf(dbg_file, "%ld \n",sum); */
-        /* } */
+    if (flag) {
+        bucket_index = choose_bucket(sum);
+        communicator->buckets_msgs[prim][bucket_index] += 1;
+        communicator->buckets_time[prim][bucket_index] += t_elapsed;
     }
     else{
         fprintf(stderr, "mpisee: empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
@@ -178,63 +206,71 @@ MPI_Pcontrol(const int level, ...)
     return mpi_errno;
 }
 
+std::vector<std::string> convertToArrayOfStrings(char *proc_names, int size,
+                                                 int name_length) {
+    std::vector<std::string> machineNames;
+    for (int i = 1; i < size; ++i) {
+        std::string machineName(proc_names + i * name_length);
+        machineNames.push_back(machineName);
+    }
+    return machineNames;
+}
+
+std::vector<std::string> convertToArrayOfPrims() {
+
+    std::vector<std::string> machineNames;
+    for (int i = 1; i < NUM_OF_PRIMS; ++i) {
+        std::string PrimName(prim_names[i]);
+        machineNames.push_back(PrimName);
+    }
+    return machineNames;
+}
+
+
 int
 _MPI_Init(int *argc, char ***argv){
     int ret,rank,size;
-    int i,rc;
+    int i,j,rc;
     prof_attrs *communicator;
     ret = PMPI_Init(argc, argv);
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
-    /* communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4); */
-    if ( size*4 > 512 )
-        local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
-    else
-        local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*512);
 
-    times = (double*)malloc(sizeof(double)*2);
-    /* world_sz = size*size; */
-    request_tab = Table_new(1024, NULL, NULL);
-    /* comm_tab = Table_new(256, NULL, NULL); */
-
-    /* for ( i =0 ; i<size*4; i++ ){ */
-    /*     communicators[i] = MPI_COMM_NULL; */
-    /*     local_comms[i] = NULL; */
-    /* } */
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
-        printf("MPI_Init: MPI Communicator Profiling Tool\nProfiling application\
+        printf("MPI_Init: mpisee Profiling Tool\nProfiling application\
  %s\n",appname);
+ #ifdef MPICH_NAME
+        printf("MPICH library used\n");
+ #endif
+ #ifdef OMPI_MAJOR_VERSION
+        printf("OpenMPI library used\n");
+ #endif
         fflush(stdout);
     }
-    /* Debuggin file please remove when running */
-    /* dbg_file = fopen("MCPT_%d\n","w"); */
     communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
     if ( communicator == NULL ){
         mcpt_abort("malloc failed at line %s\n",__LINE__);
     }
-    strcpy(communicator->name,"W");
-    communicator->bytes = 0;
+
+    strcpy(communicator->name, "W");
     communicator->size = size;
-    communicator->msgs = 0;
     for ( i = 0; i<NUM_OF_PRIMS; i++ ){
-        communicator->prims[i] = 0;
-        communicator->prim_bytes[i] = 0;
-        communicator->time_info[i] = 0.0;
+        for (j = 0; j < NUM_BUCKETS; j++) {
+            communicator->buckets_time[i][j] = 0.0;
+            communicator->buckets_msgs[i][j] = 0;
+        }
     }
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
-    local_comms[local_cid] = communicator;
-    local_cid++;
+
+    local_communicators.push_back(communicator);
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     if ( argc != NULL )
         ac = *argc;
-    /* communicators[0] = MPI_COMM_WORLD; */
-    /* PMPI_Barrier(MPI_COMM_WORLD); */
-    /* total_time = MPI_Wtime(); */
-    times[0] = MPI_Wtime();
+    total_time = MPI_Wtime();
     return ret;
 }
 
@@ -242,33 +278,24 @@ _MPI_Init(int *argc, char ***argv){
 static int
 _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     int ret,rank,size;
-    int i,rc;
+    int i,j,rc;
     prof_attrs *communicator;
-    /* char *dname; */
     ret = PMPI_Init_thread(argc, argv, required, provided);
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
-    /* communicators =(MPI_Comm*) malloc(sizeof(MPI_Comm)*size*4); */
-    if ( size*4 > 512 )
-        local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*size*4);
-    else
-        local_comms = (prof_attrs**) malloc (sizeof(prof_attrs*)*512);
 
-    times = (double*)malloc(sizeof(double)*2);
-    /* comm_tab = Table_new(256, NULL, NULL); */
-
-    /* world_sz = size*size; */
-    request_tab = Table_new(1024, NULL, NULL);
-
-    /* for ( i =0 ; i<size*4; i++ ){ */
-    /*     communicators[i] = MPI_COMM_NULL; */
-    /*     local_comms[i] = NULL; */
-    /* } */
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
-        printf("MPI_Init_thread: MPI Communicator Profiling Tool\nProfiling\
- application %s\n",appname);
+        printf("MPI_Init_thread: mpisee Profiling Tool\nProfiling\
+application %s\n",appname);
+        fflush(stdout);
+ #ifdef MPICH_NAME
+        printf("MPICH library used\n");
+ #endif
+ #ifdef OMPI_MAJOR_VERSION
+        printf("OpenMPI library used\n");
+ #endif
         fflush(stdout);
     }
     /* Debuggin file please remove when running */
@@ -281,27 +308,23 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     if ( communicator == NULL ){
         mcpt_abort("malloc failed at line %s\n",__LINE__);
     }
-    strcpy(communicator->name,"W");
-    communicator->bytes = 0;
+
+    strcpy(communicator->name, "W");
     communicator->size = size;
-    communicator->msgs = 0;
-    /* memset(communicator->prims, 0, NUM_OF_PRIMS*sizeof(int)); */
     for ( i = 0; i<NUM_OF_PRIMS; i++ ){
-        communicator->prims[i] = 0;
-        communicator->prim_bytes[i] = 0;
-        communicator->time_info[i] = 0.0;
+        for (j = 0; j < NUM_BUCKETS; j++) {
+            communicator->buckets_time[i][j] = 0.0;
+            communicator->buckets_msgs[i][j] = 0;
+        }
     }
-    local_comms[local_cid] = communicator;
     local_cid++;
+    local_communicators.push_back(communicator);
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
     if ( argc != NULL )
         ac = *argc;
-    /* free(dname); */
-    /* communicators[0] = MPI_COMM_WORLD; */
-    /* PMPI_Barrier(MPI_COMM_WORLD); */
     return ret;
 }
 
@@ -311,19 +334,11 @@ MPI_Init_thread(int *argc, char ***argv, int required, int *provided)
 {
     if ( argc != NULL )
         getProcCmdLine (&ac, av);
-    /* int i; */
-    /* ac = 0; */
-    /* if ( argc != NULL && *argc > 0 && argv != NULL ){ */
-    /*     ac = *argc; */
-    /*     for ( i = 0; i<ac && i<32 ; i++ ){ */
-    /*         if ( argv[i] != NULL ) */
-    /*             av[i]=strdup(*argv[i]); */
-    /*     } */
-    /* } */
     return _MPI_Init_thread(argc, argv, required, provided);
 }
 
 
+extern "C" {
 void
 F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr)
 {
@@ -335,8 +350,20 @@ F77_MPI_INIT_THREAD (int *required, int *provided, int *ierr)
     *ierr = ret;
     return;
 }
+}
 
+/* void
+mpi_init_ (int *ierr){
+  int ret = 0;
+  char **tmp;
+  getProcCmdLine (&ac, av);
+  tmp = av;
+  ret = _MPI_Init (&ac, (char ***) &tmp);
+  *ierr = ret;
+  return;
+} */
 
+extern "C" {
 void
 F77_MPI_INIT (int *ierr)
 {
@@ -348,22 +375,16 @@ F77_MPI_INIT (int *ierr)
   *ierr = ret;
   return;
 }
+}
 
 int
 MPI_Init(int *argc, char ***argv)
 {
-    if ( argc != NULL  )
+    if ( argc != NULL  ){
         getProcCmdLine (&ac, av);
-    /* int i; */
-    /* printf("NUM OF ARGS = %d\n",*argc); */
-    /* if ( argc != NULL && *argc > 0 && argv != NULL ){ */
-    /*     ac = *argc; */
-    /*     for ( i = 0; i<ac && i<32 ; i++ ){ */
-    /*         if ( argv[i] != NULL ) */
-    /*             av[i]=strdup(*argv[i]); */
-    /*     } */
-    /* } */
+        //getRunCmd(ac, av);
 
+    }
     return _MPI_Init(argc, argv);
 }
 
@@ -375,9 +396,9 @@ MPI_Init(int *argc, char ***argv)
 int
 MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
 {
-    int ret;
+    int ret,r;
     int comms,rank,min_rank;
-    char *buf;
+    char *buf = NULL;
     prof_attrs *communicator;
     ret = PMPI_Comm_create(comm, group, newcomm);
     /*
@@ -397,9 +418,20 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
     /* Use the parent's name as a prefix for the newly created communicator */
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*16);
+    buf = (char *)malloc(sizeof(char) * 16);
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
     /* Append prefix+suffix and initialize the data for the new communicator */
-    sprintf(buf,"_c%d.%d",my_coms,min_rank);
+    // sprintf(buf, "_c%d.%d", my_coms, min_rank);
+    r = snprintf(buf, 16, "_c%d.%d", my_coms, min_rank);
+    //truncation error handling
+    if (r < 0 || r >= 16) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
     init_comm(buf, &communicator, comm, newcomm);
     free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
@@ -407,6 +439,7 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
 }
 
 
+extern "C" {
 void
 F77_MPI_COMM_CREATE(MPI_Fint  * comm, MPI_Fint  * group, MPI_Fint  *comm_out ,
                     MPI_Fint *ierr)
@@ -424,6 +457,7 @@ F77_MPI_COMM_CREATE(MPI_Fint  * comm, MPI_Fint  * group, MPI_Fint  *comm_out ,
     return;
 
 }
+}
 
 /*
  * The naming scheme for the MPI_Comm_split requires two numbers
@@ -434,9 +468,9 @@ F77_MPI_COMM_CREATE(MPI_Fint  * comm, MPI_Fint  * group, MPI_Fint  *comm_out ,
 int
 MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 {
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf = NULL;
     int rank, min_rank;
     /* Call the actual split */
     ret = PMPI_Comm_split(comm, color, key, newcomm);
@@ -460,9 +494,20 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
     /* Use the parent's name as a prefix for the newly created communicator */
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*16);
+    buf = (char *)malloc(sizeof(char) * 16);
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
     /* Suffix of the new communicator with the two ids */
-    sprintf(buf,"_s%d.%d",comms,min_rank);
+    r = snprintf(buf, 16, "_s%d.%d", my_coms, min_rank);
+    //truncation error handling
+    if (r < 0 || r >= 16) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    // sprintf(buf, "_s%d.%d", my_coms, min_rank);
     /* Append prefix+suffix and initialize the data for the new communicator */
     init_comm(buf, &communicator, comm, newcomm);
     free(buf);
@@ -470,6 +515,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
                    MPI_Fint  *comm_out , MPI_Fint *ierr)
@@ -483,22 +529,36 @@ F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
         *comm_out = MPI_Comm_c2f(c_comm_out);
     return;
 }
+}
 
 
 int
 MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 {
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf = NULL;
     ret = PMPI_Comm_dup(comm, newcomm);
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*8);
-    sprintf(buf,"_d%d",my_coms);
+    buf = (char *)malloc(sizeof(char) * 8);
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 8, "_d%d", my_coms);
+    //truncation error handling
+    if (r < 0 || r >= 8) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    /* Append prefix+suffix and initialize the data for the new communicator */
+    // sprintf(buf,"_d%d",my_coms);
     init_comm(buf, &communicator, comm, newcomm);
     free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
@@ -506,6 +566,7 @@ MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 }
 
 
+extern "C" {
 void
 F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
 {
@@ -518,30 +579,45 @@ F77_MPI_COMM_DUP(MPI_Fint  * comm, MPI_Fint  *comm_out , MPI_Fint *ierr)
         *comm_out =  MPI_Comm_c2f(newcomm);
     return;
 }
+}
 
 /* idup is supposed to be non-blocking but we make blocking calls in the wrapper */
 int
 MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
 {
 
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf=NULL;
     ret = PMPI_Comm_idup(comm, newcomm, request);
-#ifndef MPICH_API_PUBLIC
-    Table_put(request_tab, request, comm);
-#else
-    MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-    *com = comm;
-    Table_put(request_tab, request, com);
-#endif
+
+// #ifdef OMPI_MAJOR_VERSION
+    requests_map[*request] = comm;
+// #endif
+// #ifdef MPICH_NAME
+    // requests_map[*request] = comm;
+// #endif
+
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*8);
-    sprintf(buf,"_i%d",my_coms);
+    buf = (char *)malloc(sizeof(char) * 8);
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 8, "_i%d", my_coms);
+    //truncation error handling
+    if (r < 0 || r >= 8) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    /* Append prefix+suffix and initialize the data for the new communicator */
+    // sprintf(buf,"_i%d",my_coms);
     init_comm(buf, &communicator, comm, newcomm);
 
     free(buf);
@@ -555,16 +631,30 @@ int
 MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
                 const int *periods, int reorder, MPI_Comm *comm_cart)
 {
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf = NULL;
     ret = PMPI_Cart_create(old_comm, ndims, dims, periods, reorder, comm_cart);
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, old_comm);
     my_coms = comms;
     /* Should we have an if condition here to check if comm_cart is null? */
     communicator = get_comm_name(old_comm);
-    buf = (char*)malloc(8*sizeof(char));
-    sprintf(buf,"_a%d",my_coms);
+    buf = (char *)malloc(8 * sizeof(char));
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 8, "_a%d", my_coms);
+    //truncation error handling
+    if (r < 0 || r >= 8) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    /* Append prefix+suffix and initialize the data for the new communicator */
+
+    // sprintf(buf,"_a%d",my_coms);
     init_comm(buf, &communicator, old_comm, comm_cart);
     free(buf);
     PMPI_Comm_set_attr(*comm_cart, namekey(), communicator);
@@ -572,6 +662,7 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
 }
 
 
+extern "C" {
 void
 F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, const int  *dims,
                     const int  *periods, int  * reorder,
@@ -586,14 +677,15 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, const int  *dims,
         *comm_cart = MPI_Comm_c2f(c_comm_cart);
     return;
 }
+}
 
 
 int
 MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
 {
-    int ret, my_rank;
+    int ret, my_rank,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf=NULL;
     int id,min_rank;
     ret = PMPI_Cart_sub(comm, remain_dims, new_comm);
     PMPI_Allreduce(&my_coms, &id, 1, MPI_INT, MPI_MAX, comm);
@@ -604,13 +696,27 @@ MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
     PMPI_Allreduce(&my_rank, &min_rank, 1, MPI_INT , MPI_MIN, *new_comm);
     my_coms = id;
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_b%d.%d",id,min_rank);
+    buf = (char *)malloc(sizeof(char) * 16);
+
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 16, "_b%d.%d", my_coms,min_rank);
+    //truncation error handling
+    if (r < 0 || r >= 16) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    // sprintf(buf,"_b%d.%d",id,min_rank);
     init_comm(buf, &communicator, comm, new_comm);
     PMPI_Comm_set_attr(*new_comm, namekey(), communicator);
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_CART_SUB(MPI_Fint  * comm, const int  *remain_dims,
                  MPI_Fint  *comm_new , MPI_Fint *ierr)
@@ -625,14 +731,15 @@ F77_MPI_CART_SUB(MPI_Fint  * comm, const int  *remain_dims,
     *ierr = rc;
     return;
 }
+}
 
 int
 MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
                  const int *edges, int reorder, MPI_Comm *comm_graph)
 {
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf=NULL;
 
     ret = PMPI_Graph_create(comm_old, nnodes, index, edges, reorder, comm_graph);
 
@@ -640,8 +747,22 @@ MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
     my_coms = comms;
 
     communicator = get_comm_name(comm_old);
-    buf = (char*)malloc(8*sizeof(char));
-    sprintf(buf,"_r%d",my_coms);
+    buf = (char *)malloc(8 * sizeof(char));
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 8, "_r%d", my_coms);
+    //truncation error handling
+    if (r < 0 || r >= 8) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    /* Append prefix+suffix and initialize the data for the new communicator */
+
+    // sprintf(buf,"_r%d",my_coms);
     init_comm(buf, &communicator, comm_old, comm_graph);
     free(buf);
 
@@ -651,6 +772,7 @@ MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
 }
 
 
+extern "C" {
 void
 F77_MPI_GRAPH_CREATE(MPI_Fint  * comm_old, int  * nnodes, const int  *index,
                      const int  *edges, int  * reorder, MPI_Fint  *comm_graph,
@@ -669,6 +791,7 @@ F77_MPI_GRAPH_CREATE(MPI_Fint  * comm_old, int  * nnodes, const int  *index,
         *comm_graph = MPI_Comm_c2f(c_comm_graph);
     }
     return;
+}
 
 }
 
@@ -679,17 +802,31 @@ MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int *nodes,
                       const int *weights, MPI_Info info, int reorder,
                       MPI_Comm *newcomm)
 {
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf=NULL;
     ret = PMPI_Dist_graph_create(comm_old, n, nodes, degrees, targets, weights, info, reorder, newcomm);
 
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm_old);
     my_coms = comms;
 
     communicator = get_comm_name(comm_old);
-    buf = (char*)malloc(8*sizeof(char));
-    sprintf(buf,"_g%d",my_coms);
+    buf = (char *)malloc(8 * sizeof(char));
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 8, "_g%d", my_coms);
+    //truncation error handling
+    if (r < 0 || r >= 8) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    /* Append prefix+suffix and initialize the data for the new communicator */
+
+    // sprintf(buf,"_g%d",my_coms);
     init_comm(buf, &communicator, comm_old, newcomm);
     free(buf);
 
@@ -701,9 +838,9 @@ MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int *nodes,
 int
 MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
                     MPI_Comm *newcomm){
-    int ret,comms;
+    int ret,comms,r;
     prof_attrs *communicator;
-    char *buf;
+    char *buf=NULL;
     int rank, min_rank;
 
     ret = PMPI_Comm_split_type(comm, split_type, key, info, newcomm);
@@ -716,14 +853,27 @@ MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
     }
     PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
     communicator = get_comm_name(comm);
-    buf = (char*) malloc ( sizeof(char)*16);
-    sprintf(buf,"_t%d.%d",comms,min_rank);
+    buf = (char *)malloc(sizeof(char) * 16);
+    if (buf == NULL) {
+      mcpt_abort("Malloc failed\n");
+      return 1;
+
+    }
+    /* Suffix of the new communicator with the two ids */
+    r = snprintf(buf, 16, "_b%d.%d", my_coms,min_rank);
+    //truncation error handling
+    if (r < 0 || r >= 16) {
+      mcpt_abort("Snprintf truncation error\n");
+      return 2;
+    }
+    // sprintf(buf,"_t%d.%d",comms,min_rank);
     init_comm(buf, &communicator, comm, newcomm);
     free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_COMM_SPLIT_TYPE(MPI_Fint  * comm, int  * split_type, int  * key,
                         MPI_Fint *info, MPI_Fint  *newcomm , MPI_Fint *ierr)
@@ -739,6 +889,7 @@ F77_MPI_COMM_SPLIT_TYPE(MPI_Fint  * comm, int  * split_type, int  * key,
         *newcomm = MPI_Comm_c2f(c_comm_out);
     return;
 }
+}
 
 int
 MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
@@ -752,28 +903,21 @@ MPI_Isend(const void *buf, int count, MPI_Datatype datatype,int dest, int tag,
         t_elapsed = MPI_Wtime() - t_elapsed;
 
         profile_this(comm, count, datatype, Isend, t_elapsed, 0);
+// #ifdef OMPI_MAJOR_VERSION
+        requests_map[*request] = comm;
+// #endif
+// #ifdef MPICH_NAME
+//         requests_map[*request] = comm;
+// #endif
 
-#ifndef MPICH_API_PUBLIC
-        Table_put(request_tab, request, comm);
-#else
-        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-        *com = comm;
-        Table_put(request_tab, request, com);
-#endif
     }
     else{
         ret = PMPI_Isend(buf, count, datatype, dest, tag, comm, request);
     }
-    /* if (rq_index == world_sz){ */
-    /*     request_list = (rq*) realloc (request_list,sizeof(rq)*world_sz*world_sz); */
-    /*     world_sz = world_sz*world_sz; */
-    /* } */
-    /* request_list[rq_index].req = request; */
-    /* request_list[rq_index].comm = comm; */
-    /* rq_index++; */
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_ISEND(const void  *buf, int  * count, MPI_Fint  * datatype,
                           int  * dest, int  * tag, MPI_Fint  * comm,
@@ -791,9 +935,10 @@ F77_MPI_ISEND(const void  *buf, int  * count, MPI_Fint  * datatype,
         *request = MPI_Request_c2f(c_request);
     return;
 }
+}
 
 
-
+extern "C" {
 int
 MPI_Send(const void *buf, int count, MPI_Datatype datatype,
          int dest,int tag, MPI_Comm comm)
@@ -811,7 +956,9 @@ MPI_Send(const void *buf, int count, MPI_Datatype datatype,
     }
     return ret;
 }
+}
 
+extern "C" {
 void
 F77_MPI_SEND(const void  *buf, int  * count, MPI_Fint  * datatype,
              int  * dest, int  * tag, MPI_Fint  * comm , MPI_Fint *ierr)
@@ -825,7 +972,9 @@ F77_MPI_SEND(const void  *buf, int  * count, MPI_Fint  * datatype,
     *ierr = ret;
     return;
 }
+}
 
+extern "C"{
 int
 MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
           MPI_Comm comm, MPI_Request *request)
@@ -838,20 +987,21 @@ MPI_Irecv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
         ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
         profile_this(comm, count,datatype,Irecv,t_elapsed,0);
-#ifndef MPICH_API_PUBLIC
-        Table_put(request_tab, request, comm);
-#else
-        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-        *com = comm;
-        Table_put(request_tab, request, com);
-#endif
+// #ifdef OMPI_MAJOR_VERSION
+        requests_map[*request] = comm;
+// #endif
+// #ifdef MPICH_NAME
+//         requests_map[request] = comm;
+// #endif
     }
     else{
         ret = PMPI_Irecv(buf, count, datatype, source, tag, comm, request);
     }
     return ret;
 }
+}
 
+extern "C" {
 void
 F77_MPI_IRECV(void  *buf, int  * count, MPI_Fint  * datatype, int  * source,
               int  * tag, MPI_Fint  * comm, MPI_Fint  *request , MPI_Fint *ierr)
@@ -869,6 +1019,7 @@ F77_MPI_IRECV(void  *buf, int  * count, MPI_Fint  * datatype, int  * source,
     if ( ret == MPI_SUCCESS )
         *request = MPI_Request_c2f(c_request);
     return;
+}
 }
 
 int
@@ -889,6 +1040,7 @@ MPI_Recv(void *buf, int count, MPI_Datatype datatype, int source, int tag,
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_RECV(void* buf, int* count,MPI_Fint* datatype, int* source, int* tag,
              MPI_Fint  * comm, MPI_Status  *status , MPI_Fint *ierr)
@@ -901,6 +1053,7 @@ F77_MPI_RECV(void* buf, int* count,MPI_Fint* datatype, int* source, int* tag,
     ret = MPI_Recv(buf,*count,c_datatype,*source,*tag,c_comm,status);
     *ierr = ret;
     return;
+}
 }
 
 int
@@ -934,6 +1087,7 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 
+extern "C" {
 void
 F77_MPI_SENDRECV(const void  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
                  int  * dest, int  * sendtag, void  *recvbuf, int  * recvcount,
@@ -951,6 +1105,7 @@ F77_MPI_SENDRECV(const void  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
                         *recvcount, c_recvtype, *source, *recvtag, c_comm, status);
     *ierr = ret;
     return;
+}
 }
 
 
@@ -981,6 +1136,7 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
 
 }
 
+extern "C" {
 void
 F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
               MPI_Fint  * comm , MPI_Fint *ierr)
@@ -994,6 +1150,7 @@ F77_MPI_BCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
     c_comm = MPI_Comm_f2c(*comm);
     ret = MPI_Bcast(buffer, *count, c_datatype, *root, c_comm);
     *ierr = ret;
+}
 }
 
 int
@@ -1014,13 +1171,6 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
         else {
             sum = count;
         }
-#ifndef MPICH_API_PUBLIC
-        Table_put(request_tab, request, comm);
-#else
-        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-        *com = comm;
-        Table_put(request_tab, request, com);
-#endif
         profile_this(comm,sum,datatype,Ibcast,t_elapsed,root);
     }
     else{
@@ -1030,6 +1180,7 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_IBCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
                MPI_Fint  * comm, MPI_Fint  *request , MPI_Fint *ierr)
@@ -1044,6 +1195,7 @@ F77_MPI_IBCAST(void  *buffer, int  * count, MPI_Fint  * datatype, int  * root,
     *ierr = ret;
     if ( ret == MPI_SUCCESS )
         *request = MPI_Request_c2f(c_request);
+}
 }
 
 int
@@ -1065,6 +1217,7 @@ MPI_Allreduce(const void *sendbuf, void *recvbuf, int count,
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_ALLREDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
                   MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm ,
@@ -1083,6 +1236,7 @@ F77_MPI_ALLREDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
     *ierr =ret;
     return;
 }
+}
 
 int
 MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
@@ -1095,13 +1249,6 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
         t_elapsed =  MPI_Wtime();
         ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
-#ifndef MPICH_API_PUBLIC
-        Table_put(request_tab, request, comm);
-#else
-        MPI_Comm *com = (MPI_Comm*) malloc (sizeof(MPI_Comm));
-        *com = comm;
-        Table_put(request_tab, request, com);
-#endif
 
         profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
     }
@@ -1112,6 +1259,7 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
 }
 
 
+extern "C" {
 void
 F77_MPI_IALLREDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
                    MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm,
@@ -1133,6 +1281,7 @@ F77_MPI_IALLREDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
     if ( ret == MPI_SUCCESS )
         *request = MPI_Request_c2f(c_request);
     return;
+}
 }
 
 int
@@ -1158,6 +1307,7 @@ MPI_Allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 
+extern "C" {
 void
 F77_MPI_ALLGATHER(const void *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
                   void  *recvbuf, int  * recvcount, MPI_Fint  * recvtype,
@@ -1174,6 +1324,7 @@ F77_MPI_ALLGATHER(const void *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
     ret = MPI_Allgather(sendbuf, *sendcount, c_sendtype, recvbuf, *recvcount, c_recvtype, c_comm);
     *ierr =ret;
     return;
+}
 }
 
 int
@@ -1198,6 +1349,7 @@ MPI_Alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_ALLTOALL(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
                  void  *recvbuf, int  * recvcnt, MPI_Fint  * recvtype,
@@ -1215,6 +1367,7 @@ F77_MPI_ALLTOALL(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
     ret = MPI_Alltoall(sendbuf, *sendcount, c_sendtype, recvbuf, *recvcnt, c_recvtype, c_comm);
     *ierr = ret;
     return;
+}
 }
 
 
@@ -1250,6 +1403,7 @@ MPI_Alltoallv(const void *sendbuf, const int *sendcounts,
 }
 
 
+extern "C" {
 void
 F77_MPI_ALLTOALLV(const void  *sendbuf, const int  *sendcnts, const int  *sdispls,
                   MPI_Fint  * sendtype, void  *recvbuf, const int  *recvcnts,
@@ -1268,6 +1422,7 @@ F77_MPI_ALLTOALLV(const void  *sendbuf, const int  *sendcnts, const int  *sdispl
     ret = MPI_Alltoallv(sendbuf, sendcnts, sdispls, c_sendtype, recvbuf, recvcnts, rdispls, c_recvtype, c_comm);
     *ierr = ret;
     return;
+}
 }
 
 int
@@ -1337,6 +1492,7 @@ MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 }
 
 
+extern "C" {
 void
 F77_MPI_ALLGATHERV(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
                    void  *recvbuf, int  *recvcounts, int  *displs,
@@ -1354,6 +1510,7 @@ F77_MPI_ALLGATHERV(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
     ret = MPI_Allgatherv(sendbuf, *sendcount, c_sendtype, recvbuf, recvcounts, displs, c_recvtype, c_comm);
     *ierr = ret;
     return;
+}
 }
 
 
@@ -1378,7 +1535,7 @@ MPI_Reduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
     return ret;
 }
 
-
+extern "C" {
 void F77_MPI_REDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
                     MPI_Fint  * datatype, MPI_Fint  * op, int  * root,
                     MPI_Fint  * comm , MPI_Fint *ierr)
@@ -1396,6 +1553,7 @@ void F77_MPI_REDUCE(const void  *sendbuf, void  *recvbuf, int  * count,
     *ierr = ret;
     return;
 
+}
 }
 
 int
@@ -1419,6 +1577,7 @@ MPI_Gather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recv
 
 }
 
+extern "C" {
 void
 F77_MPI_GATHER(const void  *sendbuf, int  * sendcnt, MPI_Fint  * sendtype,
                void  *recvbuf, int  * recvcount, MPI_Fint  * recvtype,
@@ -1438,6 +1597,7 @@ F77_MPI_GATHER(const void  *sendbuf, int  * sendcnt, MPI_Fint  * sendtype,
     return;
 
 }
+}
 
 
 int
@@ -1445,8 +1605,7 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             void *recvbuf, const int *recvcounts, const int *displs,
             MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
-    int ret,sum,rank;
-    const int *tmp;
+    int ret,sum,rank,comm_size;
     double t_elapsed;
     if ( prof_enabled == 1 ){
         t_elapsed = MPI_Wtime();
@@ -1464,10 +1623,9 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
         PMPI_Comm_rank(comm, &rank);
         if ( rank == root ){
-            tmp = recvcounts;
-            while ( tmp ){
-                sum += *tmp;
-                tmp++;
+            PMPI_Comm_size(comm, &comm_size);
+            for (int i = 0; i < comm_size; i++){
+                sum += recvcounts[i];
             }
         }
         else{
@@ -1483,6 +1641,7 @@ MPI_Gatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_GATHERV(const void  *sendbuf, int* sendcount, MPI_Fint  * sendtype,
                 void  *recvbuf, const int* recvcounts, const int  *displs,
@@ -1503,6 +1662,7 @@ F77_MPI_GATHERV(const void  *sendbuf, int* sendcount, MPI_Fint  * sendtype,
     *ierr = (MPI_Fint)ret;
     return;
 }
+}
 
 
 int
@@ -1511,10 +1671,9 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
              MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
 
-    int ret,rank;
+    int ret,rank,comm_size;
     uint64_t sum;
     double t_elapsed;
-    const int *tmp;
     if ( prof_enabled == 1 ){
         sum = 0;
         t_elapsed = MPI_Wtime();
@@ -1524,10 +1683,9 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
         t_elapsed = MPI_Wtime() - t_elapsed;
         PMPI_Comm_rank(comm, &rank);
         if ( rank == root ){
-            tmp = sendcounts;
-            while ( tmp ){
-                sum += *tmp;
-                tmp++;
+            PMPI_Comm_size(comm, &comm_size);
+            for (int i = 0; i < comm_size; i++){
+                sum += sendcounts[i];
             }
         }
         else{
@@ -1546,6 +1704,7 @@ MPI_Scatterv(const void *sendbuf, const int *sendcounts, const int *displs,
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_SCATTERV(const void  *sendbuf, const int  *sendcounts, const int  *displs,
                  MPI_Fint  * sendtype, void  *recvbuf, int  * recvcount,
@@ -1565,6 +1724,7 @@ F77_MPI_SCATTERV(const void  *sendbuf, const int  *sendcounts, const int  *displ
 
     *ierr = (MPI_Fint)ret;
     return;
+}
 }
 
 int
@@ -1597,6 +1757,7 @@ MPI_Scatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_SCATTER(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
                 void  *recvbuf, int  * recvcount, MPI_Fint  * recvtype, int  * root,
@@ -1616,6 +1777,7 @@ F77_MPI_SCATTER(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
 
     *ierr = (MPI_Fint)ret;
     return;
+}
 }
 
 
@@ -1641,6 +1803,7 @@ MPI_Scan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 }
 
 
+extern "C" {
 void
 F77_MPI_SCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * datatype,
              MPI_Fint  * op, MPI_Fint  * comm , MPI_Fint *ierr)
@@ -1658,6 +1821,7 @@ F77_MPI_SCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * dat
 
     *ierr = (MPI_Fint)ret;
     return;
+}
 }
 
 
@@ -1681,6 +1845,7 @@ MPI_Barrier ( MPI_Comm comm )
 }
 
 
+extern "C" {
 void
 F77_MPI_BARRIER(MPI_Fint  * comm , MPI_Fint *ierr)
 {
@@ -1692,6 +1857,7 @@ F77_MPI_BARRIER(MPI_Fint  * comm , MPI_Fint *ierr)
     *ierr = (MPI_Fint)ret;
     return;
 }
+}
 
 int
 MPI_Wait(MPI_Request *request, MPI_Status *status)
@@ -1700,25 +1866,28 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     double t_elapsed;
     /* int i; */
 
-#ifndef MPICH_API_PUBLIC
-    MPI_Comm comm = NULL;
-#else
-    MPI_Comm *comm = NULL;
-#endif
+// #ifndef MPICH_API_PUBLIC
+    MPI_Comm comm ;
+// #else
+//     MPI_Comm *comm = NULL;
+// #endif
     if ( prof_enabled == 1 ){
+        //comm = Table_get(request_tab, request);
+        comm = requests_map[*request];
         t_elapsed = MPI_Wtime();
         ret = PMPI_Wait(request, status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        comm = Table_get(request_tab, request);
-        if ( comm == NULL ){
-            /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
+        //PMPI_Comm_rank(comm,&rank);
+        if ( comm == NULL  ){
+            fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); 
             return ret;
         }
-#ifndef MPICH_API_PUBLIC
-        profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
-#else
-        profile_this(*comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
-#endif
+// #ifdef OMPI_MAJOR_VERSION
+       profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+// #endif
+// #ifdef MPICH_NAME
+//         profile_this(*comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+// #endif
     }
     else{
         ret = PMPI_Wait(request, status);
@@ -1726,7 +1895,7 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     return ret;
 }
 
-
+extern "C" {
 void
 F77_MPI_WAIT(MPI_Fint  *request, MPI_Status  *status , MPI_Fint *ierr)
 {
@@ -1736,6 +1905,7 @@ F77_MPI_WAIT(MPI_Fint  *request, MPI_Status  *status , MPI_Fint *ierr)
    ret = MPI_Wait(&c_request, status);
    *ierr = ret;
 }
+}
 
 
 int
@@ -1744,42 +1914,23 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
 {
     int ret,i;
     double t_elapsed;
-#ifndef MPICH_API_PUBLIC
+// #ifndef MPICH_API_PUBLIC
     MPI_Comm comm = NULL;
-#else
-    MPI_Comm *comm = NULL;
-#endif
+// #else
+//     MPI_Comm *comm = NULL;
+// #endif
 
     if ( prof_enabled == 1 ){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        /* comm = Table_get(request_tab, &array_of_requests[0]); */
-        /* if ( comm == NULL ){ */
-        /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-        /*     return ret; */
-        /* } */
-#ifndef MPICH_API_PUBLIC
-        /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
         for ( i =0; i<count; i++ ){
-            comm = Table_get(request_tab, &array_of_requests[i]);
             if ( comm != NULL ){
+                comm = requests_map[array_of_requests[i]];
                 profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
                 return ret;
             }
-            /* else{ */
-            /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-            /* } */
         }
-#else
-        for ( i =0; i<count; i++ ){
-            comm = Table_get(request_tab, &array_of_requests[i]);
-            if ( comm != NULL ){
-                profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
-                return ret;
-            }
-        }
-#endif
     }
     else{
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
@@ -1788,6 +1939,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
 }
 
 
+extern "C" {
 void
 F77_MPI_WAITALL(int  * count, MPI_Fint  *array_of_requests,
                 MPI_Status  *array_of_statuses , MPI_Fint *ierr)
@@ -1808,46 +1960,30 @@ F77_MPI_WAITALL(int  * count, MPI_Fint  *array_of_requests,
    }
    free( c_requests );
 }
+}
 
 int
 MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *status)
 {
     int ret,i;
     double t_elapsed;
-#ifndef MPICH_API_PUBLIC
+// #ifndef MPICH_API_PUBLIC
     MPI_Comm comm = NULL;
-#else
-    MPI_Comm *comm = NULL;
-#endif
+// #else
+//     MPI_Comm *comm = NULL;
+// #endif
 
     if ( prof_enabled == 1 ){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Waitany(count, array_of_requests,index,status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        /* comm = Table_get(request_tab, &array_of_requests[0]); */
-        /* if ( comm == NULL ){ */
-        /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-        /*     return ret; */
-        /* } */
-#ifndef MPICH_API_PUBLIC
-        /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
         for ( i =0; i<count; i++ ){
-            comm = Table_get(request_tab, &array_of_requests[i]);
+            comm = requests_map[array_of_requests[i]];
             if ( comm != NULL ){
                 profile_this(comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
                 break;
             }
         }
-
-#else
-        for ( i =0; i<count; i++ ){
-            comm = Table_get(request_tab, &array_of_requests[i]);
-            if ( comm != NULL ){
-                profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
-                break;
-            }
-        }
-#endif
     }
     else{
         ret = PMPI_Waitany(count, array_of_requests,index,status);
@@ -1855,14 +1991,15 @@ MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *s
     return ret;
 }
 
+extern "C" {
 void
 F77_MPI_WAITANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
                 MPI_Status  *status , MPI_Fint *ierr)
 {
     int ret,i;
-    MPI_Request *c_array_of_requests;
-    c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
-    assert(c_array_of_requests);
+    MPI_Request *c_array_of_requests = NULL;
+    //c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
+    //assert(c_array_of_requests);
     for (i = 0; i < *count; i++) {
         c_array_of_requests[i] = MPI_Request_f2c(array_of_requests[i]);
     }
@@ -1878,6 +2015,7 @@ F77_MPI_WAITANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
     return;
 
 }
+}
 
 int
 MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
@@ -1887,25 +2025,26 @@ MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
     double t_elapsed;
     /* int i; */
 
-#ifndef MPICH_API_PUBLIC
+// #ifndef MPICH_API_PUBLIC
     MPI_Comm comm = NULL;
-#else
-    MPI_Comm *comm = NULL;
-#endif
+// #else
+//     MPI_Comm *comm = NULL;
+// #endif
     if ( prof_enabled == 1 ){
+        comm = requests_map[*request];
         t_elapsed = MPI_Wtime();
         ret = PMPI_Test(request,flag,status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        comm = Table_get(request_tab, request);
+        //comm = Table_get(request_tab, request);
         if ( comm == NULL ){
             /* fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); */
             return ret;
         }
-#ifndef MPICH_API_PUBLIC
+// #ifndef MPICH_API_PUBLIC
         profile_this(comm, 0, MPI_DATATYPE_NULL, Test, t_elapsed, 0);
-#else
-        profile_this(*comm, 0, MPI_DATATYPE_NULL, Test, t_elapsed, 0);
-#endif
+// #else
+//         profile_this(*comm, 0, MPI_DATATYPE_NULL, Test, t_elapsed, 0);
+// #endif
     }
     else{
         ret = PMPI_Test(request,flag,status);
@@ -1914,6 +2053,7 @@ MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
 }
 
 
+extern "C" {
 void
 F77_MPI_TEST(MPI_Fint  *request, int  *flag, MPI_Status  *status , MPI_Fint *ierr)
 {
@@ -1928,46 +2068,30 @@ F77_MPI_TEST(MPI_Fint  *request, int  *flag, MPI_Status  *status , MPI_Fint *ier
     }
     return;
 }
+}
 
 int
 MPI_Testany(int count, MPI_Request *array_of_requests, int *index, int *flag, MPI_Status *status)
 {
     int ret,i;
     double t_elapsed;
-#ifndef MPICH_API_PUBLIC
+// #ifndef MPICH_API_PUBLIC
     MPI_Comm comm = NULL;
-#else
-    MPI_Comm *comm = NULL;
-#endif
+// #else
+//     MPI_Comm *comm = NULL;
+// #endif
 
     if ( prof_enabled == 1 ){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Testany(count, array_of_requests, index, flag, status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        /* comm = Table_get(request_tab, &array_of_requests[0]); */
-        /* if ( comm == NULL ){ */
-        /*     fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Waitall\n"); */
-        /*     return ret; */
-        /* } */
-#ifndef MPICH_API_PUBLIC
-        /* profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0); */
         for ( i =0; i<count; i++ ){
-            comm = Table_get(request_tab, &array_of_requests[i]);
+            comm = requests_map[array_of_requests[i]];
             if ( comm != NULL ){
                 profile_this(comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
                 break;
             }
         }
-
-#else
-        for ( i =0; i<count; i++ ){
-            comm = Table_get(request_tab, &array_of_requests[i]);
-            if ( comm != NULL ){
-                profile_this(*comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
-                break;
-            }
-        }
-#endif
     }
     else{
         ret = PMPI_Testany(count, array_of_requests, index, flag, status);
@@ -1977,15 +2101,16 @@ MPI_Testany(int count, MPI_Request *array_of_requests, int *index, int *flag, MP
 }
 
 
+extern "C" {
 void
 F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
                 int  *flag, MPI_Status  *status , MPI_Fint *ierr)
 {
 
     int ret,i;
-    MPI_Request *c_array_of_requests;
-    c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
-    assert(c_array_of_requests != NULL);
+    MPI_Request *c_array_of_requests = NULL;
+    //c_array_of_requests = (MPI_Request*)malloc(sizeof(MPI_Request)*(*count));
+    //assert(c_array_of_requests != NULL);
     for (i = 0; i < *count; i++) {
         c_array_of_requests[i] = MPI_Request_f2c(array_of_requests[i]);
     }
@@ -2000,6 +2125,7 @@ F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
     free(c_array_of_requests);
     return;
 
+}
 }
 
 int
@@ -2030,6 +2156,7 @@ MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int *recvcounts,
 
 }
 
+extern "C" {
 void F77_MPI_REDUCE_SCATTER(const void  *sendbuf, void  *recvbuf, const int *recvcnts,
                             MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm,
                             MPI_Fint *ierr)
@@ -2048,39 +2175,37 @@ void F77_MPI_REDUCE_SCATTER(const void  *sendbuf, void  *recvbuf, const int *rec
     return;
 
 }
+}
 
 int
 MPI_Comm_free(MPI_Comm *comm)
 {
-    int ret,flag,i;
-    prof_attrs *com_info;
-    PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
-    if ( flag ){
-        for ( i = 0; i<local_cid; i++ ){
-            /* if ( strcmp(com_info->name, local_comms[i]->name) == 0 ) */
-            if ( com_info == local_comms[i] )
-                break;
-        }
-        if ( i == local_cid  )
+    int ret,flag;
+    prof_attrs *com_info, *tmp;
+    PMPI_Comm_get_attr(*comm, namekey(), &tmp, &flag);
+    if (flag) {
+        auto it = std::find(local_communicators.begin(), local_communicators.end(), tmp);
+        if (it != local_communicators.end()) {
+            // Calculate the index of the found element
+            size_t index = std::distance(local_communicators.begin(), it);
+            // Now "index" holds the position of com_info in the vector
+            com_info = (prof_attrs *)malloc(sizeof(prof_attrs));
+            memcpy(com_info, tmp, sizeof(prof_attrs));
+            local_communicators[index] = com_info;
+        } else {
+            // com_info is not present in the vector
             mcpt_abort("Comm_free on invalid communicator\n");
-        local_comms[i] = (prof_attrs*) malloc (sizeof(prof_attrs));
-        memcpy(local_comms[i], com_info, sizeof(prof_attrs));
-        /* We can use memcpy here */
-        /* local_comms[i]->bytes = com_info->bytes; */
-        /* local_comms[i]->msgs = com_info->msgs; */
-        /* local_comms[i]->size = com_info->size; */
-        /* strcpy(local_comms[i]->name,com_info->name); */
-        /* for (j = 0; j < NUM_OF_PRIMS; j++) { */
-        /*     local_comms[i]->prims[j] = com_info->prims[j]; */
-        /*     local_comms[i]->prim_bytes[j] = com_info->prim_bytes[j]; */
-        /*     local_comms[i]->time_info[j] = com_info->time_info[j]; */
-        /* } */
+        }
+
+    }else {
+        mcpt_abort("Comm free: Comm_get_attr did not find communicator\n");
     }
     ret = PMPI_Comm_free(comm);
     return ret;
 }
 
 
+extern "C" {
 void
 F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
 {
@@ -2092,534 +2217,221 @@ F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
     *ierr = ret;
     return;
 }
+}
 
 static int
-_Finalize()
-{
-    FILE *fp;
-    prof_attrs *array;
-    int rank,size;
-    int i,j,k,found,len;
-    prof_attrs *recv_buffer;
-    prof_attrs dummy;
-    char **names, **unames;
-    int total_comms,total,num_of_comms, resultlen;
-    uint64_t *bytes, *ubytes,*prims_bytes,*uprims_bytes;
-    uint32_t *prims,*uprims;
-    uint64_t *msgs, *umsgs;
-    double *time_info, *utime_info;
-    /* time_t t; */
-    int *sizes,*usizes;
+_Finalize(void) {
+    prof_attrs *array = NULL;
+    int rank, size;
+    int i, k, j, len;
+    prof_attrs *recv_buffer = NULL;
+    int  num_of_comms, resultlen;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     char proc_name[MPI_MAX_PROCESSOR_NAME];
-    char *proc_names,*ptr;
-    double *alltimes;
-    times[1] = MPI_Wtime();
+    char *proc_names = NULL;
+    char *ptr;
+    double *alltimes = NULL;
+    std::vector<double> mpi_times;
+    // double mpi_time = 0.0;
+    total_time = MPI_Wtime() - total_time;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
-    num_of_comms = my_coms;
-    PMPI_Allreduce(&num_of_comms, &total_comms, 1, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
-    num_of_comms = total_comms;
+    num_of_comms = local_communicators.size();
 
-    array =(prof_attrs*) malloc(sizeof(prof_attrs)*num_of_comms);
-    recv_buffer = (prof_attrs*) malloc (sizeof(prof_attrs)*num_of_comms*size);
-/* typedef struct profiler_attributes{ */
-/*     char name[NAMELEN]; */
-/*     uint64_t bytes; */
-/*     uint64_t msgs; */
-/*     int size; */
-/*     uint32_t prims[NUM_OF_PRIMS]; */
-/*     uint64_t prim_bytes[NUM_OF_PRIMS]; */
-/*     double time_info[NUM_OF_PRIMS]; */
-/* }prof_attrs; */
 
-    MPI_Datatype types[7] = { MPI_CHAR,MPI_UINT64_T, MPI_UINT64_T, MPI_INT,
-    MPI_UINT32_T, MPI_UINT64_T, MPI_DOUBLE };
-    int blocklen[7] = {NAMELEN,1,1,1,NUM_OF_PRIMS,NUM_OF_PRIMS,NUM_OF_PRIMS};
-    MPI_Aint displacements[7];
-    MPI_Aint base_address;
-    MPI_Datatype profiler_data;
-    PMPI_Get_address(&dummy, &base_address);
-    PMPI_Get_address(&dummy.name[0], &displacements[0]);
-    PMPI_Get_address(&dummy.bytes, &displacements[1]);
-    PMPI_Get_address(&dummy.msgs, &displacements[2]);
-    PMPI_Get_address(&dummy.size, &displacements[3]);
-    PMPI_Get_address(&dummy.prims[0], &displacements[4]);
-    PMPI_Get_address(&dummy.prim_bytes[0], &displacements[5]);
-    PMPI_Get_address(&dummy.time_info[0], &displacements[6]);
-    displacements[0] = MPI_Aint_diff(displacements[0], base_address);
-    displacements[1] = MPI_Aint_diff(displacements[1], base_address);
-    displacements[2] = MPI_Aint_diff(displacements[2], base_address);
-    displacements[3] = MPI_Aint_diff(displacements[3], base_address);
-    displacements[4] = MPI_Aint_diff(displacements[4], base_address);
-    displacements[5] = MPI_Aint_diff(displacements[5], base_address);
-    displacements[6] = MPI_Aint_diff(displacements[6], base_address);
-
-    PMPI_Type_create_struct(7, blocklen, displacements, types, &profiler_data);
-    PMPI_Type_commit(&profiler_data);
-    k = 0;
-    for ( i = 0; i < num_of_comms; i++ ){
-        if ( local_comms[i] != NULL ){
-
-            /* We can use memcpy here */
-            /* memcpy(&array[i], local_comms[i], sizeof(prof_attrs)); */
-            strcpy(array[i].name, local_comms[i]->name);
-            array[i].bytes = local_comms[i]->bytes;
-            array[i].msgs= local_comms[i]->msgs;
-            array[i].size = local_comms[i]->size;
-            /* printf("%s: %lu, %lu, %d, ",local_comms[i]->name,local_comms[i]->bytes,local_comms[i]->msgs,local_comms[i]->size); */
-            for ( k=0; k<NUM_OF_PRIMS; k++ ){
-                array[i].prims[k] = local_comms[i]->prims[k];
-                array[i].prim_bytes[k] =local_comms[i]->prim_bytes[k];
-                array[i].time_info[k] = local_comms[i]->time_info[k];
-                /* printf("%lf, ", local_comms[i]->time_info[k]); */
-            }
-        }
-        else{
-            strcpy(array[i].name, "NULL");
-            /* memset(&array[i], 0, sizeof(prof_attrs)); */
-            array[i].msgs = 0;
-            array[i].bytes = 0;
-            array[i].size = 0;
-            /* We can use memset here */
-            for ( k=0; k<NUM_OF_PRIMS; k++ ){
-                array[i].prims[k] = 0;
-                array[i].prim_bytes[k] = 0;
-                array[i].time_info[k] = 0.0;
-            }
+    array = (prof_attrs *) malloc(sizeof(prof_attrs) * num_of_comms);
+    if (array == NULL) {
+        mcpt_abort("malloc error for send buffer Rank: %d\n", rank);
+    }
+    if (rank == 0) {
+        recv_buffer =
+                (prof_attrs *) malloc(sizeof(prof_attrs) * num_of_comms * size);
+        if (recv_buffer == NULL) {
+            mcpt_abort("malloc error for receive buffer Rank: %d\n", rank);
         }
     }
-    /* for ( i =0; i< num_of_comms; i++ ){ */
-    /*     for ( k=0; k<NUM_OF_PRIMS; k++ ){ */
-    /*         if ( k == Send || k == Isend || k == Irecv || k == Recv ) */
-    /*             printf("Rank %d %s = %d\n",rank,prim_names[k],array[i].prims[k]); */
-    /*         fflush(stdout); */
-    /*     } */
-    /* } */
+
+
+    MPI_Datatype profiler_data;
+    MPI_Aint base, displacements[4];
+    int blocklengths[4] = {NAMELEN, 1, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS};
+    MPI_Datatype types[4] = {MPI_CHAR, MPI_INT, MPI_DOUBLE, MPI_UINT64_T};
+    prof_attrs dummy;
+
+    // Create a dummy instance to calculate displacements
+    MPI_Get_address(&dummy, &base);
+    MPI_Get_address(&dummy.name, &displacements[0]);
+    MPI_Get_address(&dummy.size, &displacements[1]);
+    MPI_Get_address(&dummy.buckets_time, &displacements[2]);
+    MPI_Get_address(&dummy.buckets_msgs, &displacements[3]);
+
+    // Convert addresses to displacements
+    for (int i = 0; i < 4; i++) {
+        displacements[i] = MPI_Aint_diff(displacements[i], base);
+    }
+
+    MPI_Type_create_struct(4, blocklengths, displacements, types, &profiler_data);
+    PMPI_Type_commit(&profiler_data);
+    k = 0;
+
+    for (i = 0; i < num_of_comms; i++) {
+         memcpy(&array[i], local_communicators[i], sizeof(prof_attrs));
+    }
+
     MPI_Get_processor_name(proc_name, &len);
 
-    proc_names = (char*) malloc ( sizeof (char)*MPI_MAX_PROCESSOR_NAME*size);
-    alltimes = (double*) malloc (sizeof(double)*size*2);
+    if (rank == 0) {
+        proc_names = NULL;
+        proc_names = (char *)malloc(sizeof(char) * MPI_MAX_PROCESSOR_NAME * size);
+        if (proc_names == NULL) {
+            mcpt_abort("malloc error for proc_names buffer Rank: %d\n",rank);
+        }
+        alltimes = NULL;
+        alltimes = (double*) malloc (sizeof(double)*size);
+        if (alltimes == NULL) {
+            mcpt_abort("malloc error for alltimes buffer Rank: %d\n",rank);
+        }
+        // iterate over local_communicators to see if they have something meaningful
+     }
 
     PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,MPI_MAX_PROCESSOR_NAME, MPI_CHAR, 0 , MPI_COMM_WORLD);
-    PMPI_Gather(times, 2, MPI_DOUBLE, alltimes,2, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
-    PMPI_Gather(array, num_of_comms*sizeof(prof_attrs), MPI_BYTE, recv_buffer,
-                num_of_comms*sizeof(prof_attrs), MPI_BYTE, 0, MPI_COMM_WORLD);
 
+    PMPI_Gather(&total_time, 1, MPI_DOUBLE, alltimes,1, MPI_DOUBLE, 0 , MPI_COMM_WORLD);
+
+    PMPI_Gather(array, num_of_comms, profiler_data, recv_buffer,
+                num_of_comms, profiler_data, 0, MPI_COMM_WORLD);
+
+    PMPI_Barrier(MPI_COMM_WORLD);
     if ( rank == 0 ){
-
-        time_t date;
-        char *tmp;
-        names = ( char**)malloc(sizeof(char*)*num_of_comms*size);
-        unames = (char **) malloc (sizeof(char*)*num_of_comms*size);
-        /* bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size); */
-        /* msgs = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size); */
-        sizes = (int *) malloc (sizeof(int )*num_of_comms*size);
-        /* prims = (uint32_t*) malloc ( sizeof(uint32_t)*num_of_comms*size* */
-        /*                              NUM_OF_PRIMS ); */
-        /* prims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*num_of_comms*size */
-        /*                                    *NUM_OF_PRIMS); */
-        /* time_info = (double*) malloc ( sizeof(double)*num_of_comms*size* */
-        /*                                NUM_OF_PRIMS ); */
-
-        j = 0;
-        int r =-1;
-        /* int p = 0; */
-        FILE *fpp = NULL;
-        char *env_var = NULL;
-        char *fname = (char*)malloc(sizeof(char)*MPI_MAX_PROCESSOR_NAME);
-        snprintf(fname, MPI_MAX_PROCESSOR_NAME, "mpisee_profile_%d.csv",getpid());
-        env_var = getenv("MCPT");
-        /* if ( env_var  && (strcmp(env_var, "p") == 0 )){ */
-        /* p = 1; */
-        fpp = fopen(fname, "w");
-        if ( fpp == NULL ){
-            mcpt_abort("ERROR opening outputfile: %s\n",fname);
-        }
-        ptr = proc_names;
-        PMPI_Get_library_version(version, &resultlen);
-        fprintf(fpp, "# MPI library %s\n",version);
-        /* fprintf(fpp, "#Processes '%d'\n",size); */
-        fprintf(fpp, "# Run command ");
-        fprintf(fpp, "%s",av[0]);
-        for ( i = 1; i<ac && i<MAX_ARGS; i++ ){
-            fprintf(fpp, " %s",av[i]);
-        }
-        fprintf(fpp, "\n");
-
-        fprintf(fpp, "# mpisee Version %d.%d\n",mpisee_VERSION_MAJOR,mpisee_VERSION_MINOR);
-        fprintf(fpp, "# mpisee Build date %s, %s\n", mpisee_build_date,mpisee_build_time);
-        if ( env_var ){
-            fprintf(fpp, "# mpisee env %s\n", env_var);
+        int rc,commId,maxsize,minsize;
+        int powers_of_2[NUM_BUCKETS - 1];
+        sqlite3 *db = NULL;
+        const char *env_var = getenv("MPISEE_OUTFILE");
+        char *outfile;
+        int r = -1;
+        if (env_var != NULL) {
+          rc = sqlite3_open(env_var, &db);
+          if (rc) {
+              std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
+              return 1;
+          } else {
+              std::cout << "mpise: Opened database successfully" << std::endl;
+          }
+          outfile = strdup(env_var);
         }
         else{
-            fprintf(fpp, "# mpisee env\n");
+          rc = sqlite3_open("mpisee_profile.db", &db);
+          if (rc) {
+              std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
+              return 1;
+          } else {
+              std::cout << "mpisee: Opened database successfully" << std::endl;
+          }
+          outfile = strdup("mpisee_profile.db");
         }
-        time(&date);
-        tmp = ctime(&date);
-        fprintf(fpp, "# Profile date ");
-        fprintf(fpp, "%c",*tmp);
-        tmp++;
-        while ( *tmp != '\n' ){
-            fprintf(fpp, "%c",*tmp);
-            tmp++;
-        }
-        fprintf(fpp, "\n");
-        fprintf(fpp,"#@ mapping_l ");
-        for ( i =0; i<size; i++ ){
-            if ( ptr != NULL ){
-                snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, "%s", ptr);
-            }
-            if ( i != size-1 )
-                fprintf(fpp, "%d %s,",i,proc_name);
-            else
-                fprintf(fpp, "%d %s\n",i,proc_name);
-            ptr+=MPI_MAX_PROCESSOR_NAME;
-        }
-        fprintf(fpp,"#@ metric_l ");
-        fprintf(fpp,"VOL,");
-        fprintf(fpp,"TIME,");
-        fprintf(fpp,"NCALLS\n");
-
-        fprintf(fpp,"#@ metric_type_l ");
-        fprintf(fpp,"int,");
-        fprintf(fpp,"float,");
-        fprintf(fpp,"int\n");
-
-        fprintf(fpp,"#@ rank_start_l ");
-        for ( i =0; i<size*2; i+=2 ){
-            if ( i != size*2-2 )
-                fprintf(fpp, "%lf,",alltimes[i]);
-            else
-                fprintf(fpp, "%lf\n",alltimes[i]);
-        }
-        fprintf(fpp,"#@ rank_end_l ");
-        for ( i =1; i<size*2; i+=2 ){
-            if ( i != size*2-1 )
-                fprintf(fpp, "%lf,",alltimes[i]);
-            else
-                fprintf(fpp, "%lf\n",alltimes[i]);
-        }
-        j = 0;
-        for ( i =0; i<size*num_of_comms; i++ ){
-            if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
-                unames[j] = strdup("NULL");
-                /* Use memcpy instead of loop */
-                names[j]=strdup(recv_buffer[i].name);
-                /* bytes[j] = recv_buffer[i].bytes; */
-                /* msgs[j] = recv_buffer[i].msgs; */
-                sizes[j] = recv_buffer[i].size;
-                j++;
+        PMPI_Get_library_version(version, &resultlen);
+        /* Remove line breaks in MPI version string, as it may create bugs during parsing. */
+        for (i = 0; i < strlen(version); i++)
+        {
+            if(version[i] == '\n')
+            {
+                version[i] = ' ';
             }
         }
-        /* I need to move the post processing of the communicators here */
+        createTables(db);
+        insertMetadata(db, version, size, av, ac, mpisee_major_version,
+                       mpisee_minor_version, mpisee_build_date,
+                       mpisee_build_time, env_var);
 
-        total = j;
-        /* ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total); */
-        /* umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total); */
-        usizes = (int *) malloc (sizeof(int)*total);
-        /* uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS); */
-        /* uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*NUM_OF_PRIMS); */
-        /* utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS); */
+        insertIntoOperationsEmpty(db, prim_names[i]);
+        std::vector<std::string> operations = convertToArrayOfPrims();
+        BatchInsertIntoOperations(db, operations);
+        operations.clear();
+        operations.shrink_to_fit();
+
+        // for (i = 0; i<NUM_OF_PRIMS ; i++ ) {
+        //     insertIntoOperations(db, prim_names[i]);
+        // }
 
 
-        /* memset(ubytes, 0, sizeof(uint64_t )*total); */
-        /* memset(umsgs, 0, sizeof(uint64_t )*total); */
-        /* memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS); */
-        /* memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS); */
-        memset(usizes, 0, sizeof(int)*total);
-        /* for ( i = 0; i<total*NUM_OF_PRIMS; i++) */
-        /*     utime_info[i] = 0.0; */
-        int local_n_comms = num_of_comms;
-        num_of_comms = 0;
-        j = 0;
-        for ( i=0; i<total; i++ ){
-            found = 0;
-            for ( k =0; k<total; k++ ){
-                if ( strcmp(names[i], unames[k] ) == 0 ){
-                    found = 1;
+        std::string machineName(proc_names);
+        insertIntoMappings(db, machineName);
+        std::vector<std::string> machines =
+            convertToArrayOfStrings(proc_names, size, MPI_MAX_PROCESSOR_NAME);
+        BatchInsertIntoMappings(db, machines);
+        machines.clear();
+        machines.shrink_to_fit();
+        free(proc_names);
+
+        // Precompute powers of 2 for each bucket
+        for (int i = 0; i < NUM_BUCKETS - 1; i++) {
+            powers_of_2[i] = 1 << buckets[i];
+        }
+
+        std::vector<CommData> comms;
+        std::vector<int> commIds;
+        for (i = 0; i < num_of_comms * size; i++) {
+            comms.push_back({recv_buffer[i].name, recv_buffer[i].size});
+        }
+        commIds=CommsInsert(db, comms);
+        comms.clear();
+        comms.shrink_to_fit();
+
+
+        std::vector<DataEntry> entries;
+        std::cout << "mpisee: Writing the main data table"
+                  << std::endl;
+        double t;
+        t = MPI_Wtime();
+        for (i = 0; i < num_of_comms*size; i++) {
+            commId = commIds[i];
+            if (i % num_of_comms == 0) {
+              r++;
+            }
+            for (k = 0; k < NUM_OF_PRIMS; k++) {
+                // Handle the first bucket separately
+                minsize = 0;
+                maxsize = powers_of_2[0];
+                if (recv_buffer[i].buckets_msgs[k][0] > 0) {
+                    insertIntoDataEntry(entries, r, commId, k, maxsize, minsize,
+                                        recv_buffer[i].buckets_msgs[k][0],
+                                        recv_buffer[i].buckets_time[k][0]);
                 }
-            }
-            if ( !found ){
-                strcpy(unames[j], names[i]);
-                j++;
-                num_of_comms++;
-            }
-        }
-        for ( i = 0; i<num_of_comms; i++){
-            for ( j=0; j<total; j++ ){
-                if ( strcmp(unames[i], names[j]) == 0 ){
-                    /* ubytes[i]+= bytes[j]; */
-                    /* umsgs[i]+= msgs[j]; */
-                    usizes[i]=sizes[j];
-                    /* for ( k =0; k<NUM_OF_PRIMS; k++){ */
-                    /*     if ( k >= Sendrecv ){ */
-                    /*         uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k]; */
-
-                    /*         if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){ */
-                    /*             uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k]; */
-                    /*         } */
-                    /*     } */
-                    /*     else{ */
-                    /*         uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k]; */
-                    /*         uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k]; */
-                    /*     } */
-                    /*     if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){ */
-                    /*         utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k]; */
-                    /*     } */
-                    /* } */
-                }
-            }
-        }
-        fprintf(fpp,"#@ comm_l ");
-        for ( i = 0; i<num_of_comms; i++ ){
-            if ( i < num_of_comms- 1 )
-                fprintf(fpp, "%s,",unames[i]);
-            else
-                fprintf(fpp, "%s\n",unames[i]);
-        }
-
-        fprintf(fpp,"#@ comm_sz_l ");
-        for ( i = 0; i<num_of_comms; i++ ){
-            if ( i < num_of_comms- 1 )
-                fprintf(fpp, "%d,",usizes[i]);
-            else
-                fprintf(fpp, "%d\n",usizes[i]);
-        }
-
-
-        fprintf(fpp,"#@ call_l ");
-        for (k = 0; k<NUM_OF_PRIMS; k++){
-            if ( k == NUM_OF_PRIMS -1 )
-                fprintf(fpp, "%s\n",prim_names[k]);
-            else
-                fprintf(fpp, "%s,",prim_names[k]);
-        }
-
-
-        /* fprintf(fpp, "Rank,Comm,Size,Volume,Calls,"); */
-        /* for (k = 0; k<NUM_OF_PRIMS; k++){ */
-        /*     fprintf(fpp, "%s_Calls,",prim_names[k]); */
-        /*     fprintf(fpp, "%s_Volume,",prim_names[k]); */
-        /*     if ( k == NUM_OF_PRIMS -1 ) */
-        /*         fprintf(fpp, "%s_Time",prim_names[k]); */
-        /*     else */
-        /*         fprintf(fpp, "%s_Time,",prim_names[k]); */
-        /* } */
-        /* fprintf(fpp,"\n"); */
-
-        /* fprintf(fpp,"#@ metric_l "); */
-        /* fprintf(fpp,"VOL,"); */
-        /* fprintf(fpp,"TIME,"); */
-        /* fprintf(fpp,"NCALLS\n"); */
-
-        /* fprintf(fpp,"#@ metric_type_l "); */
-        /* fprintf(fpp,"int,"); */
-        /* fprintf(fpp,"float,"); */
-        /* fprintf(fpp,"int\n"); */
-
-        j = 0;
-        fprintf(fpp, "Rank,Call,Comm,Type,Val\n");
-        for ( i =0; i<size*local_n_comms; i++ ){
-            if ( i % local_n_comms == 0 ){
-                r++;
-            }
-            if ( strcmp(recv_buffer[i].name, "NULL") != 0 ){
-                /* unames[j] = strdup("NULL"); */
-                /* names[j]=strdup(recv_buffer[i].name); */
-                /* bytes[j] = recv_buffer[i].bytes; */
-                /* msgs[j] = recv_buffer[i].msgs; */
-                /* sizes[j] = recv_buffer[i].size; */
-                /* fprintf(fpp, "%d,%s,%d,%llu,%llu,",r,names[j],sizes[j],bytes[j],msgs[j]); */
-                /* memcpy(&prims[j*NUM_OF_PRIMS],recv_buffer[i].prims,NUM_OF_PRIMS*sizeof(int)); */
-                for ( j = 0; j<num_of_comms; j++ ){
-                    if ( strcmp(recv_buffer[i].name,unames[j]) == 0 )
-                        break;
-                }
-
-                for ( k =0; k<NUM_OF_PRIMS; k++){
-                    /* prims[j*NUM_OF_PRIMS+k] = recv_buffer[i].prims[k]; */
-                    /* prims_bytes[j*NUM_OF_PRIMS+k] = recv_buffer[i].prim_bytes[k]; */
-                    /* time_info[j*NUM_OF_PRIMS+k] = recv_buffer[i].time_info[k]; */
-                    if ( (uint32_t)recv_buffer[i].prims[k] > 0 ){
-                        fprintf(fpp, "%d,%d,%d,0,%" PRIu64 "\n",r,k,j,(uint64_t)recv_buffer[i].prim_bytes[k]);
-                        fprintf(fpp, "%d,%d,%d,1,%lf\n",r,k,j,(double)recv_buffer[i].time_info[k]);
-                        fprintf(fpp, "%d,%d,%d,2,%u\n",r,k,j,(uint32_t)recv_buffer[i].prims[k]);
+                for (j = 1; j < NUM_BUCKETS-1; j++) {
+                    minsize = powers_of_2[j - 1];
+                    maxsize = (j == NUM_BUCKETS - 2) ? INT_MAX : powers_of_2[j];
+                    if (recv_buffer[i].buckets_msgs[k][j] > 0) {
+                        insertIntoDataEntry(entries, r, commId, k, maxsize,
+                                            minsize,
+                                            recv_buffer[i].buckets_msgs[k][j],
+                                            recv_buffer[i].buckets_time[k][j]);
                     }
-                    /* fprintf(fpp, "%u,",prims[j*NUM_OF_PRIMS+k]); */
-                    /* if ( prims[j*NUM_OF_PRIMS+k] > 0 ) */
-                    /*     fprintf(fpp, "%" PRIu64 ",",prims_bytes[j*NUM_OF_PRIMS+k]); */
-                    /* else */
-                    /*     fprintf(fpp, "0.0,"); */
-                    /* if ( k == NUM_OF_PRIMS-1 ) */
-                    /*     fprintf(fpp, "%lf",time_info[j*NUM_OF_PRIMS+k]); */
-                    /* else */
-                    /*     fprintf(fpp, "%lf,",time_info[j*NUM_OF_PRIMS+k]); */
+
                 }
-                /* fprintf(fpp,"\n"); */
-                /* j++; */
             }
+            // if (i % num_of_comms == (num_of_comms-1)) {
+            //     executeBatchInsert(db, entries);
+            //     entries.clear();
+            // }
         }
-        fclose(fpp);
-        printf("MPISEE: Per process data file: %s\n",fname);
+        executeBatchInsert(db, entries);
+        // if (!entries.empty()) {
+        //     executeBatchInsert(db, entries);
+        //     entries.clear();
+        // }
+        t = MPI_Wtime() - t;
 
-        /* total = j; */
+        std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
+        sqlite3_close(db);
 
-        /* if ( env_var  && (strcmp(env_var, "p") == 0 )){ */
-        /*     ubytes = (uint64_t *) malloc (sizeof(uint64_t )*total); */
-        /*     umsgs = (uint64_t *) malloc (sizeof(uint64_t )*total); */
-        /*     usizes = (int *) malloc (sizeof(int)*total); */
-        /*     uprims = (uint32_t *) malloc (sizeof(uint32_t)*total*NUM_OF_PRIMS); */
-        /*     uprims_bytes = (uint64_t *) malloc (sizeof(uint64_t )*total*NUM_OF_PRIMS); */
-        /*     utime_info = (double*) malloc (sizeof(double)*total*NUM_OF_PRIMS); */
-
-
-        /*     memset(ubytes, 0, sizeof(uint64_t )*total); */
-        /*     memset(umsgs, 0, sizeof(uint64_t )*total); */
-        /*     memset(uprims, 0, sizeof(uint32_t)*total*NUM_OF_PRIMS); */
-        /*     memset(uprims_bytes, 0, sizeof(uint64_t )*total*NUM_OF_PRIMS); */
-        /*     memset(usizes, 0, sizeof(int)*total); */
-        /*     for ( i = 0; i<total*NUM_OF_PRIMS; i++) */
-        /*         utime_info[i] = 0.0; */
-
-        /*     num_of_comms = 0; */
-        /*     j = 0; */
-        /*     for ( i=0; i<total; i++ ){ */
-        /*         found = 0; */
-        /*         for ( k =0; k<total; k++ ){ */
-        /*             if ( strcmp(names[i], unames[k] ) == 0 ){ */
-        /*                 found = 1; */
-        /*             } */
-        /*         } */
-        /*         if ( !found ){ */
-        /*             strcpy(unames[j], names[i]); */
-        /*             j++; */
-        /*             num_of_comms++; */
-        /*         } */
-        /*     } */
-        /*     for ( i = 0; i<num_of_comms; i++){ */
-        /*         for ( j=0; j<total; j++ ){ */
-        /*             if ( strcmp(unames[i], names[j]) == 0 ){ */
-        /*                 ubytes[i]+= bytes[j]; */
-        /*                 umsgs[i]+= msgs[j]; */
-        /*                 usizes[i]=sizes[j]; */
-        /*                 for ( k =0; k<NUM_OF_PRIMS; k++){ */
-        /*                     if ( k >= Sendrecv ){ */
-        /*                         uprims_bytes[i*NUM_OF_PRIMS+k] +=  prims_bytes[j*NUM_OF_PRIMS+k]; */
-
-        /*                         if ( uprims[i*NUM_OF_PRIMS+k] < prims[j*NUM_OF_PRIMS+k] ){ */
-        /*                             uprims[i*NUM_OF_PRIMS+k] = prims[j*NUM_OF_PRIMS+k]; */
-        /*                         } */
-        /*                     } */
-        /*                     else{ */
-        /*                         uprims_bytes[i*NUM_OF_PRIMS+k] += prims_bytes[j*NUM_OF_PRIMS+k]; */
-        /*                         uprims[i*NUM_OF_PRIMS+k] += prims[j*NUM_OF_PRIMS+k]; */
-        /*                     } */
-        /*                     if ( utime_info[i*NUM_OF_PRIMS+k] < time_info[j*NUM_OF_PRIMS+k] ){ */
-        /*                         utime_info[i*NUM_OF_PRIMS+k] = time_info[j*NUM_OF_PRIMS+k]; */
-        /*                     } */
-        /*                 } */
-        /*             } */
-        /*         } */
-        /*     } */
-
-        /*     fp = fopen("profiler_data.csv","w"); */
-        /*     if (fp == NULL){ */
-        /*         fprintf(stderr, "Failed to open output file: profiler_stats.txt\n"); */
-        /*         mcpt_abort("Aborting\n"); */
-        /*     } */
-        /*     /\* PMPI_Get_library_version(version, &resultlen); *\/ */
-        /*     fprintf(fp, "#'MPI LIBRARY' '%s'\n",version); */
-        /*     fprintf(fp, "#'Processes' '%d'\n",size); */
-        /*     fprintf(fp, "#'Run command' "); */
-        /*     fprintf(fp, "'%s",av[0]); */
-        /*     for ( i = 1; i<ac && i<MAX_ARGS; i++ ){ */
-        /*         fprintf(fp, " %s",av[i]); */
-        /*     } */
-        /*     fprintf(fp, "'\n"); */
-
-        /*     fprintf(fp, "#'mpisee Version' '%d.%d'\n",mpisee_VERSION_MAJOR,mpisee_VERSION_MINOR); */
-        /*     fprintf(fp, "#'mpisee Build date' '%s, %s' \n", mpisee_build_date,mpisee_build_time); */
-        /*     if ( env_var ){ */
-        /*         fprintf(fp, "#'mpisee env' '%s'\n", env_var); */
-        /*     } */
-        /*     else{ */
-        /*         fprintf(fp, "#'mpisee env'\n"); */
-        /*     } */
-        /*     /\* time(&date); *\/ */
-        /*     /\* tmp = ctime(&date); *\/ */
-        /*     fprintf(fp, "#'Profile date' "); */
-        /*     fprintf(fp, "'%c",*tmp); */
-        /*     tmp++; */
-        /*     while ( *tmp != '\n' ){ */
-        /*         fprintf(fp, "%c",*tmp); */
-        /*         tmp++; */
-        /*     } */
-        /*     fprintf(fp, "'\n"); */
-        /*     fprintf(fp, "#'Num of REAL comms' '%d'\n",num_of_comms); */
-        /*     fprintf(fp, "Comm,Size,Calls,"); */
-        /*     /\* free(date); *\/ */
-        /*     for (k = 0; k<NUM_OF_PRIMS; k++){ */
-        /*         fprintf(fp, "%s_Calls,",prim_names[k]); */
-        /*         fprintf(fp, "%s_Volume,",prim_names[k]); */
-        /*         if ( k == NUM_OF_PRIMS -1 ) */
-        /*             fprintf(fp, "%s_Time",prim_names[k]); */
-        /*         else */
-        /*             fprintf(fp, "%s_Time,",prim_names[k]); */
-        /*     } */
-        /*     fprintf(fp,"\n"); */
-        /*     for ( i =0; i<num_of_comms; i++ ){ */
-        /*         /\* if ( strcmp(unames[i], "NULL") !=0 ){ *\/ */
-        /*         fprintf(fp,"%s(%d),%d,%" PRIu64 ",",unames[i],usizes[i],usizes[i],umsgs[i]); */
-        /*         for ( k =0; k<NUM_OF_PRIMS; k++ ){ */
-        /*             fprintf(fp, "%u,",uprims[i*NUM_OF_PRIMS+k]); */
-        /*             if ( uprims[i*NUM_OF_PRIMS+k] > 0 ) */
-        /*                 fprintf(fp, "%" PRIu64 ",",uprims_bytes[i*NUM_OF_PRIMS+k]); */
-        /*             else */
-        /*                 fprintf(fp, "0.0,"); */
-        /*             if ( k == NUM_OF_PRIMS-1 ) */
-        /*                 fprintf(fp, "%lf",utime_info[i*NUM_OF_PRIMS+k]); */
-        /*             else */
-        /*                 fprintf(fp, "%lf,",utime_info[i*NUM_OF_PRIMS+k]); */
-        /*         } */
-        /*         fprintf(fp,"\n"); */
-        /*         /\* } *\/ */
-        /*     } */
-        /*     printf("MCPT File: profiler_data.csv\n"); */
-        /*     /\* for ( i =0; i<total; i++ ){ *\/ */
-        /*     /\*     free(unames[i]); *\/ */
-        /*     /\* } *\/ */
-        /*     free(unames); */
-        /*     free(ubytes); */
-        /*     free(umsgs); */
-        /*     free(uprims); */
-        /*     free(uprims_bytes); */
-        /*     free(utime_info); */
-        /*     fclose(fp); */
-        /* } */
-
-        /* for ( i =0; i<num_of_comms*size; i++ ){ */
-        /*     free(unames[i]); */
-        /* } */
-        /* free(unames); */
-
-        /* for ( i =0; i<total; i++ ){ */
-        /*     if ( names[i] != NULL ) */
-        /*         free(names[i]); */
-        /* } */
-        /* free(names); */
-        /* free(sizes); */
-        /* free(usizes); */
-        /* free(prims_bytes); */
-        /* free(bytes); */
-        /* free(msgs); */
-        /* free(prims); */
-        /* free(time_info); */
+        free(outfile);
+        free(alltimes);
     }
 
     PMPI_Type_free(&profiler_data);
-    Table_free(&request_tab);
+    MPI_Barrier(MPI_COMM_WORLD);
+    free(array);
 
     return PMPI_Finalize();
 }
@@ -2635,6 +2447,7 @@ MPI_Finalize (void)
   return rc;
 }
 
+extern "C" {
 void
 F77_MPI_FINALIZE (int *ierr)
 {
@@ -2644,6 +2457,7 @@ F77_MPI_FINALIZE (int *ierr)
   *ierr = rc;
 
   return;
+}
 }
 
 /* void apply_print(const void *key,void **value,void *cl){ */
