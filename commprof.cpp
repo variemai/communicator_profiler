@@ -2351,39 +2351,42 @@ _Finalize(void) {
         std::vector<DataEntry> entries;
         std::cout << "Writing the main data table"
                   << std::flush;
-
+        double t;
+        t = MPI_Wtime();
         for (i = 0; i < num_of_comms*size; i++) {
             commId = insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
             if (i % num_of_comms == 0) {
               r++;
-              for (k = 0; k < NUM_OF_PRIMS; k++) {
-                  // Handle the first bucket separately
-                  minsize = 0;
-                  maxsize = powers_of_2[0];
-                  if (recv_buffer[i].buckets_msgs[k][0] > 0) {
-                      insertIntoDataEntry(entries, r, commId, k, maxsize, minsize,
-                                          recv_buffer[i].buckets_msgs[k][0],
-                                          recv_buffer[i].buckets_time[k][0]);
-                  }
-                  for (j = 1; j < NUM_BUCKETS-1; j++) {
-                      minsize = powers_of_2[j - 1];
-                      maxsize = (j == NUM_BUCKETS - 2) ? INT_MAX : powers_of_2[j];
-                      if (recv_buffer[i].buckets_msgs[k][j] > 0) {
+            }
+            for (k = 0; k < NUM_OF_PRIMS; k++) {
+                // Handle the first bucket separately
+                minsize = 0;
+                maxsize = powers_of_2[0];
+                if (recv_buffer[i].buckets_msgs[k][0] > 0) {
+                    insertIntoDataEntry(entries, r, commId, k, maxsize, minsize,
+                                        recv_buffer[i].buckets_msgs[k][0],
+                                        recv_buffer[i].buckets_time[k][0]);
+                }
+                for (j = 1; j < NUM_BUCKETS-1; j++) {
+                    minsize = powers_of_2[j - 1];
+                    maxsize = (j == NUM_BUCKETS - 2) ? INT_MAX : powers_of_2[j];
+                    if (recv_buffer[i].buckets_msgs[k][j] > 0) {
                         insertIntoDataEntry(entries, r, commId, k, maxsize,
                                             minsize,
                                             recv_buffer[i].buckets_msgs[k][j],
                                             recv_buffer[i].buckets_time[k][j]);
-                      }
+                    }
 
-                  }
+                }
             }
-            executeBatchInsert(db, entries); // Perform batch insert after processing each i iteration
-            entries.clear(); // Clear the vector for reuse in the next iteration
+            if (i % num_of_comms == 0) {
+                executeBatchInsert(db, entries); // Perform batch insert after processing each i iteration
+                entries.clear(); // Clear the vector for reuse in the next iteration
             }
         }
+        t = MPI_Wtime() - t;
 
-        printf("Database File Written: %s\n", outfile);
-
+        std::cout << "Output database file " << outfile << "time to write  = " << t << std::flush;
         //printMetadata(db);
         //printCommsTable(db);
         //printData(db);
