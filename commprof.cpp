@@ -209,9 +209,19 @@ MPI_Pcontrol(const int level, ...)
 std::vector<std::string> convertToArrayOfStrings(char *proc_names, int size,
                                                  int name_length) {
     std::vector<std::string> machineNames;
-    for (int i = 0; i < size; ++i) {
+    for (int i = 1; i < size; ++i) {
         std::string machineName(proc_names + i * name_length);
         machineNames.push_back(machineName);
+    }
+    return machineNames;
+}
+
+std::vector<std::string> convertToArrayOfPrims() {
+
+    std::vector<std::string> machineNames;
+    for (int i = 1; i < NUM_OF_PRIMS; ++i) {
+        std::string PrimName(prim_names[i]);
+        machineNames.push_back(PrimName);
     }
     return machineNames;
 }
@@ -2334,10 +2344,19 @@ _Finalize(void) {
                        mpisee_minor_version, mpisee_build_date,
                        mpisee_build_time, env_var);
 
-        for (i = 0; i<NUM_OF_PRIMS ; i++ ) {
-            insertIntoOperations(db, prim_names[i]);
-        }
+        insertIntoOperationsEmpty(db, prim_names[i]);
+        std::vector<std::string> operations = convertToArrayOfPrims();
+        BatchInsertIntoOperations(db, operations);
+        operations.clear();
+        operations.shrink_to_fit();
 
+        // for (i = 0; i<NUM_OF_PRIMS ; i++ ) {
+        //     insertIntoOperations(db, prim_names[i]);
+        // }
+
+
+        std::string machineName(proc_names);
+        insertIntoMappings(db, machineName);
         std::vector<std::string> machines =
             convertToArrayOfStrings(proc_names, size, MPI_MAX_PROCESSOR_NAME);
         BatchInsertIntoMappings(db, machines);
@@ -2345,14 +2364,6 @@ _Finalize(void) {
         machines.shrink_to_fit();
         free(proc_names);
 
-        // ptr = proc_names;
-        // for (i = 0; i < size; i++) {
-        //     if ( ptr != NULL ){
-        //       snprintf(proc_name, MPI_MAX_PROCESSOR_NAME, "%s", ptr);
-        //     }
-        //     insertIntoMappings(db, proc_name);
-        //     ptr+=MPI_MAX_PROCESSOR_NAME;
-        // }
         // Precompute powers of 2 for each bucket
         for (int i = 0; i < NUM_BUCKETS - 1; i++) {
             powers_of_2[i] = 1 << buckets[i];

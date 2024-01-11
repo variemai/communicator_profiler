@@ -267,42 +267,23 @@ void createTables(sqlite3* db) {
 
 // Function to insert into mappings
 void insertIntoMappings(sqlite3 *db, const std::string &machine) {
-  int count;
-  count = countTable(db, "mappings");
   std::string insertSql;
-  if (count == 0) {
-    // The table is empty, insert with id = 0
-    insertSql = "INSERT INTO mappings (id, machine) VALUES (0, '" + machine + "')";
-  } else {
-    // The table is not empty, let SQLite auto-increment the id
-    insertSql = "INSERT INTO mappings (machine) VALUES ('" + machine + "')";
-  }
-
+  insertSql = "INSERT INTO mappings (id, machine) VALUES (0, '" + machine + "')";
   executeSQL(db, insertSql, "INSERT INTO mappings");
 }
 
 void BatchInsertIntoMappings(sqlite3 *db, const std::vector<std::string>& machines) {
-    // Check if the mappings table is empty
-    bool isEmpty = countTable(db, "mappings") == 0;
+  // Start a transaction
+  executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
 
-    // Start a transaction
-    executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
+  for (const auto& machine : machines) {
+    std::string insertSql;
+    insertSql = "INSERT INTO mappings (machine) VALUES ('" + machine + "')";
+    executeSQL(db, insertSql, "INSERT INTO mappings");
+  }
 
-    for (const auto& machine : machines) {
-        std::string insertSql;
-        if (isEmpty) {
-            // The table is initially empty, insert with id = 0
-            insertSql = "INSERT INTO mappings (id, machine) VALUES (0, '" + machine + "')";
-            isEmpty = false; // Subsequent inserts will not include the id
-        } else {
-            // The table is not empty, let SQLite auto-increment the id
-            insertSql = "INSERT INTO mappings (machine) VALUES ('" + machine + "')";
-        }
-        executeSQL(db, insertSql, "INSERT INTO mappings");
-    }
-
-    // Commit the transaction
-    executeSQL(db, "END TRANSACTION", "End Transaction");
+  // Commit the transaction
+  executeSQL(db, "END TRANSACTION", "End Transaction");
 }
 
 
@@ -379,6 +360,35 @@ void insertIntoOperations(sqlite3* db, const std::string& operation) {
 
   }
   executeSQL(db, insertSql, "INSERT INTO operations");
+}
+
+void insertIntoOperationsEmpty(sqlite3 *db, const std::string &operation) {
+  std::string insertSql;
+  insertSql = "INSERT INTO operations (id, operation) VALUES (0, '" + operation + "')";
+  executeSQL(db, insertSql, "INSERT INTO operations");
+}
+
+void BatchInsertIntoOperations(sqlite3 *db,
+                               const std::vector<std::string> &operations) {
+  bool isEmpty = countTable(db, "operations") == 0;
+  // Start a transaction
+  executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
+
+  for (const auto& operation : operations) {
+    std::string insertSql;
+    if (isEmpty) {
+      // The table is initially empty, insert with id = 0
+      insertSql = "INSERT INTO operations (id, operation) VALUES (0, '" + operation + "')";
+      isEmpty = false; // Subsequent inserts will not include the id
+    } else {
+      // The table is not empty, let SQLite auto-increment the id
+    insertSql = "INSERT INTO operations (operation) VALUES ('" + operation + "')";
+    }
+    executeSQL(db, insertSql, "INSERT INTO mappings");
+  }
+
+  // Commit the transaction
+  executeSQL(db, "END TRANSACTION", "End Transaction");
 }
 
 // Functions to insert into data

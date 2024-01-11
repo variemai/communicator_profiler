@@ -18,6 +18,9 @@ void insertIntoMappings(sqlite3 *db, const std::string &machine);
 int insertIntoComms(sqlite3 *db, const std::string &name, int size);
 
 void insertIntoOperations(sqlite3 *db, const std::string &operation);
+void insertIntoOperationsEmpty(sqlite3 *db, const std::string &operation);
+void BatchInsertIntoOperations(sqlite3 *db,
+                               const std::vector<std::string> &operations);
 
 void insertIntoData(sqlite3 *db, int rank, int commId, int operationId,
                     int bufferSizeMax, int bufferSizeMin, int calls,
