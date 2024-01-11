@@ -305,6 +305,42 @@ int insertIntoComms(sqlite3 *db, const std::string &name, int size ) {
     return commId;
 }
 
+std::vector<int> CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
+   sqlite3_stmt *insertStmt, *getIdStmt;
+   std::vector<int> ids;
+   std::string insertSql =
+     "INSERT OR IGNORE INTO comms (name, size) VALUES (?, ?)";
+   std::string getIdSql = "SELECT id FROM comms WHERE name = ?";
+
+   sqlite3_prepare_v2(db, insertSql.c_str(), -1, &insertStmt, nullptr);
+   sqlite3_prepare_v2(db, getIdSql.c_str(), -1, &getIdStmt, nullptr);
+
+   // Start transaction
+   executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
+
+   for (const auto& comm : comms) {
+     sqlite3_bind_text(insertStmt, 1, comm.name.c_str(), -1, SQLITE_STATIC);
+     sqlite3_bind_int(insertStmt, 2, comm.size);
+     sqlite3_step(insertStmt);
+     sqlite3_reset(insertStmt); // Reset the statement to insert next record
+
+
+     // Get the ID of the communicator
+     sqlite3_bind_text(getIdStmt, 1, comm.name.c_str(), -1, SQLITE_STATIC);
+     if (sqlite3_step(getIdStmt) == SQLITE_ROW) {
+       int id = sqlite3_column_int(getIdStmt, 0);
+       ids.push_back(id); // Store the ID
+     }
+     sqlite3_reset(getIdStmt);
+   }
+
+   // Finalize statement and commit transaction
+   sqlite3_finalize(insertStmt);
+   sqlite3_finalize(getIdStmt);
+   executeSQL(db, "END TRANSACTION", "End Transaction");
+   return ids;
+}
+
 
 
 // Functions to insert into operations

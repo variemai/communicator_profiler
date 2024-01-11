@@ -2,6 +2,7 @@
 #define SQLITEDB_H_
 #include <sqlite3.h>
 #include <string>
+#include <vector>
 #include "utils.h"
 
 void printDataDetails(sqlite3 *db);
@@ -33,6 +34,8 @@ void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
                          int calls, double time);
 
 void executeBatchInsert(sqlite3 *db, const std::vector<DataEntry> &entries);
+
+std::vector<int> CommsInsert(sqlite3 *db, const std::vector<CommData>& comms);
 
 void printData(sqlite3* db);
 

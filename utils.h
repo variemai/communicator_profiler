@@ -5,6 +5,7 @@
 #include <mpi.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <string>
 #define NAMELEN 256
 #define PRIMLEN 16
 #define NUM_OF_PRIMS 36
@@ -52,6 +53,11 @@ Ibcast,
 Ialltoall,
 Iscatter,
 Ibarrier
+};
+
+struct CommData {
+    std::string name;
+    int size;
 };
 
 struct DataEntry {

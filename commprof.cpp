@@ -19,7 +19,6 @@
 #include "commprof.h"
 #include <algorithm>
 #include "symbols.h"
-#include <inttypes.h>
 #include "create_db.h"
 #include <iostream>
 
@@ -2348,13 +2347,24 @@ _Finalize(void) {
             powers_of_2[i] = 1 << buckets[i];
         }
 
+        std::vector<CommData> comms;
+        std::vector<int> commIds;
+        for (i = 0; i < num_of_comms * size; i++) {
+            comms.push_back({recv_buffer[i].name, recv_buffer[i].size});
+        }
+        commIds=CommsInsert(db, comms);
+        comms.clear();
+        comms.shrink_to_fit();
+
+
         std::vector<DataEntry> entries;
         std::cout << "Writing the main data table"
-                  << std::flush;
+                  << std::endl;
         double t;
         t = MPI_Wtime();
         for (i = 0; i < num_of_comms*size; i++) {
-            commId = insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
+            // commId = insertIntoComms(db, recv_buffer[i].name, recv_buffer[i].size);
+            commId = commIds[i];
             if (i % num_of_comms == 0) {
               r++;
             }
@@ -2386,7 +2396,7 @@ _Finalize(void) {
         }
         t = MPI_Wtime() - t;
 
-        std::cout << "Output database file " << outfile << "time to write  = " << t << std::flush;
+        std::cout << "Output database file " << outfile << ", time to write  = " << t << " seconds" << std::endl;
         //printMetadata(db);
         //printCommsTable(db);
         //printData(db);
