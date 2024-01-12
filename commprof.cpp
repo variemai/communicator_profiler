@@ -31,8 +31,8 @@ std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 std::vector<prof_attrs*> local_communicators;
 
 /* Tool date */
-int mpisee_major_version = 0;
-int mpisee_minor_version = 1;
+int mpisee_major_version = 1;
+int mpisee_minor_version = 0;
 char mpisee_build_date[sizeof(__DATE__)] = __DATE__;
 char mpisee_build_time[sizeof(__TIME__)] = __TIME__;
 double total_time = 0.0;
@@ -2350,10 +2350,12 @@ _Finalize(void) {
         operations.clear();
         operations.shrink_to_fit();
 
-        // for (i = 0; i<NUM_OF_PRIMS ; i++ ) {
-        //     insertIntoOperations(db, prim_names[i]);
-        // }
-
+        insertIntoTimes(db, alltimes[0]);
+        std::vector<double> times;
+        for (i = 1; i < size; i++) {
+            times.push_back(alltimes[i]);
+        }
+        BatchInsertIntoTimes(db, times);
 
         std::string machineName(proc_names);
         insertIntoMappings(db, machineName);

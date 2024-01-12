@@ -26,10 +26,10 @@ You friendly neighborhood MPI Communicator-centric profiler.
 - Display all data: ~/path/to/mpisee-through-db.py -d /path/to/mpisee_profile.db~
 - Display data for collective MPI operations only: ~/path/to/mpisee-through-db.py -d /path/to/mpisee_profile.db -c~
 - Display data for point-to-point MPI operations only: ~/path/to/mpisee-through-db.py -d /path/to/mpisee_profile.db -p~
-- The follow switches can be combined with the above
+- The following switches can be combined with the above
   - Display data for a specific MPI ranks (e.g. Ranks 0 and 12): ~-r 0,12~
   - Display data for a specific buffer range (e.g. 0-1024): ~-b 0:1024~
-  - Display data for MPI operations within a specific time range (e.g from 0.02 to 0.8 seconds): ~t 0.02:0.8~
+  - Display data for MPI operations within a specific time range (e.g from 0.02 to 0.8 seconds): ~-t 0.02:0.8~
 
 
 

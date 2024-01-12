@@ -226,6 +226,13 @@ void createTables(sqlite3* db) {
         "machine TEXT);";
     executeSQL(db, MappingTable, "Mappings Table created");
 
+    // Create Execution Time Table
+    const char* ExecTimeTable =
+        "CREATE TABLE IF NOT EXISTS exectime ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "time REAL);";
+    executeSQL(db, ExecTimeTable, "Execution Time Table created");
+
     // Create Metadata Table
     const char* Metadata =
         "CREATE TABLE IF NOT EXISTS metadata ("
@@ -286,6 +293,26 @@ void BatchInsertIntoMappings(sqlite3 *db, const std::vector<std::string>& machin
   executeSQL(db, "END TRANSACTION", "End Transaction");
 }
 
+// Function to insert into mappings
+void insertIntoTimes(sqlite3 *db, const double time) {
+  std::string insertSql;
+  insertSql = "INSERT INTO exectimes (id, time) VALUES (0, '" + std::to_string(time) + "')";
+  executeSQL(db, insertSql, "INSERT INTO exectimes");
+}
+
+void BatchInsertIntoTimes(sqlite3 *db, const std::vector<double> times) {
+  // Start a transaction
+  executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
+
+  for (const auto& time : times) {
+    std::string insertSql;
+    insertSql = "INSERT INTO exectimes (time) VALUES ('" + std::to_string(time) + "')";
+    executeSQL(db, insertSql, "INSERT INTO exectimes");
+  }
+
+  // Commit the transaction
+  executeSQL(db, "END TRANSACTION", "End Transaction");
+}
 
 int insertIntoComms(sqlite3 *db, const std::string &name, int size ) {
     // Insert or ignore based on unique name

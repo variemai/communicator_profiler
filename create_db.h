@@ -40,7 +40,13 @@ void executeBatchInsert(sqlite3 *db, const std::vector<DataEntry> &entries);
 
 std::vector<int> CommsInsert(sqlite3 *db, const std::vector<CommData> &comms);
 
-void BatchInsertIntoMappings(sqlite3 *db, const std::vector<std::string>& machines);
+void BatchInsertIntoMappings(sqlite3 *db,
+                             const std::vector<std::string> &machines);
+
+
+void insertIntoTimes(sqlite3 *db, const double time);
+
+void BatchInsertIntoTimes(sqlite3 *db, const std::vector<double> times);
 
 void printData(sqlite3* db);
 
