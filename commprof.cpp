@@ -2229,7 +2229,6 @@ _Finalize(void) {
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names = NULL;
-    char *ptr;
     double *alltimes = NULL;
     std::vector<double> mpi_times;
     // double mpi_time = 0.0;
@@ -2350,15 +2349,21 @@ _Finalize(void) {
         operations.clear();
         operations.shrink_to_fit();
 
-        insertIntoTimes(db, alltimes[0]);
-        std::vector<double> times;
-        for (i = 1; i < size; i++) {
-            times.push_back(alltimes[i]);
+        std::cout << "mpisee: Writing the exectimes table"
+                  << std::endl;
+        if (alltimes != NULL){
+            insertIntoTimes(db, alltimes[0]);
+            std::vector<double> times;
+            for (i = 1; i < size; i++) {
+                times.push_back(alltimes[i]);
+            }
+            BatchInsertIntoTimes(db, times);
+            times.clear();
+            times.shrink_to_fit();
+            free(alltimes);
         }
-        BatchInsertIntoTimes(db, times);
-        times.clear();
-        times.shrink_to_fit();
-        free(alltimes);
+        std::cout << "mpisee: exectimes written"
+                  << std::endl;
 
         std::string machineName(proc_names);
         insertIntoMappings(db, machineName);
