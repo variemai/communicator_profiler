@@ -2360,7 +2360,6 @@ _Finalize(void) {
             BatchInsertIntoTimes(db, times);
             times.clear();
             times.shrink_to_fit();
-            free(alltimes);
         }
         std::cout << "mpisee: exectimes written"
                   << std::endl;
