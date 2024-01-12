@@ -2339,10 +2339,14 @@ _Finalize(void) {
             }
         }
         createTables(db);
+        std::cout << "mpisee: Writing the metadata table"
+                  << std::endl;
         insertMetadata(db, version, size, av, ac, mpisee_major_version,
                        mpisee_minor_version, mpisee_build_date,
                        mpisee_build_time, env_var);
 
+        std::cout << "mpisee: Writing the MPI operations table"
+                  << std::endl;
         insertIntoOperationsEmpty(db, prim_names[i]);
         std::vector<std::string> operations = convertToArrayOfPrims();
         BatchInsertIntoOperations(db, operations);
@@ -2361,8 +2365,6 @@ _Finalize(void) {
             times.clear();
             times.shrink_to_fit();
         }
-        std::cout << "mpisee: exectimes written"
-                  << std::endl;
 
         std::string machineName(proc_names);
         insertIntoMappings(db, machineName);
