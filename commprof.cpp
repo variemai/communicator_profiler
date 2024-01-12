@@ -2364,6 +2364,7 @@ _Finalize(void) {
             BatchInsertIntoTimes(db, times);
             times.clear();
             times.shrink_to_fit();
+            free(alltimes);
         }
 
         std::string machineName(proc_names);
@@ -2437,7 +2438,6 @@ _Finalize(void) {
         sqlite3_close(db);
 
         free(outfile);
-        free(alltimes);
     }
 
     PMPI_Type_free(&profiler_data);

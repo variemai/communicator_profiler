@@ -397,20 +397,13 @@ void insertIntoOperationsEmpty(sqlite3 *db, const std::string &operation) {
 
 void BatchInsertIntoOperations(sqlite3 *db,
                                const std::vector<std::string> &operations) {
-  bool isEmpty = countTable(db, "operations") == 0;
   // Start a transaction
   executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
 
   for (const auto& operation : operations) {
     std::string insertSql;
-    if (isEmpty) {
-      // The table is initially empty, insert with id = 0
-      insertSql = "INSERT INTO operations (id, operation) VALUES (0, '" + operation + "')";
-      isEmpty = false; // Subsequent inserts will not include the id
-    } else {
       // The table is not empty, let SQLite auto-increment the id
     insertSql = "INSERT INTO operations (operation) VALUES ('" + operation + "')";
-    }
     executeSQL(db, insertSql, "INSERT INTO mappings");
   }
 
