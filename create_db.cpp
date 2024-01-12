@@ -228,7 +228,7 @@ void createTables(sqlite3* db) {
 
     // Create Execution Time Table
     const char* ExecTimeTable =
-        "CREATE TABLE IF NOT EXISTS exectime ("
+        "CREATE TABLE IF NOT EXISTS exectimes ("
         "id INTEGER PRIMARY KEY AUTOINCREMENT, "
         "time REAL);";
     executeSQL(db, ExecTimeTable, "Execution Time Table created");

@@ -230,6 +230,46 @@ def print_data_by_comm(db_path, comm):
         if conn:
             conn.close()
 
+def print_execution_time(dpath,order=1,ranks=[]):
+    conn = sqlite3.connect(dpath)
+    cursor = conn.cursor()
+
+    sql = """
+    SELECT t.id, t.time
+    FROM exectimes t
+    """
+    params = ""
+    if len(ranks) > 0:
+            placeholders = ','.join('?' * len(ranks))
+            sql += f"WHERE d.rank IN ({placeholders})"
+            params = tuple(ranks)
+
+    elif order == 1:
+        sql += """
+        ORDER BY d.time DESC"""
+    elif order == 2:
+        sql += """
+        ORDER BY d.time ASC"""
+
+
+    try:
+        # Execute the query
+        cursor.execute(sql,(params))
+
+        # Print header
+        print(f"{'MPI Rank':<15}{'Execution Time (s)':<15}")
+
+        # Print rows
+        for row in cursor.fetchall():
+            id,time = row
+            print(f"{id:<15}{time:<15}")
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        if conn:
+            conn.close()
 
 
 def print_data_by_time(dbpath,order=1,num_of_rows=0,rank_list=[],*args):
@@ -280,6 +320,7 @@ def print_data_pt2pt(dbpath,order=1,num_of_rows=0,rank_list=[],*args):
 def main():
     parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
     parser.add_argument("-d", "--db_path", required=True, help="Path to the mpisee SQLite database file.")
+    parser.add_argument("-e", "--exectime", required=False, action='store_true', help="Print the execution time for each process.")
     parser.add_argument("-p","--pt2pt",action='store_true', required=False, help="Show only point to point MPI operations,")
     parser.add_argument("-c","--collectives", action='store_true', required=False, help="Show only collective MPI operations.")
     parser.add_argument("-r","--ranks", type=str, required=False, help="Show the data of specific MPI ranks.")
@@ -341,7 +382,8 @@ def main():
         timemax = -1
         timemin = sys.float_info.max
 
-
+    if args.exectime:
+        print_execution_time(db_path,args.sort,rank_list)
 
     #print_data_by_rank(db_path,0)
 
