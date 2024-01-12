@@ -321,13 +321,13 @@ def main():
     parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
     parser.add_argument("-d", "--db_path", required=True, help="Path to the mpisee SQLite database file.")
     parser.add_argument("-e", "--exectime", required=False, action='store_true', help="Print the execution time for each process.")
-    parser.add_argument("-p","--pt2pt",action='store_true', required=False, help="Show only point to point MPI operations,")
-    parser.add_argument("-c","--collectives", action='store_true', required=False, help="Show only collective MPI operations.")
-    parser.add_argument("-r","--ranks", type=str, required=False, help="Show the data of specific MPI ranks.")
-    parser.add_argument("-b","--buffsize", type=str, required=False, help="Show the data for a specific buffer size range defined as min:max.")
-    parser.add_argument("-t","--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
-    parser.add_argument("-n","--nresults", required=False, type=int, default=0, help="Show the first N results. By default all are printed.")
-    parser.add_argument("-s","--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
+    parser.add_argument("-p", "--pt2pt",action='store_true', required=False, help="Show only point to point MPI operations,")
+    parser.add_argument("-c", "--collectives", action='store_true', required=False, help="Show only collective MPI operations.")
+    parser.add_argument("-r", "--ranks", type=str, required=False, help="Show the data of specific MPI ranks.")
+    parser.add_argument("-b", "--buffsize", type=str, required=False, help="Show the data for a specific buffer size range defined as min:max.")
+    parser.add_argument("-t", "--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
+    parser.add_argument("-n", "--nresults", required=False, type=int, default=0, help="Show the first N results. By default all are printed.")
+    parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
     args = parser.parse_args()
 
     header_path = '../utils.h'
@@ -382,8 +382,6 @@ def main():
         timemax = -1
         timemin = sys.float_info.max
 
-    if args.exectime:
-        print_execution_time(db_path,args.sort,rank_list)
 
     #print_data_by_rank(db_path,0)
 
@@ -403,8 +401,10 @@ def main():
         print_data_by_bufsize(db_path,args.sort,args.nresults,rank_list,buffsizemin,buffsizemax)
     elif args.time:
         print_data_by_time(db_path,args.sort,args.nresults,rank_list,timemin,timemax)
+    elif args.exectime:
+        print_execution_time(db_path,args.sort,rank_list)
     else:
-        print_all_data(db_path)
+         print_all_data(db_path)
 
 if __name__ == "__main__":
     main()
