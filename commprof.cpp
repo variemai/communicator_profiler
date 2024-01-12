@@ -2356,6 +2356,9 @@ _Finalize(void) {
             times.push_back(alltimes[i]);
         }
         BatchInsertIntoTimes(db, times);
+        times.clear();
+        times.shrink_to_fit();
+        free(alltimes);
 
         std::string machineName(proc_names);
         insertIntoMappings(db, machineName);
