@@ -404,7 +404,7 @@ void BatchInsertIntoOperations(sqlite3 *db,
     std::string insertSql;
       // The table is not empty, let SQLite auto-increment the id
     insertSql = "INSERT INTO operations (operation) VALUES ('" + operation + "')";
-    executeSQL(db, insertSql, "INSERT INTO mappings");
+    executeSQL(db, insertSql, "INSERT INTO operations");
   }
 
   // Commit the transaction

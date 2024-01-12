@@ -2347,7 +2347,7 @@ _Finalize(void) {
 
         std::cout << "mpisee: Writing the MPI operations table"
                   << std::endl;
-        insertIntoOperationsEmpty(db, prim_names[i]);
+        insertIntoOperationsEmpty(db, prim_names[0]);
         std::vector<std::string> operations = convertToArrayOfPrims();
         BatchInsertIntoOperations(db, operations);
         operations.clear();
