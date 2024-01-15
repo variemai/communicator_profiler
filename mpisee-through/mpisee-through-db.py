@@ -37,9 +37,10 @@ def parse_enum_from_header(header_path):
 def get_exec_time_by_rank(db_path, rank):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
+    total_time = 0.0
 
     try:
-        sql = "SELECT time FROM exectimes WHERE rank = ?"
+        sql = "SELECT time FROM exectimes WHERE id = ?"
 
         cursor.execute(sql, (rank,))
         result = cursor.fetchone()
@@ -115,7 +116,7 @@ def exec_query_and_print(db_path,sql,order,num_of_rows,ranks,*args):
 
         # Print header
         print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'MPI Operation':<20}"
-              f"{'Buffer Size Range':<20}{'Calls':<15}{'Time':<15}{'% of MPI Time':<10}{'% of Total Time':<10}")
+              f"{'Buffer Size Range':<20}{'Calls':<15}{'Time':<15}{'% of MPI Time':<20}{'% of Total Time':<10}")
 
         # Print rows
         r = 0
@@ -126,14 +127,14 @@ def exec_query_and_print(db_path,sql,order,num_of_rows,ranks,*args):
             name, size, rank, operation, buf_min, buf_max, calls, time = row
             buffer_size = f"{buf_min} - {buf_max}"
             if rank != prev_rank:
-                mpi_time = get_mpi_time_by_rank(db_path,rank)
-                exec_time = get_exec_time_by_rank(db_path,rank)
-                percentage = (time/mpi_time)*100
-                percentage_exec_time = (time/exec_time)*100
+                percentage_exec_time = (time/get_exec_time_by_rank(db_path,rank))*100
+                percentage_mpi_time = (time/get_mpi_time_by_rank(db_path,rank))*100
+                # if type(time) == float and (type) == float:
+                #     percentage_exec_time = (time/exec_time)*100
                 prev_rank = rank
 
             print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
-                  f"{buffer_size:<20}{calls:<15}{time:<15.4f}{percentage:<10.2f}{percentage_exec_time:<10.2f}")
+                  f"{buffer_size:<20}{calls:<15}{time:<15.4f}{percentage_mpi_time:<20.2f}{percentage_exec_time:<10.2f}")
             r+=1
             if num_of_rows > 0 and r >= num_of_rows:
                 break
@@ -297,15 +298,15 @@ def print_execution_time(dpath,order=1,ranks=[]):
     params = ""
     if len(ranks) > 0:
             placeholders = ','.join('?' * len(ranks))
-            sql += f"WHERE d.rank IN ({placeholders})"
+            sql += f"WHERE t.id IN ({placeholders})"
             params = tuple(ranks)
 
     elif order == 1:
         sql += """
-        ORDER BY d.time DESC"""
+        ORDER BY t.time DESC"""
     elif order == 2:
         sql += """
-        ORDER BY d.time ASC"""
+        ORDER BY t.time ASC"""
 
 
     try:
@@ -321,7 +322,7 @@ def print_execution_time(dpath,order=1,ranks=[]):
             print(f"{id:<10}{time:<10.4f}")
 
     except sqlite3.Error as e:
-        print("Failed to read data from SQLite table", e)
+        print("Failed to read data from SQLite exectime table", e)
     finally:
         # Close the database connection
         if conn:
@@ -373,6 +374,13 @@ def print_data_pt2pt(dbpath,order=1,num_of_rows=0,rank_list=[],*args):
         WHERE d.buffer_size_min >= ? AND d.buffer_size_max <= ? AND d.operation_id <= ?  """
     exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,*args)
 
+def query_all_data(dbpath,order=1,num_of_rows=0,rank_list=[],*args):
+    sql = """SELECT c.name, c.size, d.rank, o.operation,
+                      d.buffer_size_min, d.buffer_size_max, d.calls, d.time
+                      FROM data d
+                      JOIN comms c ON d.comm_id = c.id
+                      JOIN operations o ON d.operation_id = o.id """
+    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,*args)
 
 def clear_table_if_exists(db_path, table_name):
     conn = sqlite3.connect(db_path)
@@ -385,9 +393,9 @@ def clear_table_if_exists(db_path, table_name):
             # Table exists, so clear it
             cursor.execute(f"DELETE FROM {table_name}")
             conn.commit()
-            print(f"Table '{table_name}' cleared.")
-        else:
-            print(f"Table '{table_name}' does not exist.")
+            #print(f"Table '{table_name}' cleared.")
+        #else:
+        #    print(f"Table '{table_name}' does not exist.")
 
     except sqlite3.Error as e:
         print("An error occurred:", e)
@@ -448,6 +456,67 @@ def mpi_time(dbpath,order=1,ranks=[]):
         print("An error occurred:", e)
     finally:
         conn.close()
+
+def print_metadata_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT key, value FROM metadata")
+
+    rows = cursor.fetchall()
+    for row in rows:
+        key, value = row
+        print(f"{key}: {value}")
+
+    conn.close()
+
+def get_max_time_rank(db_path,sql):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    max_time = -1.0
+    rank = -1
+    try:
+        cursor.execute(sql)
+        result = cursor.fetchone()
+
+        if result:
+            rank, max_time = result
+        else:
+            print("No data found in tabe.")
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+    return rank,max_time
+
+
+def print_general_stats(db_path):
+    print("Overall statistics")
+    sql = """
+    SELECT rank, total_time
+    FROM mpi_time_sum
+    WHERE total_time = (SELECT MAX(total_time) FROM mpi_time_sum)
+    """
+    rank, time_max = get_max_time_rank(db_path,sql)
+    if rank < 0 or time_max < 0.0:
+         print("Error occured in max mpi time")
+    else:
+         print(f"Maximum MPI time: Rank {rank}, MPI Time: {time_max:.3f}")
+    sql = """
+    SELECT id, time
+    FROM exectimes
+    WHERE time = (SELECT MAX(time) FROM exectimes)
+    """
+    rank, time_max = get_max_time_rank(db_path,sql)
+    if rank < 0 or time_max < 0.0:
+         print("Error occured in max exec time time")
+    else:
+        print(f"Maximum execution time: Rank {rank}, Execution Time: {time_max:.3f}")
+
+    print(f"Percentage of MPI time to total execution time: {mpi_time}")
+    print()
 
 
 def main():
@@ -518,15 +587,9 @@ def main():
 
     create_and_populate_summary_table(db_path)
 
-    #print_data_by_rank(db_path,0)
+    print_metadata_table(db_path)
 
-    #print_data_by_comm(db_path,"W")
-
-    #print_data_by_bufsize(db_path, min=128)
-
-    #print_data_by_time(db_path, min=0.01)
-
-    #print_data_by_time_sort_desc(db_path, min=0.01)
+    print_general_stats(db_path)
 
     if args.pt2pt:
         print_data_pt2pt(db_path,args.sort,args.nresults,rank_list,buffsizemin,buffsizemax,enum_primitives['Issend'])
@@ -541,7 +604,7 @@ def main():
     elif args.mpitime:
         mpi_time(db_path,args.sort,rank_list)
     else:
-        print_all_data(db_path)
+        query_all_data(db_path,args.sort,args.nresults,rank_list)
 
 if __name__ == "__main__":
     main()
