@@ -2281,12 +2281,10 @@ _Finalize(void) {
     MPI_Get_processor_name(proc_name, &len);
 
     if (rank == 0) {
-        proc_names = NULL;
         proc_names = (char *)malloc(sizeof(char) * MPI_MAX_PROCESSOR_NAME * size);
         if (proc_names == NULL) {
             mcpt_abort("malloc error for proc_names buffer Rank: %d\n",rank);
         }
-        alltimes = NULL;
         alltimes = (double*) malloc (sizeof(double)*size);
         if (alltimes == NULL) {
             mcpt_abort("malloc error for alltimes buffer Rank: %d\n",rank);
@@ -2315,7 +2313,7 @@ _Finalize(void) {
               std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
               return 1;
           } else {
-              std::cout << "mpise: Opened database successfully" << std::endl;
+              std::cout << "mpisee: Opened database successfully" << std::endl;
           }
           outfile = strdup(env_var);
         }
@@ -2339,14 +2337,15 @@ _Finalize(void) {
             }
         }
         createTables(db);
-        std::cout << "mpisee: Writing the metadata table"
-                  << std::endl;
+        std::cout << "mpisee: Writing the metadata table" << std::endl;
+
         insertMetadata(db, version, size, av, ac, mpisee_major_version,
                        mpisee_minor_version, mpisee_build_date,
                        mpisee_build_time, env_var);
 
-        std::cout << "mpisee: Writing the MPI operations table"
-                  << std::endl;
+        std::cout << "mpisee: Writing the MPI operations table" << std::endl;
+
+
         insertIntoOperationsEmpty(db, prim_names[0]);
         std::vector<std::string> operations = convertToArrayOfPrims();
         BatchInsertIntoOperations(db, operations);
@@ -2354,8 +2353,8 @@ _Finalize(void) {
         operations.shrink_to_fit();
 
         if (alltimes != NULL){
-            std::cout << "mpisee: Writing the exectimes table"
-                  << std::endl;
+          std::cout << "mpisee: Writing the exectimes table" << std::endl;
+
             insertIntoTimes(db, alltimes[0]);
             std::vector<double> times;
             for (i = 1; i < size; i++) {
@@ -2365,6 +2364,8 @@ _Finalize(void) {
             times.clear();
             times.shrink_to_fit();
             free(alltimes);
+        } else {
+          std::cout << "mpisee: Execution times NULL" << std::endl;
         }
 
         std::string machineName(proc_names);
