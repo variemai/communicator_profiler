@@ -2353,9 +2353,9 @@ _Finalize(void) {
         operations.clear();
         operations.shrink_to_fit();
 
-        std::cout << "mpisee: Writing the exectimes table"
-                  << std::endl;
         if (alltimes != NULL){
+            std::cout << "mpisee: Writing the exectimes table"
+                  << std::endl;
             insertIntoTimes(db, alltimes[0]);
             std::vector<double> times;
             for (i = 1; i < size; i++) {

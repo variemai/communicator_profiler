@@ -34,6 +34,52 @@ def parse_enum_from_header(header_path):
         print("Enum 'primitives' not found in the header file.")
         return None
 
+def get_exec_time_by_rank(db_path, rank):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    try:
+        sql = "SELECT time FROM exectimes WHERE rank = ?"
+
+        cursor.execute(sql, (rank,))
+        result = cursor.fetchone()
+
+        if result:
+            total_time = result[0]
+            return total_time
+        else:
+            print(f"No data found for rank {rank}.")
+            return None
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+        return None
+    finally:
+        conn.close()
+
+
+def get_mpi_time_by_rank(db_path, rank):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    try:
+        sql = "SELECT total_time FROM mpi_time_sum WHERE rank = ?"
+
+        cursor.execute(sql, (rank,))
+        result = cursor.fetchone()
+
+        if result:
+            total_time = result[0]
+            return total_time
+        else:
+            print(f"No data found for rank {rank}.")
+            return None
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+        return None
+    finally:
+        conn.close()
 
 def query_all_data(db_path):
     with sqlite3.connect(db_path) as conn:
@@ -68,16 +114,26 @@ def exec_query_and_print(db_path,sql,order,num_of_rows,ranks,*args):
         cursor.execute(sql,params)
 
         # Print header
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
-              f"{'Buffer Size Range':<25}{'Calls':<15}{'Time':<20}")
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'MPI Operation':<20}"
+              f"{'Buffer Size Range':<20}{'Calls':<15}{'Time':<15}{'% of MPI Time':<10}{'% of Total Time':<10}")
 
         # Print rows
         r = 0
+        prev_rank = -1
+        percentage = 0.0
+        percentage_exec_time = 0.0
         for row in cursor.fetchall():
             name, size, rank, operation, buf_min, buf_max, calls, time = row
             buffer_size = f"{buf_min} - {buf_max}"
+            if rank != prev_rank:
+                mpi_time = get_mpi_time_by_rank(db_path,rank)
+                exec_time = get_exec_time_by_rank(db_path,rank)
+                percentage = (time/mpi_time)*100
+                percentage_exec_time = (time/exec_time)*100
+                prev_rank = rank
+
             print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
-                  f"{buffer_size:<25}{calls:<15}{time:<20}")
+                  f"{buffer_size:<20}{calls:<15}{time:<15.4f}{percentage:<10.2f}{percentage_exec_time:<10.2f}")
             r+=1
             if num_of_rows > 0 and r >= num_of_rows:
                 break
@@ -257,12 +313,12 @@ def print_execution_time(dpath,order=1,ranks=[]):
         cursor.execute(sql,(params))
 
         # Print header
-        print(f"{'MPI Rank':<15}{'Execution Time (s)':<15}")
+        print(f"{'MPI Rank':<10}{'Execution Time (s)':<10}")
 
         # Print rows
         for row in cursor.fetchall():
             id,time = row
-            print(f"{id:<15}{time:<15}")
+            print(f"{id:<10}{time:<10.4f}")
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
@@ -317,6 +373,83 @@ def print_data_pt2pt(dbpath,order=1,num_of_rows=0,rank_list=[],*args):
         WHERE d.buffer_size_min >= ? AND d.buffer_size_max <= ? AND d.operation_id <= ?  """
     exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,*args)
 
+
+def clear_table_if_exists(db_path, table_name):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    try:
+        # Check if the table exists
+        cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+        if cursor.fetchone()[0] == 1:
+            # Table exists, so clear it
+            cursor.execute(f"DELETE FROM {table_name}")
+            conn.commit()
+            print(f"Table '{table_name}' cleared.")
+        else:
+            print(f"Table '{table_name}' does not exist.")
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+def create_and_populate_summary_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    clear_table_if_exists(db_path,"mpi_time_sum")
+
+    # Step 1: Create a new table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mpi_time_sum (
+            rank INTEGER PRIMARY KEY,
+            total_time REAL
+        )
+    """)
+
+    # Step 2: Aggregate and insert data
+    cursor.execute("""
+        INSERT INTO mpi_time_sum (rank, total_time)
+        SELECT d.rank, SUM(d.time) as total_time
+        FROM data d
+        GROUP BY d.rank
+    """)
+
+    conn.commit()
+    conn.close()
+
+def mpi_time(dbpath,order=1,ranks=[]):
+    conn = sqlite3.connect(dbpath)
+    cursor = conn.cursor()
+    sql ="""
+    SELECT rank, total_time as mpi_time
+    FROM mpi_time_sum
+    """
+
+    if len(ranks) > 0:
+        placeholders = ','.join('?' * len(ranks))
+        sql += f" WHERE rank IN ({placeholders})"
+
+    sql += f"GROUP BY rank "
+
+    if order == 1:
+        sql += f" ORDER BY mpi_time DESC"
+    else:
+        sql += f" ORDER BY mpi_time ASC"
+
+    try:
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        print(f"{'Rank':<8}{'MPI Time':<15}")
+        for row in rows:
+            rank, total_time = row
+            print(f"{rank:<10}{total_time:.3f}")
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
     parser.add_argument("-d", "--db_path", required=True, help="Path to the mpisee SQLite database file.")
@@ -326,6 +459,7 @@ def main():
     parser.add_argument("-r", "--ranks", type=str, required=False, help="Show the data of specific MPI ranks.")
     parser.add_argument("-b", "--buffsize", type=str, required=False, help="Show the data for a specific buffer size range defined as min:max.")
     parser.add_argument("-t", "--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
+    parser.add_argument("-m", "--mpitime", action='store_true', required=False, help="Show the data for a specific time range in seconds defined as min:max.")
     parser.add_argument("-n", "--nresults", required=False, type=int, default=0, help="Show the first N results. By default all are printed.")
     parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
     args = parser.parse_args()
@@ -382,6 +516,7 @@ def main():
         timemax = -1
         timemin = sys.float_info.max
 
+    create_and_populate_summary_table(db_path)
 
     #print_data_by_rank(db_path,0)
 
@@ -403,8 +538,10 @@ def main():
         print_data_by_time(db_path,args.sort,args.nresults,rank_list,timemin,timemax)
     elif args.exectime:
         print_execution_time(db_path,args.sort,rank_list)
+    elif args.mpitime:
+        mpi_time(db_path,args.sort,rank_list)
     else:
-         print_all_data(db_path)
+        print_all_data(db_path)
 
 if __name__ == "__main__":
     main()
