@@ -82,16 +82,6 @@ def get_mpi_time_by_rank(db_path, rank):
     finally:
         conn.close()
 
-def query_all_data(db_path):
-    with sqlite3.connect(db_path) as conn:
-        cursor = conn.cursor()
-        cursor.execute("SELECT c.name, c.size, d.rank, o.operation, "
-                      "d.buffer_size_min, d.buffer_size_max, d.calls, d.time "
-                      "FROM data d "
-                      "JOIN comms c ON d.comm_id = c.id "
-                      "JOIN operations o ON d.operation_id = o.id "
-                       "ORDER BY c.name;")
-        return cursor.fetchall()
 
 def query_data_by_rank(db_path, rank):
     with sqlite3.connect(db_path) as conn:
@@ -109,19 +99,18 @@ def exec_query_and_print(db_path,sql,order,num_of_rows,ranks,*args):
     else:
         params = args
     sql = select_order(sql,order)
-    #print(sql)
     try:
         # Execute the query
         cursor.execute(sql,params)
 
         # Print header
         print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'MPI Operation':<20}"
-              f"{'Buffer Size Range':<20}{'Calls':<15}{'Time':<15}{'% of MPI Time':<20}{'% of Total Time':<10}")
+              f"{'Buffer Size Range':<20}{'Calls':<15}{'Time (s)':<15}{'% of MPI Time':<20}{'% of Total Time':<10}")
 
         # Print rows
         r = 0
         prev_rank = -1
-        percentage = 0.0
+        percentage_mpi_time = 0.0
         percentage_exec_time = 0.0
         for row in cursor.fetchall():
             name, size, rank, operation, buf_min, buf_max, calls, time = row
@@ -129,12 +118,10 @@ def exec_query_and_print(db_path,sql,order,num_of_rows,ranks,*args):
             if rank != prev_rank:
                 percentage_exec_time = (time/get_exec_time_by_rank(db_path,rank))*100
                 percentage_mpi_time = (time/get_mpi_time_by_rank(db_path,rank))*100
-                # if type(time) == float and (type) == float:
-                #     percentage_exec_time = (time/exec_time)*100
                 prev_rank = rank
 
             print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
-                  f"{buffer_size:<20}{calls:<15}{time:<15.4f}{percentage_mpi_time:<20.2f}{percentage_exec_time:<10.2f}")
+                  f"{buffer_size:<20}{calls:<15}{time:<15.3f}{percentage_mpi_time:<20.3f}{percentage_exec_time:<10.3f}")
             r+=1
             if num_of_rows > 0 and r >= num_of_rows:
                 break
@@ -483,7 +470,7 @@ def get_max_time_rank(db_path,sql):
         if result:
             rank, max_time = result
         else:
-            print("No data found in tabe.")
+            print("No data found in table.")
 
     except sqlite3.Error as e:
         print("An error occurred:", e)
@@ -491,31 +478,155 @@ def get_max_time_rank(db_path,sql):
         conn.close()
     return rank,max_time
 
+def get_avg_time(db_path,sql):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    time = -1.0
+    try:
+        cursor.execute(sql)
+        result = cursor.fetchone()[0]
+
+        if result:
+            time = result
+        else:
+            print("No data found in table.")
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+    return time
+
+def get_all_times(db_path,sql):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    all_times_dict = {}
+    try:
+        cursor.execute(sql)
+        for row in cursor.fetchall():
+            all_times_dict[row[0]] = row[1]
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+    return all_times_dict
+
+def max_value_in_dict(d):
+    if not d:
+        return None,None
+
+    max_key = max(d, key=lambda k: d[k])
+
+    return max_key,d[max_key]
+
+def avg_value_in_dict(d):
+    average = -1.0
+    if not d:
+        return None
+
+    total = sum(d.values())
+    average = total/len(d)
+
+    return average
 
 def print_general_stats(db_path):
-    print("Overall statistics")
     sql = """
-    SELECT rank, total_time
-    FROM mpi_time_sum
-    WHERE total_time = (SELECT MAX(total_time) FROM mpi_time_sum)
+    SELECT value
+    FROM metadata
+    WHERE key = 'Processes'
     """
-    rank, time_max = get_max_time_rank(db_path,sql)
-    if rank < 0 or time_max < 0.0:
-         print("Error occured in max mpi time")
-    else:
-         print(f"Maximum MPI time: Rank {rank}, MPI Time: {time_max:.3f}")
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql)
+        result = cursor.fetchone()
+
+        if result:
+            size = int(result[0])
+        else:
+            print("No data found in tabe.")
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+    print("Overall statistics")
+
+
     sql = """
     SELECT id, time
     FROM exectimes
-    WHERE time = (SELECT MAX(time) FROM exectimes)
     """
-    rank, time_max = get_max_time_rank(db_path,sql)
-    if rank < 0 or time_max < 0.0:
-         print("Error occured in max exec time time")
+    exec_times_dict = get_all_times(db_path,sql)
+    rank,max_exec_time = max_value_in_dict(exec_times_dict)
+    if max_exec_time == None or rank == None:
+         print("Error occured in max exec time")
     else:
-        print(f"Maximum execution time: Rank {rank}, Execution Time: {time_max:.3f}")
+         print(f"Maximum Execution time: {max_exec_time:.3f} s, Rank: {rank}")
 
-    print(f"Percentage of MPI time to total execution time: {mpi_time}")
+
+    sql = """
+    SELECT rank, total_time
+    FROM mpi_time_sum
+    """
+    mpi_times_dict = get_all_times(db_path,sql)
+    rank,max_mpi_time = max_value_in_dict(mpi_times_dict)
+    if max_mpi_time == None or rank == None:
+         print("Error occured in max MPI time")
+    else:
+         print(f"Maximum MPI time: {max_mpi_time:.3f} s, Rank: {rank}")
+
+    avg_exec = avg_value_in_dict(exec_times_dict)
+    avg_mpi = avg_value_in_dict(mpi_times_dict)
+    print(f"Average Execution time across {size} processes: {avg_exec:.3f} s")
+    print(f"Average MPI time across {size} processes: {avg_mpi:.3f} s")
+    print(f"MPI Time to Execution time Ratio: {(avg_mpi/avg_exec)*100:.2f}%")
+
+    # sql = """
+    # SELECT rank, total_time
+    # FROM mpi_time_sum
+    # WHERE total_time = (SELECT MAX(total_time) FROM mpi_time_sum)
+    # """
+    # rank, time_max = get_max_time_rank(db_path,sql)
+    # if rank < 0 or time_max < 0.0:
+    #      print("Error occured in max mpi time")
+    # else:
+    #      print(f"Maximum MPI time: {time_max:.3f} s, Rank: {rank}")
+
+    # sql = """
+    # SELECT AVG(total_time)
+    # FROM mpi_time_sum
+    # """
+    # avg_mpi_time = get_avg_time(db_path,sql)
+    # if avg_mpi_time < 0.0:
+    #      print("Error occured in average mpi time calculation")
+    # else:
+    #      print(f"Average MPI time across {size} processes: {avg_mpi_time:.3f} s")
+    # sql = """
+    # SELECT id, time
+    # FROM exectimes
+    # WHERE time = (SELECT MAX(time) FROM exectimes)
+    # """
+    # rank, time_max = get_max_time_rank(db_path,sql)
+    # if rank < 0 or time_max < 0.0:
+    #      print("Error occured in max exec time time")
+    # else:
+    #     print(f"Maximum Execution time: {time_max:.3f} s, Rank: {rank}")
+
+    # sql = """
+    # SELECT AVG(time)
+    # FROM exectimes
+    # """
+    # avg_exec_time = get_avg_time(db_path,sql)
+    # if avg_exec_time < 0.0:
+    #      print("Error occured in average exec time calculation")
+    # else:
+    #      print(f"Average Execution time across {size} processes: {avg_exec_time:.3f} s")
+
+
     print()
 
 
