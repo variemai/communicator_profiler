@@ -5,6 +5,26 @@ import re
 import os
 import sys
 
+
+from signal import signal, SIGPIPE, SIG_DFL
+
+signal(SIGPIPE, SIG_DFL)
+
+# Global variables
+RED = "\033[1;31m"
+BLUE = "\033[1;34m"
+CYAN = "\033[1;36m"
+GREEN = "\033[0;32m"
+RESET = "\033[0;0m"
+BOLD = "\033[;1m"
+REVERSE = "\033[;7m"
+
+# Function declarations
+def print_decoration(decoration):
+    if sys.stdout.isatty():
+        # the output is not redirected, we can use a fancy style:
+        sys.stdout.write(decoration)
+
 def parse_enum_from_header(header_path):
     with open(header_path, 'r') as file:
         content = file.read()
@@ -531,7 +551,20 @@ def avg_value_in_dict(d):
 
     return average
 
+def dict_ratios(dict_mpi,dict_exec):
+    #dict_mpi is dictionary with the MPI times
+    #dict_exec is the dictionary of Execution times
+    #ratios will contain the MPI to Execution time Ratio for every MPI rank
+
+    ratios = {}
+    # Keys of both dictionaries must be the same
+    for k in dict_mpi.keys():
+        ratios[k] = float((dict_mpi[k] / dict_exec[k]))*100
+
+    return ratios
+
 def print_general_stats(db_path):
+    size = -1
     sql = """
     SELECT value
     FROM metadata
@@ -553,7 +586,7 @@ def print_general_stats(db_path):
     finally:
         conn.close()
 
-    print("Overall statistics")
+    print("Overview Statistics")
 
 
     sql = """
@@ -567,6 +600,9 @@ def print_general_stats(db_path):
     else:
          print(f"Maximum Execution time: {max_exec_time:.3f} s, Rank: {rank}")
 
+    avg_exec = avg_value_in_dict(exec_times_dict)
+    if avg_exec != None:
+        print(f"Average Execution time across {size} MPI Ranks: {avg_exec:.3f} s")
 
     sql = """
     SELECT rank, total_time
@@ -579,55 +615,13 @@ def print_general_stats(db_path):
     else:
          print(f"Maximum MPI time: {max_mpi_time:.3f} s, Rank: {rank}")
 
-    avg_exec = avg_value_in_dict(exec_times_dict)
     avg_mpi = avg_value_in_dict(mpi_times_dict)
-    print(f"Average Execution time across {size} processes: {avg_exec:.3f} s")
-    print(f"Average MPI time across {size} processes: {avg_mpi:.3f} s")
-    print(f"MPI Time to Execution time Ratio: {(avg_mpi/avg_exec)*100:.2f}%")
-
-    # sql = """
-    # SELECT rank, total_time
-    # FROM mpi_time_sum
-    # WHERE total_time = (SELECT MAX(total_time) FROM mpi_time_sum)
-    # """
-    # rank, time_max = get_max_time_rank(db_path,sql)
-    # if rank < 0 or time_max < 0.0:
-    #      print("Error occured in max mpi time")
-    # else:
-    #      print(f"Maximum MPI time: {time_max:.3f} s, Rank: {rank}")
-
-    # sql = """
-    # SELECT AVG(total_time)
-    # FROM mpi_time_sum
-    # """
-    # avg_mpi_time = get_avg_time(db_path,sql)
-    # if avg_mpi_time < 0.0:
-    #      print("Error occured in average mpi time calculation")
-    # else:
-    #      print(f"Average MPI time across {size} processes: {avg_mpi_time:.3f} s")
-    # sql = """
-    # SELECT id, time
-    # FROM exectimes
-    # WHERE time = (SELECT MAX(time) FROM exectimes)
-    # """
-    # rank, time_max = get_max_time_rank(db_path,sql)
-    # if rank < 0 or time_max < 0.0:
-    #      print("Error occured in max exec time time")
-    # else:
-    #     print(f"Maximum Execution time: {time_max:.3f} s, Rank: {rank}")
-
-    # sql = """
-    # SELECT AVG(time)
-    # FROM exectimes
-    # """
-    # avg_exec_time = get_avg_time(db_path,sql)
-    # if avg_exec_time < 0.0:
-    #      print("Error occured in average exec time calculation")
-    # else:
-    #      print(f"Average Execution time across {size} processes: {avg_exec_time:.3f} s")
-
-
-    print()
+    if avg_exec != None and avg_mpi != None:
+        print(f"Average MPI time across {size} MPI Ranks: {avg_mpi:.3f} s")
+        print(f"Average Ratio of MPI time to Execution time across {size} MPI Ranks: {(avg_mpi/avg_exec)*100:.2f}%")
+    ratios = dict_ratios(mpi_times_dict,exec_times_dict)
+    rank,max_ratio = max_value_in_dict(ratios)
+    print(f"Maximum Ratio of MPI time to Execution time: {max_ratio:.2f}%, Rank: {rank}\n")
 
 
 def main():
