@@ -2268,14 +2268,6 @@ _Finalize(void) {
     if (array == NULL) {
         mcpt_abort("malloc error for send buffer Rank: %d\n", rank);
     }
-    // if (rank == 0) {
-    //     recv_buffer =
-    //             (prof_attrs *) malloc(sizeof(prof_attrs) * num_of_comms * size);
-    //     if (recv_buffer == NULL) {
-    //         mcpt_abort("malloc error for receive buffer Rank: %d\n", rank);
-    //     }
-    // }
-
 
     MPI_Datatype profiler_data;
     MPI_Aint base, displacements[4];
@@ -2291,7 +2283,7 @@ _Finalize(void) {
     MPI_Get_address(&dummy.buckets_msgs, &displacements[3]);
 
     // Convert addresses to displacements
-    for (int i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++) {
         displacements[i] = MPI_Aint_diff(displacements[i], base);
     }
 
@@ -2314,7 +2306,6 @@ _Finalize(void) {
         if (alltimes == NULL) {
           mcpt_abort("malloc error for alltimes buffer Rank: %d\n", rank);
         }
-        // iterate over local_communicators to see if they have something meaningful
      }
 
     PMPI_Gather(proc_name, MPI_MAX_PROCESSOR_NAME, MPI_CHAR, proc_names,
@@ -2324,13 +2315,10 @@ _Finalize(void) {
     PMPI_Gather(&total_time, 1, MPI_DOUBLE, alltimes, 1, MPI_DOUBLE, 0,
                 MPI_COMM_WORLD);
 
-    // PMPI_Gather(array, num_of_comms, profiler_data, recv_buffer, num_of_comms,
-    //             profiler_data, 0, MPI_COMM_WORLD);
 
     PMPI_Gatherv(array, num_of_comms, profiler_data, recv_buffer, recvcounts,
                  displs, profiler_data, 0, MPI_COMM_WORLD);
 
-    PMPI_Barrier(MPI_COMM_WORLD);
 
     if ( rank == 0 ){
         int rc,commId,maxsize,minsize;
@@ -2420,24 +2408,16 @@ _Finalize(void) {
         for (proc = 0; proc < size; ++proc) {
             startIdx = displs[proc];
             numElements = recvcounts[proc];
-            //std::cout << "Data received from process " << proc << ":\n";
 
           for (j = 0; j < numElements; ++j) {
-              //prof_attrs& item = recv_buffer[startIdx + j];
-              // Process the item (e.g., print values or perform calculations)
-              // std::cout << "Name: " << item.name << ", Size: " << item.size << "\n";
               comms.push_back({recv_buffer[startIdx + j].name,
                       recv_buffer[startIdx + j].size});
           }
         }
 
-        // for (i = 0; i < num_of_comms * size; i++) {
-        //     comms.push_back({recv_buffer[i].name, recv_buffer[i].size});
-        // }
         commIds=CommsInsert(db, comms);
         comms.clear();
         comms.shrink_to_fit();
-
 
         std::vector<DataEntry> entries;
         std::cout << "mpisee: Writing the main data table"
@@ -2478,52 +2458,20 @@ _Finalize(void) {
           }
         }
 
-
-        // for (i = 0; i < num_of_comms*size; i++) {
-        //     commId = commIds[i];
-        //     if (i % num_of_comms == 0) {
-        //       r++;
-        //     }
-        //     for (k = 0; k < NUM_OF_PRIMS; k++) {
-        //         minsize = 0;
-        //         maxsize = powers_of_2[0];
-        //         if (recv_buffer[i].buckets_msgs[k][0] > 0) {
-        //             insertIntoDataEntry(entries, r, commId, k, maxsize, minsize,
-        //                                 recv_buffer[i].buckets_msgs[k][0],
-        //                                 recv_buffer[i].buckets_time[k][0]);
-        //         }
-        //         for (j = 1; j < NUM_BUCKETS-1; j++) {
-        //             minsize = powers_of_2[j - 1];
-        //             maxsize = (j == NUM_BUCKETS - 2) ? INT_MAX : powers_of_2[j];
-        //             if (recv_buffer[i].buckets_msgs[k][j] > 0) {
-        //                 insertIntoDataEntry(entries, r, commId, k, maxsize,
-        //                                     minsize,
-        //                                     recv_buffer[i].buckets_msgs[k][j],
-        //                                     recv_buffer[i].buckets_time[k][j]);
-        //             }
-
-        //         }
-        //     }
-        //     // if (i % num_of_comms == (num_of_comms-1)) {
-        //     //     executeBatchInsert(db, entries);
-        //     //     entries.clear();
-        //     // }
-        // }
         executeBatchInsert(db, entries);
-        // if (!entries.empty()) {
-        //     executeBatchInsert(db, entries);
-        //     entries.clear();
-        // }
         t = MPI_Wtime() - t;
 
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
         sqlite3_close(db);
-        //free(outfile);
+        free(outfile);
+        free(alltimes);
+        free(proc_names);
     }
 
     PMPI_Type_free(&profiler_data);
-    MPI_Barrier(MPI_COMM_WORLD);
-    //free(array);
+    free(array);
+    free(displs);
+    free(recvcounts);
 
     return PMPI_Finalize();
 }
