@@ -2523,7 +2523,7 @@ _Finalize(void) {
 
     PMPI_Type_free(&profiler_data);
     MPI_Barrier(MPI_COMM_WORLD);
-    free(array);
+    //free(array);
 
     return PMPI_Finalize();
 }
