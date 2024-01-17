@@ -2460,9 +2460,9 @@ _Finalize(void) {
 
         executeBatchInsert(db, entries);
         t = MPI_Wtime() - t;
-
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
         sqlite3_close(db);
+        free(recv_buffer);
     }
 
     PMPI_Type_free(&profiler_data);
