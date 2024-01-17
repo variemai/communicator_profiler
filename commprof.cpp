@@ -2243,8 +2243,18 @@ _Finalize(void) {
     if (rank == 0) {
         num_of_allcoms = (int*) malloc (sizeof(int)*size);
     }
-    PMPI_Gather(num_of_comms, 1, MPI_INT, num_of_allcoms, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    array = (prof_attrs *) malloc(sizeof(prof_attrs) * num_of_comms);
+    PMPI_Gather(&num_of_comms, 1, MPI_INT, num_of_allcoms, 1, MPI_INT, 0,
+                MPI_COMM_WORLD);
+    if (rank == 0) {
+        for (i = 0; i<size; ++i) {
+          if (num_of_allcoms[i] != num_of_comms) {
+            std::cout << "mpisee: Rank " << i << " has " << num_of_allcoms[i]
+                      << " communicators, which is different from Rank 0: "
+                      << num_of_comms << std::endl;
+          }
+        }
+    }
+    array = (prof_attrs *)malloc(sizeof(prof_attrs) * num_of_comms);
     if (array == NULL) {
         mcpt_abort("malloc error for send buffer Rank: %d\n", rank);
     }
