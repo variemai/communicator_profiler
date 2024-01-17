@@ -2463,7 +2463,6 @@ _Finalize(void) {
 
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
         sqlite3_close(db);
-        free(outfile);
     }
 
     PMPI_Type_free(&profiler_data);
