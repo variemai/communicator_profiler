@@ -2231,6 +2231,7 @@ _Finalize(void) {
     char *proc_names = NULL;
     double *alltimes = NULL;
     std::vector<double> mpi_times;
+    int *num_of_allcoms = NULL:
     // double mpi_time = 0.0;
     total_time = MPI_Wtime() - total_time;
 
@@ -2238,7 +2239,11 @@ _Finalize(void) {
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     num_of_comms = local_communicators.size();
 
-
+    // Do all processes have the same number of communicators?
+    if (rank == 0) {
+        num_of_allcoms = (int*) malloc (sizeof(int)*size);
+    }
+    PMPI_Gather(num_of_comms, 1, MPI_INT, num_of_allcoms, 1, MPI_INT, 0, MPI_COMM_WORLD);
     array = (prof_attrs *) malloc(sizeof(prof_attrs) * num_of_comms);
     if (array == NULL) {
         mcpt_abort("malloc error for send buffer Rank: %d\n", rank);

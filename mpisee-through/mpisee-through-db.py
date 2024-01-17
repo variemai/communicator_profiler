@@ -739,7 +739,7 @@ def main():
     elif args.mpitime:
         mpi_time(db_path,args.sort,rank_list)
     else:
-        query_all_data(db_path,args.sort,args.nresults,rank_list)
+        query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
 
 if __name__ == "__main__":
     main()
