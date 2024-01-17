@@ -2231,7 +2231,7 @@ _Finalize(void) {
     char *proc_names = NULL;
     double *alltimes = NULL;
     std::vector<double> mpi_times;
-    int *num_of_allcoms = NULL:
+    int *num_of_allcoms = NULL;
     // double mpi_time = 0.0;
     total_time = MPI_Wtime() - total_time;
 
