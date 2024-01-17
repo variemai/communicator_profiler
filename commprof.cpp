@@ -2336,9 +2336,10 @@ _Finalize(void) {
         int rc,commId,maxsize,minsize;
         int powers_of_2[NUM_BUCKETS - 1];
         sqlite3 *db = NULL;
-        const char *env_var = getenv("MPISEE_OUTFILE");
         char *outfile;
-        int r = -1;
+        int l, proc, startIdx, numElements;
+        double t;
+        const char *env_var = getenv("MPISEE_OUTFILE");
         if (env_var != NULL) {
           rc = sqlite3_open(env_var, &db);
           if (rc) {
@@ -2416,12 +2417,12 @@ _Finalize(void) {
         std::vector<CommData> comms;
         std::vector<int> commIds;
 
-        for (int proc = 0; proc < size; ++proc) {
-          int startIdx = displs[proc];
-          int numElements = recvcounts[proc];
-          //std::cout << "Data received from process " << proc << ":\n";
+        for (proc = 0; proc < size; ++proc) {
+            startIdx = displs[proc];
+            numElements = recvcounts[proc];
+            //std::cout << "Data received from process " << proc << ":\n";
 
-          for (int j = 0; j < numElements; ++j) {
+          for (j = 0; j < numElements; ++j) {
               //prof_attrs& item = recv_buffer[startIdx + j];
               // Process the item (e.g., print values or perform calculations)
               // std::cout << "Name: " << item.name << ", Size: " << item.size << "\n";
@@ -2441,17 +2442,15 @@ _Finalize(void) {
         std::vector<DataEntry> entries;
         std::cout << "mpisee: Writing the main data table"
                   << std::endl;
-        double t;
-        int l;
         i = 0;
         t = MPI_Wtime();
 
-        for (int proc = 0; proc < size; ++proc) {
+        for (proc = 0; proc < size; ++proc) {
 
-          int startIdx = displs[proc];
-          int numElements = recvcounts[proc];
+          startIdx = displs[proc];
+          numElements = recvcounts[proc];
 
-          for (int j = 0; j < numElements; ++j) {
+          for (j = 0; j < numElements; ++j) {
 
             commId = commIds[i];
             prof_attrs &item = recv_buffer[startIdx + j];
@@ -2460,7 +2459,7 @@ _Finalize(void) {
               minsize = 0;
               maxsize = powers_of_2[0];
               if (item.buckets_msgs[k][0] > 0) {
-                  insertIntoDataEntry(entries, r, commId, k, maxsize, minsize,
+                  insertIntoDataEntry(entries, proc, commId, k, maxsize, minsize,
                                       item.buckets_msgs[k][0],
                                       item.buckets_time[k][0]);
               }
@@ -2468,7 +2467,7 @@ _Finalize(void) {
                   minsize = powers_of_2[l - 1];
                   maxsize = (l == NUM_BUCKETS - 2) ? INT_MAX : powers_of_2[l];
                   if (item.buckets_msgs[k][l] > 0) {
-                    insertIntoDataEntry(entries, r, commId, k, maxsize,
+                    insertIntoDataEntry(entries, proc, commId, k, maxsize,
                                         minsize, item.buckets_msgs[k][l],
                                         item.buckets_time[k][l]);
                   }
