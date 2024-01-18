@@ -2246,7 +2246,7 @@ _Finalize(void) {
         mcpt_abort("malloc error for recvcounts Rank: %d\n", rank);
     }
     displs = (int *)malloc(sizeof(int) * size);
-    if (recvcounts == NULL) {
+    if (displs == NULL) {
         mcpt_abort("malloc error for displs Rank: %d\n", rank);
     }
 
@@ -2331,7 +2331,7 @@ _Finalize(void) {
         int rc,commId,maxsize,minsize;
         int powers_of_2[NUM_BUCKETS - 1];
         sqlite3 *db = NULL;
-        char *outfile;
+        char *outfile = NULL;
         int l, proc, startIdx, numElements;
         double t;
         const char *env_var = getenv("MPISEE_OUTFILE");
@@ -2344,6 +2344,9 @@ _Finalize(void) {
               std::cout << "mpisee: Opened database successfully" << std::endl;
           }
           outfile = strdup(env_var);
+          if (outfile == NULL) {
+              mcpt_abort("mpisee: strdup returned NULL\n");
+          }
         }
         else{
           rc = sqlite3_open("mpisee_profile.db", &db);
@@ -2354,6 +2357,9 @@ _Finalize(void) {
               std::cout << "mpisee: Opened database successfully" << std::endl;
           }
           outfile = strdup("mpisee_profile.db");
+          if (outfile == NULL) {
+              mcpt_abort("mpisee: strdup returned NULL\n");
+          }
         }
         PMPI_Get_library_version(version, &resultlen);
         /* Remove line breaks in MPI version string, as it may create bugs during parsing. */
@@ -2431,14 +2437,14 @@ _Finalize(void) {
                   << std::endl;
         i = 0;
         t = MPI_Wtime();
-
+        commId = 0;
         for (proc = 0; proc < size; ++proc) {
 
           startIdx = displs[proc];
           numElements = recvcounts[proc];
 
           for (j = 0; j < numElements; ++j) {
-            if (proc < commIds.size()) {
+            if (i < commIds.size()) {
                 commId = commIds[i];
             } else {
               std::cout << "mpisee: index in commids (" << i
@@ -2474,13 +2480,15 @@ _Finalize(void) {
         t = MPI_Wtime() - t;
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
         sqlite3_close(db);
-        //free(recv_buffer);
+        free(outfile);
+        free(recv_buffer);
     }
-    MPI_Barrier(MPI_COMM_WORLD);
+
     PMPI_Type_free(&profiler_data);
-    // free(array);
-    // free(displs);
-    // free(recvcounts);
+    MPI_Barrier(MPI_COMM_WORLD);
+    free(array);
+    free(displs);
+    free(recvcounts);
 
     return PMPI_Finalize();
 }
