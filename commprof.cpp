@@ -2322,8 +2322,8 @@ _Finalize(void) {
                 MPI_COMM_WORLD);
 
 
-    PMPI_Gatherv(array, num_of_comms, profiler_data, recv_buffer, recvcounts,
-                 displs, profiler_data, 0, MPI_COMM_WORLD);
+    // PMPI_Gatherv(array, num_of_comms, profiler_data, recv_buffer, recvcounts,
+    //              displs, profiler_data, 0, MPI_COMM_WORLD);
     /*
     MPI_Barrier(MPI_COMM_WORLD);
 
