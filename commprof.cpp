@@ -2325,6 +2325,7 @@ _Finalize(void) {
     PMPI_Gatherv(array, num_of_comms, profiler_data, recv_buffer, recvcounts,
                  displs, profiler_data, 0, MPI_COMM_WORLD);
 
+    MPI_Barrier(MPI_COMM_WORLD);
 
     if ( rank == 0 ){
         int rc,commId,maxsize,minsize;
@@ -2442,6 +2443,7 @@ _Finalize(void) {
             } else {
               std::cout << "mpisee: index in commids (" << i
                         << ") out of bounds" << std::endl;
+              mcpt_abort("commId out of bounds\n");
 
             }
             prof_attrs &item = recv_buffer[startIdx + j];
