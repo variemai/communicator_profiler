@@ -647,8 +647,7 @@ def print_general_stats(db_path):
 
 
 def plot_mpi_operations_pie_chart(operations_names,avg_times,comm_name):
-
-        # Create a pie chart
+    # Create a pie chart
     plt.figure(figsize=(10, 8))
     plt.pie(avg_times, labels=operations_names, autopct=lambda p: f'{p:.1f}%' if p > 1 else '', startangle=140)
     plt.axis('equal')  # Equal aspect ratio ensures the pie chart is circular.
@@ -684,43 +683,54 @@ def get_average_time_per_communicator_and_operation(db_path):
         conn.close()
 
 
-def fetch_data_and_plot(db_path):
+def fetch_data_and_plot(db_path,comm=""):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     try:
         # Step 1: Identify the communicator with the maximum average time
-        cursor.execute("""
+        if comm == "":
+            cursor.execute("""
             SELECT c.name, c.size, AVG(d.time) as avg_time
             FROM data d
             JOIN comms c ON d.comm_id = c.id
             GROUP BY c.name
             ORDER BY avg_time DESC
             LIMIT 1
-        """)
-        result = cursor.fetchone()
-        if not result:
-            print("No data found.")
-            return
-        max_communicator = result[0]
-        comm_size = result[1]
+            """)
+            result = cursor.fetchone()
+            if not result:
+                print("No data found.")
+                return
+            max_communicator = result[0]
+            comm_size = result[1]
+        else:
+            max_communicator = comm
+            cursor.execute("""
+            SELECT c.size
+            FROM comms c
+            WHERE c.name = ?
+            """, (max_communicator,))
+
+            result = cursor.fetchone()
+            if not result:
+                print("No data found.")
+                return
+            comm_size = result[0]
 
         # Step 2: Get MPI operations for the identified communicator
-        #
         cursor.execute("""
             SELECT o.operation, d.buffer_size_min, d.buffer_size_max, AVG(d.time) as avg_time
             FROM data d
             JOIN operations o ON d.operation_id = o.id
             WHERE d.comm_id = (SELECT id FROM comms WHERE name = ?)
             GROUP BY o.operation, d.buffer_size_min, d.buffer_size_max
-        """, (max_communicator))
+        """, (max_communicator,))
 
         operations_data = cursor.fetchall()
 
         # Group operations with less than 1% into "Other"
         total_time = sum(avg_time for _, _, _, avg_time in operations_data)
-        # operations_data = [(op, time) if (time / total_time >= 0.01) else ('Other', time)
-        #                    for op, time in operations_data]
         aggregated_data = {}
         for operation, buf_min, buf_max, avg_time in operations_data:
             key = (operation, f"{buf_min}-{buf_max}")
@@ -735,12 +745,6 @@ def fetch_data_and_plot(db_path):
         operation_names = [f"{op} ({buf_range})" if buf_range else op for op, buf_range in aggregated_data.keys()]
         avg_times = list(aggregated_data.values())
 
-        # Aggregate times for "Other" operations
-        # other_time = sum(time for op, time in operations_data if op == 'Other')
-        # operations_data = [(op, time) for op, time in operations_data if op != 'Other']
-        # if other_time > 0:
-        #     operations_data.append(('Other', other_time))
-
         # Plot the pie chart
         comm_name = str(max_communicator) + "(" + str(comm_size) + ")"
         plot_mpi_operations_pie_chart(operation_names, avg_times, comm_name)
@@ -750,10 +754,33 @@ def fetch_data_and_plot(db_path):
     finally:
         conn.close()
 
+def get_all_comms(db):
+    conn = sqlite3.connect(db)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+        SELECT c.name
+        FROM comms c
+        """)
+
+        result = cursor.fetchall()
+        if not result:
+            print("No data found.")
+            return
+        for item in result:
+            print(item)
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
     parser.add_argument("-d", "--db_path", required=True, help="Path to the mpisee SQLite database file.")
+    parser.add_argument("-l", "--plot", required=False, help="Plot data for a specific communicator.")
     parser.add_argument("-e", "--exectime", required=False, action='store_true', help="Print the execution time for each process.")
     parser.add_argument("-p", "--pt2pt",action='store_true', required=False, help="Show only point to point MPI operations,")
     parser.add_argument("-c", "--collectives", action='store_true', required=False, help="Show only collective MPI operations.")
@@ -848,7 +875,10 @@ def main():
     else:
         query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
 
-    fetch_data_and_plot(db_path)
+    if args.plot:
+        comm = args.plot
+        fetch_data_and_plot(db_path,comm)
+    #get_all_comms(db_path)
 
 if __name__ == "__main__":
     main()
