@@ -2361,8 +2361,8 @@ _Finalize(void) {
               mcpt_abort("mpisee: strdup returned NULL\n");
           }
         }
+        /*
         PMPI_Get_library_version(version, &resultlen);
-        /* Remove line breaks in MPI version string, as it may create bugs during parsing. */
         for (i = 0; i < strlen(version); i++)
         {
             if(version[i] == '\n')
@@ -2482,6 +2482,7 @@ _Finalize(void) {
         sqlite3_close(db);
         free(outfile);
         free(recv_buffer);
+        */
     }
 
     PMPI_Type_free(&profiler_data);
