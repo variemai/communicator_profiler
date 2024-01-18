@@ -2233,7 +2233,7 @@ _Finalize(void) {
     std::vector<double> mpi_times;
     int *recvcounts = NULL;
     int *displs = NULL;
-    int total_num_of_comms = 0;
+    int total_num_of_comms;
     total_time = MPI_Wtime() - total_time;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -2245,24 +2245,26 @@ _Finalize(void) {
     if (recvcounts == NULL) {
         mcpt_abort("malloc error for recvcounts Rank: %d\n", rank);
     }
-    displs = (int *)malloc(sizeof(int) * size);
-    if (displs == NULL) {
-        mcpt_abort("malloc error for displs Rank: %d\n", rank);
+    if ( rank == 0 ){
+        displs = (int *)malloc(sizeof(int) * size);
+        if (displs == NULL) {
+            mcpt_abort("malloc error for displs");
+        }
     }
-
     PMPI_Gather(&num_of_comms, 1, MPI_INT, recvcounts, 1, MPI_INT, 0,
                 MPI_COMM_WORLD);
 
     if (rank == 0) {
         // Compute displacements
         displs[0] = 0;
+        total_num_of_comms = recvcounts[0];
         for (i = 1; i < size; ++i) {
           displs[i] = displs[i - 1] + recvcounts[i - 1];
           total_num_of_comms += recvcounts[i];
         }
-
+        std::cout << "mpise: total number of communicators = " << total_num_of_comms;
         recv_buffer =
-            (prof_attrs *)malloc(sizeof(prof_attrs) * total_num_of_comms);
+            (prof_attrs *)malloc(sizeof(prof_attrs) * total_num_of_comms );
 
         if (recv_buffer == NULL) {
           mcpt_abort("malloc error for receive buffer Rank: %d\n", rank);
@@ -2322,9 +2324,9 @@ _Finalize(void) {
                 MPI_COMM_WORLD);
 
 
-    // PMPI_Gatherv(array, num_of_comms, profiler_data, recv_buffer, recvcounts,
-    //              displs, profiler_data, 0, MPI_COMM_WORLD);
-    /*
+    PMPI_Gatherv(array, num_of_comms, profiler_data, recv_buffer, recvcounts,
+                 displs, profiler_data, 0, MPI_COMM_WORLD);
+/*
     MPI_Barrier(MPI_COMM_WORLD);
 
     if ( rank == 0 ){
@@ -2484,7 +2486,7 @@ _Finalize(void) {
         free(recv_buffer);
 
     }
-    */
+*/
 
     MPI_Barrier(MPI_COMM_WORLD);
     PMPI_Type_free(&profiler_data);
