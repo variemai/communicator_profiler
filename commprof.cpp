@@ -2324,7 +2324,7 @@ _Finalize(void) {
 
     PMPI_Gatherv(array, num_of_comms, profiler_data, recv_buffer, recvcounts,
                  displs, profiler_data, 0, MPI_COMM_WORLD);
-
+    /*
     MPI_Barrier(MPI_COMM_WORLD);
 
     if ( rank == 0 ){
@@ -2361,7 +2361,7 @@ _Finalize(void) {
               mcpt_abort("mpisee: strdup returned NULL\n");
           }
         }
-        /*
+
         PMPI_Get_library_version(version, &resultlen);
         for (i = 0; i < strlen(version); i++)
         {
@@ -2482,11 +2482,12 @@ _Finalize(void) {
         sqlite3_close(db);
         free(outfile);
         free(recv_buffer);
-        */
-    }
 
-    PMPI_Type_free(&profiler_data);
+    }
+    */
+
     MPI_Barrier(MPI_COMM_WORLD);
+    PMPI_Type_free(&profiler_data);
     free(array);
     free(displs);
     free(recvcounts);
