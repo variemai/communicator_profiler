@@ -2476,7 +2476,7 @@ _Finalize(void) {
         sqlite3_close(db);
         //free(recv_buffer);
     }
-
+    MPI_Barrier(MPI_COMM_WORLD);
     PMPI_Type_free(&profiler_data);
     // free(array);
     // free(displs);
