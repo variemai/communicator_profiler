@@ -2262,7 +2262,7 @@ _Finalize(void) {
           displs[i] = displs[i - 1] + recvcounts[i - 1];
           total_num_of_comms += recvcounts[i];
         }
-        std::cout << "mpise: total number of communicators = " << total_num_of_comms;
+        std::cout << "mpisee: total number of communicators = " << total_num_of_comms << std::endl;
         recv_buffer =
             (prof_attrs *)malloc(sizeof(prof_attrs) * total_num_of_comms );
 
@@ -2326,8 +2326,7 @@ _Finalize(void) {
 
     PMPI_Gatherv(array, num_of_comms, profiler_data, recv_buffer, recvcounts,
                  displs, profiler_data, 0, MPI_COMM_WORLD);
-/*
-    MPI_Barrier(MPI_COMM_WORLD);
+
 
     if ( rank == 0 ){
         int rc,commId,maxsize,minsize;
@@ -2486,7 +2485,7 @@ _Finalize(void) {
         free(recv_buffer);
 
     }
-*/
+
 
     MPI_Barrier(MPI_COMM_WORLD);
     PMPI_Type_free(&profiler_data);
