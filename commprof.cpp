@@ -2431,10 +2431,10 @@ _Finalize(void) {
           numElements = recvcounts[proc];
 
           for (j = 0; j < numElements; ++j) {
-            if (i < commIds.size() - 1) {
+            if (proc < commIds.size()) {
                 commId = commIds[i];
             } else {
-                std::cout << "mpisee: index (" << i << ")out of commids" << std::endl;
+                std::cout << "mpisee: index (" << i << ") out of commids" << std::endl;
             }
             prof_attrs &item = recv_buffer[startIdx + j];
 
@@ -2456,7 +2456,6 @@ _Finalize(void) {
                   }
               }
             }
-
             i++;
           }
         }
@@ -2465,13 +2464,13 @@ _Finalize(void) {
         t = MPI_Wtime() - t;
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
         sqlite3_close(db);
-        free(recv_buffer);
+        //free(recv_buffer);
     }
 
     PMPI_Type_free(&profiler_data);
-    free(array);
-    free(displs);
-    free(recvcounts);
+    // free(array);
+    // free(displs);
+    // free(recvcounts);
 
     return PMPI_Finalize();
 }
