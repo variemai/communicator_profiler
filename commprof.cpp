@@ -2398,7 +2398,7 @@ _Finalize(void) {
         free(proc_names);
 
         // Precompute powers of 2 for each bucket
-        for (int i = 0; i < NUM_BUCKETS - 1; i++) {
+        for (i = 0; i < NUM_BUCKETS - 1; i++) {
             powers_of_2[i] = 1 << buckets[i];
         }
 
@@ -2431,8 +2431,11 @@ _Finalize(void) {
           numElements = recvcounts[proc];
 
           for (j = 0; j < numElements; ++j) {
-
-            commId = commIds[i];
+            if (i < commIds.size() - 1) {
+                commId = commIds[i];
+            } else {
+                std::cout << "mpisee: index (" << i << ")out of commids" << std::endl;
+            }
             prof_attrs &item = recv_buffer[startIdx + j];
 
             for (k = 0; k < NUM_OF_PRIMS; k++) {
