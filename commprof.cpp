@@ -2242,7 +2242,13 @@ _Finalize(void) {
 
     // Do all processes have the same number of communicators?
     recvcounts = (int *)malloc(sizeof(int) * size);
+    if (recvcounts == NULL) {
+        mcpt_abort("malloc error for recvcounts Rank: %d\n", rank);
+    }
     displs = (int *)malloc(sizeof(int) * size);
+    if (recvcounts == NULL) {
+        mcpt_abort("malloc error for displs Rank: %d\n", rank);
+    }
 
     PMPI_Gather(&num_of_comms, 1, MPI_INT, recvcounts, 1, MPI_INT, 0,
                 MPI_COMM_WORLD);
@@ -2250,7 +2256,7 @@ _Finalize(void) {
     if (rank == 0) {
         // Compute displacements
         displs[0] = 0;
-        for (int i = 1; i < size; ++i) {
+        for (i = 1; i < size; ++i) {
           displs[i] = displs[i - 1] + recvcounts[i - 1];
           total_num_of_comms += recvcounts[i];
         }
@@ -2373,10 +2379,10 @@ _Finalize(void) {
         operations.clear();
         operations.shrink_to_fit();
 
+        std::vector<double> times;
         if (alltimes != NULL){
           std::cout << "mpisee: Writing the exectimes table" << std::endl;
           insertIntoTimes(db, alltimes[0]);
-          std::vector<double> times;
           for (i = 1; i < size; i++) {
             times.push_back(alltimes[i]);
           }
@@ -2434,7 +2440,9 @@ _Finalize(void) {
             if (proc < commIds.size()) {
                 commId = commIds[i];
             } else {
-                std::cout << "mpisee: index (" << i << ") out of commids" << std::endl;
+              std::cout << "mpisee: index in commids (" << i
+                        << ") out of bounds" << std::endl;
+
             }
             prof_attrs &item = recv_buffer[startIdx + j];
 
