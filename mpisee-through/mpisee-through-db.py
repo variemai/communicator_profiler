@@ -5,9 +5,11 @@ import re
 import os
 import sys
 import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
 import matplotlib.colors as mcolors
 import matplotlib.cm as cm
 import numpy as np
+import colorsys
 
 
 from signal import signal, SIGPIPE, SIG_DFL
@@ -22,6 +24,52 @@ GREEN = "\033[0;32m"
 RESET = "\033[0;0m"
 BOLD = "\033[;1m"
 REVERSE = "\033[;7m"
+
+def initialize_mpi_operation_colors(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    sql = "SELECT DISTINCT operation FROM operations"
+
+    try:
+        cursor.execute(sql)
+        operations = cursor.fetchall()
+        # Flatten the list of tuples to a list of operation names
+        operations = [op[0] for op in operations]
+
+        # Generate colors from a colormap
+        #color_map = plt.cm.get_cmap('tab20', len(operations))
+        #mpi_operation_colors = {op: color_map(i) for i, op in enumerate(operations)}
+        #mpi_operation_colors = {op: color for op, color in zip(operations, generate_distinct_colors(len(operations)))}
+        custom_cmap = discrete_cmap(len(operations), 'tab20')
+        mpi_operation_colors = {op: custom_cmap(i) for i, op in enumerate(operations)}
+
+
+        return mpi_operation_colors
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+        return {}
+    finally:
+        conn.close()
+
+def generate_distinct_colors(num_colors):
+    # Generate colors as equally spaced hues in the HSV space
+    hsv_tuples = [(x * 1.0 / num_colors, 0.5, 0.5) for x in range(num_colors)]
+    rgb_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples)
+    return list(rgb_tuples)
+
+def discrete_cmap(N, base_cmap=None):
+    """Create an N-bin discrete colormap from the specified input map"""
+
+    # Note that if base_cmap is a string or None, you can simply do
+    #    return plt.cm.get_cmap(base_cmap, N)
+    # The following works for string, None, or a colormap instance:
+
+    base = plt.cm.get_cmap(base_cmap)
+    color_list = base(np.linspace(0, 1, N))
+    cmap_name = base.name + str(N)
+    return ListedColormap(color_list, name=cmap_name)
 
 # Function declarations
 def print_decoration(decoration):
@@ -747,12 +795,14 @@ def plot_mpi_operations_pie_chart(operations_names,avg_times,comm_name):
     plt.title(f'MPI Operations Average Time Distribution in Communicator: {comm_name}')
     plt.show()
 
-    # plt.pie(avg_times, labels=operations_names, autopct=autopct, startangle=140)
-    # plt.axis('equal')  # Equal aspect ratio ensures the pie chart is circular.
-    # plt.title(f'MPI Operations Average Time Distribution in Communicator: {comm_name}')
-    # plt.show()
 
-def plot_comms_ops_stacked_bar_chart(plot_data, n):
+def plot_comms_ops_stacked_bar_chart(plot_data):
+    # Define specific colors for each MPI operation
+    #mpi_operation_colors = (initialize_mpi_operation_colors(db_path))
+    # Prepare the plot data
+    #operations = list(plot_data.keys())
+    #communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
+
     # Setup the color map for each operation
     operations = list(plot_data.keys())
     colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
@@ -761,12 +811,21 @@ def plot_comms_ops_stacked_bar_chart(plot_data, n):
     communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
 
     # Set up the figure and axis
-    fig, ax = plt.subplots(figsize=(14, 8))
+    fig, ax = plt.subplots(figsize=(12, 8))
+
+    # Bar width and spacing
+    bar_width = 0.9  # You can adjust this value to change the bar width
+    ind = np.arange(len(communicators_with_size))  # X-axis positions
 
     # Plot stacked bars for each communicator
-    bar_width = 0.35  # Width of each bar
-    ind = np.arange(len(communicators_with_size))  # X-axis positions
     bottoms = np.zeros(len(communicators_with_size))  # Starting point for each stack
+
+    # for op in operations:
+    #     avg_times = [plot_data[op].get(comm, 0) for comm in communicators_with_size]
+    #     # Use a default color if the operation is not in the predefined dictionary
+    #     color = mpi_operation_colors.get(op.split()[0], 'gray')
+    #     ax.bar(ind, avg_times, bar_width, label=op, color=color, bottom=bottoms)
+    #     bottoms += np.array(avg_times)
 
     for op, color in zip(operations, colors):
         avg_times = [plot_data[op].get(comm_with_size, 0) for comm_with_size in communicators_with_size]
@@ -776,13 +835,19 @@ def plot_comms_ops_stacked_bar_chart(plot_data, n):
     # Add labels and legend
     ax.set_xlabel('Communicators (Size)')
     ax.set_ylabel('Average Time (s)')
-    ax.set_title('Stacked Bar Chart of Average Time per MPI Operation by Communicator')
+    ax.set_title('Average Time per MPI Operation by Communicator')
     ax.set_xticks(ind)
     ax.set_xticklabels(communicators_with_size, rotation=45, ha='right')
-    ax.legend(title='MPI Operations with Buffer Size', bbox_to_anchor=(1.04,1), loc="upper left")
+    ax.legend(title='MPI Operations with Buffer sizes', bbox_to_anchor=(1.04,1), loc="upper left")
+
+    # Extend the Y-axis
+    ax.set_ylim(0, max(bottoms) + 1)  # Add one more unit to the upper limit
+
+    # Reduce the space between bars
+    ax.margins(x=0.025)  # You can adjust this value to change the spacing
 
     # Show the plot
-    plt.tight_layout(rect=[0, 0, 0.85, 1])
+    plt.tight_layout(rect=[0, 0, 1, 1])
     plt.show()
 
 # Plotting function
@@ -827,7 +892,7 @@ def get_average_time_per_operation_top(db_path, n):
     JOIN comms c ON d.comm_id = c.id
     JOIN operations o ON d.operation_id = o.id
     GROUP BY o.operation, d.buffer_size_min, d.buffer_size_max, c.name
-    HAVING AVG(d.time) > 0.1
+    HAVING AVG(d.time) > 0.2
     ORDER BY avg_time DESC
     """
     plot_data = {}
@@ -860,7 +925,7 @@ def get_average_time_per_communicator_top(db_path,n):
     # SQL query to group by communicator, MPI operation, and buffer size range
     # and calculate average time
     sql = """
-    SELECT c.name, o.operation, d.buffer_size_min, d.buffer_size_max, AVG(d.time) as avg_time
+    SELECT c.name, AVG(d.time) as avg_time
     FROM data d
     JOIN comms c ON d.comm_id = c.id
     JOIN operations o ON d.operation_id = o.id
@@ -1082,7 +1147,7 @@ def main():
         else:
             n = args.nresults
         data = get_average_time_per_operation_top(db_path,n)
-        plot_comms_ops_stacked_bar_chart(data,n)
+        plot_comms_ops_stacked_bar_chart(data)
         #plot_mpi_operations_bar_chart(data)
     elif args.pt2pt:
         print_data_pt2pt(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax,enum_primitives['Issend'])
