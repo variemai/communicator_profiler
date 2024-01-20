@@ -71,6 +71,12 @@ def discrete_cmap(N, base_cmap=None):
     cmap_name = base.name + str(N)
     return ListedColormap(color_list, name=cmap_name)
 
+def assign_colors(plot_data):
+    operations = list(plot_data.keys())
+    colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
+    mpi_operation_colors = {op: color for op, color in zip(operations, colors)}
+    return mpi_operation_colors;
+
 # Function declarations
 def print_decoration(decoration):
     if sys.stdout.isatty():
@@ -761,7 +767,7 @@ def plot_mpi_operations_bar_chart(plot_data):
     plt.tight_layout(rect=[0, 0, 0.85, 1])  # Adjust layout to make room for legend
     plt.show()
 
-def plot_mpi_operations_pie_chart(operations_names,avg_times,comm_name):
+def plot_mpi_operations_pie_chart(operations_names,mpi_operation_colors,avg_times,comm_name):
     # Generator to yield avg_times values one by one
     def gen_avg_times():
         for val in avg_times:
@@ -780,9 +786,21 @@ def plot_mpi_operations_pie_chart(operations_names,avg_times,comm_name):
 
     explode = [0.1 if pct < 2 else 0 for pct in (amt/sum(avg_times)*100 for amt in avg_times)]
 
+    # Extend the mpi_operation_colors with additional colors if needed
+    existing_operations = set(mpi_operation_colors.keys())
+    new_operations = set(operations_names) - existing_operations
+    if new_operations:
+        new_colors = plt.cm.tab20b(np.linspace(0, 1, len(new_operations)))
+        for op, color in zip(new_operations, new_colors):
+            mpi_operation_colors[op] = color
+
+    # Get colors for the current operations
+    pie_colors = [mpi_operation_colors[op] for op in operations_names]
+
+
 
     # Create pie chart with custom labels
-    wedges, texts, autotexts = plt.pie(avg_times, labels=operations_names, autopct=autopct, explode=explode, startangle=140)
+    wedges, texts, autotexts = plt.pie(avg_times, labels=operations_names, autopct=autopct, colors=pie_colors, explode=explode, startangle=140)
 
     # Set properties for pie chart text
     for text in autotexts:
@@ -804,8 +822,9 @@ def plot_comms_ops_stacked_bar_chart(plot_data):
     #communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
 
     # Setup the color map for each operation
-    operations = list(plot_data.keys())
-    colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
+    #operations = list(plot_data.keys())
+    #colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
+    colors = assign_colors(plot_data)
 
     # Prepare the plot data
     communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
@@ -957,7 +976,7 @@ def get_average_time_per_communicator_top(db_path,n):
     return communicator_list[:n]
         
 
-def fetch_data_and_plot(db_path,comm=""):
+def fetch_data_and_plot(db_path,colors,comm=""):
 
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -1022,7 +1041,7 @@ def fetch_data_and_plot(db_path,comm=""):
 
         # Plot the pie chart
         comm_name = str(max_communicator) + "(" + str(comm_size) + ")"
-        plot_mpi_operations_pie_chart(operation_names, avg_times, comm_name)
+        plot_mpi_operations_pie_chart(operation_names, colors, avg_times, comm_name)
 
     except sqlite3.Error as e:
         print("An error occurred:", e)
@@ -1137,10 +1156,12 @@ def main():
     print_decoration(RESET)
 
     if args.comm_plot:
+        data = get_average_time_per_operation_top(db_path,10)
+        colors = assign_colors(data)
         if comms == []:
            comm_list=get_average_time_per_communicator_top(db_path,args.nresults)
            for c in comm_list:
-               fetch_data_and_plot(db_path,c)
+               fetch_data_and_plot(db_path,colors,c)
     elif args.mpiop_plot:
         if not args.nresults:
             n = 10
