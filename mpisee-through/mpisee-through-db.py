@@ -74,6 +74,12 @@ def discrete_cmap(N, base_cmap=None):
 def assign_colors(plot_data):
     operations = list(plot_data.keys())
     colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
+    #mpi_operation_colors = {op: color for op, color in zip(operations, colors)}
+    return colors;
+
+def colors_assign(plot_data):
+    operations = list(plot_data.keys())
+    colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
     mpi_operation_colors = {op: color for op, color in zip(operations, colors)}
     return mpi_operation_colors;
 
@@ -800,7 +806,8 @@ def plot_mpi_operations_pie_chart(operations_names,mpi_operation_colors,avg_time
 
 
     # Create pie chart with custom labels
-    fig, ax = plt.subplots()
+    fig,ax = plt.subplots(figsize=(6,4))
+    ax.set_position([0.1, 0.1, 0.3, 0.5])
     wedges, texts, autotexts = ax.pie(avg_times, labels=operations_names, autopct=autopct, colors=pie_colors, explode=explode, startangle=140)
 
     # Set properties for pie chart text
@@ -809,13 +816,16 @@ def plot_mpi_operations_pie_chart(operations_names,mpi_operation_colors,avg_time
         text.set_fontsize(9)
         text.set_weight('bold')
 
+    #ax.legend(wedges, operations_names, title="MPI Operations (Buffer sizes)", loc="upper left",bbox_to_anchor=(0.9, 1.15))
+
     # Equal aspect ratio ensures that pie is drawn as a circle
     ax.axis('equal')
-    ax.set_title(f'MPI Operations Average Time Distribution in Communicator: {comm_name}')  # Corrected here
+    #ax.set_title(f'MPI Operations Average Time Distribution in Communicator: {comm_name}')  # Corrected here
     comm_name = comm_name.replace('(', '').replace(')', '').replace(' ', '_').replace('.', '_')
     current_path = os.getcwd()
     save_path = os.path.join(current_path, f"{comm_name}.pdf")
     plt.savefig(save_path, format='pdf', bbox_inches='tight')
+    plt.show()
     plt.close(fig)  # Close the figure to free memory
 
 
@@ -823,46 +833,47 @@ def plot_comms_ops_stacked_bar_chart(plot_data):
     # Define specific colors for each MPI operation
     #mpi_operation_colors = (initialize_mpi_operation_colors(db_path))
     # Prepare the plot data
-    #operations = list(plot_data.keys())
     #communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
 
     # Setup the color map for each operation
-    #operations = list(plot_data.keys())
-    #colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
+    operations = list(plot_data.keys())
     colors = assign_colors(plot_data)
 
+     # Calculate total average time for each communicator
+    communicator_totals = {}
+    for op in operations:
+        for comm_with_size, avg_time in plot_data[op].items():
+            communicator_totals[comm_with_size] = communicator_totals.get(comm_with_size, 0) + avg_time
+
+    # Sort communicators by total average time and select top 10
+    top_communicators = sorted(communicator_totals, key=communicator_totals.get, reverse=True)[:10]
+
     # Prepare the plot data
-    communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
+    #communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
 
     # Set up the figure and axis
-    fig, ax = plt.subplots(figsize=(12, 8))
+    fig, ax = plt.subplots(figsize=(6, 4))
 
     # Bar width and spacing
     bar_width = 0.9  # You can adjust this value to change the bar width
-    ind = np.arange(len(communicators_with_size))  # X-axis positions
+    ind = np.arange(len(top_communicators))  # X-axis positions
 
     # Plot stacked bars for each communicator
-    bottoms = np.zeros(len(communicators_with_size))  # Starting point for each stack
+    bottoms = np.zeros(len(top_communicators))  # Starting point for each stack
 
-    # for op in operations:
-    #     avg_times = [plot_data[op].get(comm, 0) for comm in communicators_with_size]
-    #     # Use a default color if the operation is not in the predefined dictionary
-    #     color = mpi_operation_colors.get(op.split()[0], 'gray')
-    #     ax.bar(ind, avg_times, bar_width, label=op, color=color, bottom=bottoms)
-    #     bottoms += np.array(avg_times)
 
     for op, color in zip(operations, colors):
-        avg_times = [plot_data[op].get(comm_with_size, 0) for comm_with_size in communicators_with_size]
+        avg_times = [plot_data[op].get(comm_with_size, 0) for comm_with_size in top_communicators]
         ax.bar(ind, avg_times, bar_width, label=op, color=color, bottom=bottoms)
         bottoms += np.array(avg_times)  # Increment the starting point for the next stack
 
     # Add labels and legend
     ax.set_xlabel('Communicators (Size)')
     ax.set_ylabel('Average Time (s)')
-    ax.set_title('Average Time per MPI Operation by Communicator')
+    #ax.set_title('Average Time per MPI Operation by Communicator')
     ax.set_xticks(ind)
-    ax.set_xticklabels(communicators_with_size, rotation=45, ha='right')
-    ax.legend(title='MPI Operations with Buffer sizes', bbox_to_anchor=(1.04,1), loc="upper left")
+    ax.set_xticklabels(top_communicators, rotation=45, ha='right')
+    ax.legend(title='MPI Operations (Buffer sizes)', bbox_to_anchor=(1.04,1), loc="upper left")
 
     # Extend the Y-axis
     ax.set_ylim(0, max(bottoms) + 1)  # Add one more unit to the upper limit
@@ -872,6 +883,7 @@ def plot_comms_ops_stacked_bar_chart(plot_data):
 
     # Show the plot
     plt.tight_layout(rect=[0, 0, 1, 1])
+    plt.savefig('comms_ops.pdf', format='pdf', bbox_inches='tight')
     plt.show()
 
 # Plotting function
@@ -1162,7 +1174,7 @@ def main():
 
     if args.comm_plot:
         data = get_average_time_per_operation_top(db_path,10)
-        colors = assign_colors(data)
+        colors = colors_assign(data)
         if comms == []:
            comm_list=get_average_time_per_communicator_top(db_path,args.nresults)
            for c in comm_list:
