@@ -800,7 +800,8 @@ def plot_mpi_operations_pie_chart(operations_names,mpi_operation_colors,avg_time
 
 
     # Create pie chart with custom labels
-    wedges, texts, autotexts = plt.pie(avg_times, labels=operations_names, autopct=autopct, colors=pie_colors, explode=explode, startangle=140)
+    fig, ax = plt.subplots()
+    wedges, texts, autotexts = ax.pie(avg_times, labels=operations_names, autopct=autopct, colors=pie_colors, explode=explode, startangle=140)
 
     # Set properties for pie chart text
     for text in autotexts:
@@ -809,9 +810,13 @@ def plot_mpi_operations_pie_chart(operations_names,mpi_operation_colors,avg_time
         text.set_weight('bold')
 
     # Equal aspect ratio ensures that pie is drawn as a circle
-    plt.axis('equal')
-    plt.title(f'MPI Operations Average Time Distribution in Communicator: {comm_name}')
-    plt.show()
+    ax.axis('equal')
+    ax.set_title(f'MPI Operations Average Time Distribution in Communicator: {comm_name}')  # Corrected here
+    comm_name = comm_name.replace('(', '').replace(')', '').replace(' ', '_').replace('.', '_')
+    current_path = os.getcwd()
+    save_path = os.path.join(current_path, f"{comm_name}.pdf")
+    plt.savefig(save_path, format='pdf', bbox_inches='tight')
+    plt.close(fig)  # Close the figure to free memory
 
 
 def plot_comms_ops_stacked_bar_chart(plot_data):
