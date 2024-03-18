@@ -1045,7 +1045,7 @@ def fetch_data_and_plot(db_path,colors,comm=""):
         aggregated_data = {}
         for operation, buf_min, buf_max, avg_time in operations_data:
             key = (operation, f"{buf_min}-{buf_max}")
-            if avg_time / total_time < 0.01:
+            if avg_time / total_time < 0.008:
                 key = ('Other', '')  # Group small operations into "Other"
             if key in aggregated_data:
                 aggregated_data[key] += avg_time
@@ -1105,7 +1105,7 @@ def main():
     parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
     args = parser.parse_args()
 
-    header_path = '../utils.h'
+    #header_path = '../utils.h'
 
     # Path to the script file (this script)
     script_path = os.path.abspath(__file__)
