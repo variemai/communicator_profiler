@@ -6,7 +6,6 @@
 #include <unistd.h>
 #include <string>
 #define NAMELEN 256
-#define PRIMLEN 16
 #define NUM_OF_PRIMS 58
 #define MAX_ARG_STRING_SIZE 4096
 #define MAX_ARGS 1024
@@ -14,7 +13,8 @@
 #define NUM_BUCKETS 7
 // Buckets for message sizes
 const uint32_t buckets[NUM_BUCKETS-1] = {7,10,13,16,20,25};
-
+// This is used to index the prim_names array
+// Warning: This has to be in the same order as the prim_names array
 enum primitives{
 Send,
 Recv,
@@ -73,7 +73,7 @@ Neighbor_iallgather,
 Neighbor_iallgatherv,
 Neighbor_ialltoall,
 Neighbor_ialltoallv,
-Neighbor_ialltoallw,
+Neighbor_ialltoallw
 };
 
 struct CommData {

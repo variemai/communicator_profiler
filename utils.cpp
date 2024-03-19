@@ -8,6 +8,7 @@
 
 #define MAX_ARG_STRING_SIZE 4096
 
+// The enum primitives is used to index this array defined in symbols.h
 const char prim_names[][NUM_OF_PRIMS]={
 "Send",
 "Recv",
@@ -44,7 +45,29 @@ const char prim_names[][NUM_OF_PRIMS]={
 "Ibcast",
 "Ialltoall",
 "Iscatter",
-"Ibarrier"
+"Ibarrier",
+"Iallgather",
+"Iallgatherv",
+"Ialltoallv",
+"Ialltoallw",
+"Ireduce",
+"Igather",
+"Igatherv",
+"Iscan",
+"Iexscan",
+"Iscatterv",
+"Ireduce_scatter",
+"Ireduce_scatter_block",
+"Neighbor_allgather",
+"Neighbor_allgatherv",
+"Neighbor_alltoall",
+"Neighbor_alltoallv",
+"Neighbor_alltoallw",
+"Neighbor_iallgather",
+"Neighbor_iallgatherv",
+"Neighbor_ialltoall",
+"Neighbor_ialltoallv",
+"Neighbor_ialltoallw"
 };
 
 char *appname = NULL;
