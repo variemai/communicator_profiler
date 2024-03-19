@@ -2198,7 +2198,7 @@ MPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype
 
 extern "C" {
 void
-_mpi_neighbor_allgather_(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
+mpi_neighbor_allgather_(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
                                     void  *recvbuf, int  * recvcount, MPI_Fint  * recvtype,
                                     MPI_Fint  * comm , MPI_Fint *ierr)
 {
