@@ -3,12 +3,11 @@
 
 #include <cstdint>
 #include <mpi.h>
-#include <stdint.h>
 #include <unistd.h>
 #include <string>
 #define NAMELEN 256
 #define PRIMLEN 16
-#define NUM_OF_PRIMS 36
+#define NUM_OF_PRIMS 58
 #define MAX_ARG_STRING_SIZE 4096
 #define MAX_ARGS 1024
 #define MAX_ARG_SIZE 64
@@ -52,7 +51,29 @@ Iallreduce,
 Ibcast,
 Ialltoall,
 Iscatter,
-Ibarrier
+Ibarrier,
+Iallgather,
+Iallgatherv,
+Ialltoallv,
+Ialltoallw,
+Ireduce,
+Igather,
+Igatherv,
+Iscan,
+Iexscan,
+Iscatterv,
+Ireduce_scatter,
+Ireduce_scatter_block,
+Neighbor_allgather,
+Neighbor_allgatherv,
+Neighbor_alltoall,
+Neighbor_alltoallv,
+Neighbor_alltoallw,
+Neighbor_iallgather,
+Neighbor_iallgatherv,
+Neighbor_ialltoall,
+Neighbor_ialltoallv,
+Neighbor_ialltoallw,
 };
 
 struct CommData {

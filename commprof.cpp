@@ -2157,7 +2157,8 @@ MPI_Reduce_scatter(const void *sendbuf, void *recvbuf, const int *recvcounts,
 }
 
 extern "C" {
-void F77_MPI_REDUCE_SCATTER(const void  *sendbuf, void  *recvbuf, const int *recvcnts,
+void
+F77_MPI_REDUCE_SCATTER(const void  *sendbuf, void  *recvbuf, const int *recvcnts,
                             MPI_Fint  * datatype, MPI_Fint  * op, MPI_Fint  * comm,
                             MPI_Fint *ierr)
 {
@@ -2172,6 +2173,46 @@ void F77_MPI_REDUCE_SCATTER(const void  *sendbuf, void  *recvbuf, const int *rec
 
     ret = MPI_Reduce_scatter(sendbuf, recvbuf, recvcnts, c_datatype, c_op, c_comm);
     *ierr = (MPI_Fint)ret;
+    return;
+
+}
+}
+
+int
+MPI_Neighbor_allgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype, void *recvbuf,
+                           int recvcount, MPI_Datatype recvtype, MPI_Comm comm)
+{
+    int ret;
+    double t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Neighbor_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,sendcount,sendtype,Neighbor_allgather,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Neighbor_allgather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+    }
+    return ret;
+}
+
+extern "C" {
+void
+_mpi_neighbor_allgather_(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
+                                    void  *recvbuf, int  * recvcount, MPI_Fint  * recvtype,
+                                    MPI_Fint  * comm , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_sendtype;
+    MPI_Datatype c_recvtype;
+    MPI_Comm c_comm;
+
+    c_sendtype = MPI_Type_f2c(*sendtype);
+    c_recvtype = MPI_Type_f2c(*recvtype);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Neighbor_allgather(sendbuf, *sendcount, c_sendtype, recvbuf, *recvcount, c_recvtype, c_comm);
+    *ierr = ret;
     return;
 
 }
