@@ -63,11 +63,11 @@ const char prim_names[][NUM_OF_PRIMS]={
 "Neighbor_alltoall",
 "Neighbor_alltoallv",
 "Neighbor_alltoallw",
-"Neighbor_iallgather",
-"Neighbor_iallgatherv",
-"Neighbor_ialltoall",
-"Neighbor_ialltoallv",
-"Neighbor_ialltoallw"
+"Ineighbor_allgather",
+"Ineighbor_allgatherv",
+"Ineighbor_alltoall",
+"Ineighbor_alltoallv",
+"Ineighbor_alltoallw"
 };
 
 char *appname = NULL;

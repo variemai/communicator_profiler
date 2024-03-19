@@ -13,6 +13,8 @@
 #define NUM_BUCKETS 7
 // Buckets for message sizes
 const uint32_t buckets[NUM_BUCKETS-1] = {7,10,13,16,20,25};
+
+
 // This is used to index the prim_names array
 // Warning: This has to be in the same order as the prim_names array
 enum primitives{
@@ -69,11 +71,11 @@ Neighbor_allgatherv,
 Neighbor_alltoall,
 Neighbor_alltoallv,
 Neighbor_alltoallw,
-Neighbor_iallgather,
-Neighbor_iallgatherv,
-Neighbor_ialltoall,
-Neighbor_ialltoallv,
-Neighbor_ialltoallw
+Ineighbor_allgather,
+Ineighbor_allgatherv,
+Ineighbor_alltoall,
+Ineighbor_alltoallv,
+Ineighbor_alltoallw
 };
 
 struct CommData {
