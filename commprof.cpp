@@ -2313,7 +2313,9 @@ MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const int sd
         t_elapsed = MPI_Wtime();
         ret = PMPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        MPI_Comm_size(comm, &sz);
+        // This not correct for the neighbor alltoallv
+        // Need to know the number of neighbors
+        PMPI_Comm_size(comm, &sz);
         for ( i=0; i<sz; i++ ){
             if ( sendcounts[i] > 0 )
                 sum+=sendcounts[i];
@@ -2393,6 +2395,8 @@ void mpi_neighbor_alltoallw_(const void *sendbuf, const int *sendcounts,
 
   ret = MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf,
                                recvcounts, rdispls, c_recvtypes, c_comm);
+  free(c_sendtypes);
+  free(c_recvtypes);
   *ierr = ret;
   return;
 }
