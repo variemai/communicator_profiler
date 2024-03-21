@@ -10,9 +10,8 @@
 #define MAX_ARG_STRING_SIZE 4096
 #define MAX_ARGS 1024
 #define MAX_ARG_SIZE 64
-#define NUM_BUCKETS 7
-// Buckets for message sizes
-const uint32_t buckets[NUM_BUCKETS-1] = {7,10,13,16,20,25};
+#define NUM_BUCKETS 8
+const int64_t buckets[NUM_BUCKETS-1] = {128,1024,8192,65536,262144,1048576,33554432};
 
 
 // This is used to index the prim_names array

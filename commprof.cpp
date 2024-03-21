@@ -1117,10 +1117,10 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
         t_elapsed = MPI_Wtime() - t_elapsed;
         PMPI_Comm_rank(comm, &rank);
         if ( rank == root ){
-            sum = 0;
+            sum = count;
         }
         else {
-            sum = count;
+            sum = 0;
         }
         profile_this(comm,sum,datatype,Bcast,t_elapsed,root);
     }
@@ -2602,7 +2602,7 @@ _Finalize(void) {
 
     if ( rank == 0 ){
         int rc,commId,maxsize,minsize;
-        int powers_of_2[NUM_BUCKETS - 1];
+        //int powers_of_2[NUM_BUCKETS - 1];
         sqlite3 *db = NULL;
         char *outfile = NULL;
         int l, proc, startIdx, numElements;
@@ -2684,9 +2684,9 @@ _Finalize(void) {
         free(proc_names);
 
         // Precompute powers of 2 for each bucket
-        for (i = 0; i < NUM_BUCKETS - 1; i++) {
-            powers_of_2[i] = 1 << buckets[i];
-        }
+        // for (i = 0; i < NUM_BUCKETS - 1; i++) {
+        //     powers_of_2[i] = 1 << buckets[i];
+        // }
 
         std::vector<CommData> comms;
         std::vector<int> commIds;
@@ -2729,15 +2729,15 @@ _Finalize(void) {
 
             for (k = 0; k < NUM_OF_PRIMS; k++) {
               minsize = 0;
-              maxsize = powers_of_2[0];
+              maxsize = buckets[0]; //powers_of_2[0];
               if (item.buckets_msgs[k][0] > 0) {
                   insertIntoDataEntry(entries, proc, commId, k, maxsize, minsize,
                                       item.buckets_msgs[k][0],
                                       item.buckets_time[k][0]);
               }
               for (l = 1; l < NUM_BUCKETS-1; l++) {
-                  minsize = powers_of_2[l - 1];
-                  maxsize = (l == NUM_BUCKETS - 2) ? INT_MAX : powers_of_2[l];
+                  minsize = buckets[l-1]; //powers_of_2[l - 1];
+                  maxsize = (l == NUM_BUCKETS - 2) ? INT_MAX : buckets[l]; //powers_of_2[l];
                   if (item.buckets_msgs[k][l] > 0) {
                     insertIntoDataEntry(entries, proc, commId, k, maxsize,
                                         minsize, item.buckets_msgs[k][l],
