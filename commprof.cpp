@@ -2301,7 +2301,7 @@ int
 MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype,
                            void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm)
 {
-    int ret,sz,i;
+    int ret,sz,i,status, rank, tmp, temp;
     int64_t sum=0;
     double t_elapsed;
     if ( prof_enabled == 1 ){
@@ -2310,7 +2310,19 @@ MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const int sd
         t_elapsed = MPI_Wtime() - t_elapsed;
         // This not correct for the neighbor alltoallv
         // Need to know the number of neighbors
-        PMPI_Comm_size(comm, &sz);
+        // Do an MPI_TOPO_TEST
+        PMPI_Comm_rank(comm, &rank);
+        PMPI_Topo_test(comm, &status);
+        if ( status == MPI_GRAPH ){
+            MPI_Graph_neighbors_count(comm, rank, &sz);
+        }
+        else if (status == MPI_DIST_GRAPH) {
+            MPI_Dist_graph_neighbors_count(comm, &tmp, &sz, &temp);
+        }
+        else{ // Find the number of neighbors of a rank in Cartesian Communicator
+            sz = 0; // dummy value
+            // Find the dimensions to determine the max number neighbors
+        }
         for ( i=0; i<sz; i++ ){
             if ( sendcounts[i] > 0 )
                 sum+=sendcounts[i];
