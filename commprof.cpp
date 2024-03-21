@@ -2358,13 +2358,23 @@ MPI_Neighbor_alltoallw(const void *sendbuf, const int *sendcounts,
                        const MPI_Aint *rdispls, const MPI_Datatype *recvtypes,
                        MPI_Comm comm)
 {
-    int ret;
+    int ret,sz,i,typesz;
     double t_elapsed;
+    int64_t sum = 0;
     if ( prof_enabled == 1 ){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        profile_this(comm,0,MPI_DATATYPE_NULL,Neighbor_alltoallw,t_elapsed,0);
+        // This not correct for the neighbor alltoallw
+        // Need to know the number of neighbors
+        PMPI_Comm_size(comm, &sz);
+        for ( i=0; i<sz; i++ ){
+            if ( sendcounts[i] > 0 ){
+                PMPI_Type_size(sendtypes[i], &typesz);
+                sum+=sendcounts[i]*typesz;
+            }
+        }
+        profile_this(comm,sum,MPI_DATATYPE_NULL,Neighbor_alltoallw,t_elapsed,0);
     }
     else{
         ret = PMPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm);
