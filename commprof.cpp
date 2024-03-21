@@ -121,36 +121,31 @@ init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
 //Change these values modify the buckets
 int choose_bucket(int64_t bytes) {
     // These numbers must correspond to the buckets variable
-    if (bytes < (1LL << 7)) {       // 1 << 7 is 128
-        return 0;
-    } else if (bytes < (1LL << 10)) { // 1 << 10 is 1024
-        return 1;
-    } else if (bytes < (1LL << 13)) { // 1 << 13 is 8192
-        return 2;
-    } else if (bytes < (1LL << 16)) { // 1 << 16 is 65536
-        return 3;
-    } else if (bytes < (1LL << 20)) { // 1 << 20 is 1048576
-        return 4;
-    } else if (bytes < (1LL << 25)) { // 1 << 25 is 33554432
-        return 5;
-    } else {
-        return 6; // For bytes >= 33554432
+    // if (bytes < (1LL << 7)) {       // 1 << 7 is 128
+    //     return 0;
+    // } else if (bytes < (1LL << 10)) { // 1 << 10 is 1024
+    //     return 1;
+    // } else if (bytes < (1LL << 13)) { // 1 << 13 is 8192
+    //     return 2;
+    // } else if (bytes < (1LL << 16)) { // 1 << 16 is 65536
+    //     return 3;
+    // } else if (bytes < (1LL << 20)) { // 1 << 20 is 1048576
+    //     return 4;
+    // } else if (bytes < (1LL << 25)) { // 1 << 25 is 33554432
+    //     return 5;
+    // } else {
+    //     return 6; // For bytes >= 33554432
+    // }
+    // The above is more optimized
+    int index;
+    int64_t tmp;
+    for (index = 0; index < NUM_BUCKETS-1; index++) {
+        tmp = buckets[index];
+        if (tmp > bytes) {
+            break;
+        }
     }
-  // The above is more optimized
-  // int index;
-  // int64_t tmp;
-  // for (index = 0; index < NUM_BUCKETS-1; index++) {
-  //   tmp = buckets[index];
-  //   tmp = 1 << tmp;
-  //   if (tmp > bytes) {
-  //       break;
-  //   }
-  //   if (index == (NUM_BUCKETS - 1) && (bytes > tmp)) {
-  //     index += 1;
-  //     break;
-  //   }
-  // }
-  // return index;
+    return index;
 }
 
 
@@ -2389,28 +2384,69 @@ void mpi_neighbor_alltoallw_(const void *sendbuf, const int *sendcounts,
                              const MPI_Aint *rdispls, const MPI_Fint *recvtypes,
                              MPI_Fint *comm, MPI_Fint *ierr)
 {
-  int ret;
-  MPI_Comm c_comm;
-  MPI_Datatype *c_sendtypes, *c_recvtypes;
-  c_comm = MPI_Comm_f2c(*comm);
-  c_sendtypes = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * *sendcounts);
-  c_recvtypes = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * *recvcounts);
-  for (int i = 0; i < *sendcounts; i++) {
-      c_sendtypes[i] = MPI_Type_f2c(sendtypes[i]);
-  }
-  for (int i = 0; i < *recvcounts; i++) {
-      c_recvtypes[i] = MPI_Type_f2c(recvtypes[i]);
-  }
+    int ret;
+    MPI_Comm c_comm;
+    MPI_Datatype *c_sendtypes, *c_recvtypes;
+    c_comm = MPI_Comm_f2c(*comm);
+    c_sendtypes = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * *sendcounts);
+    c_recvtypes = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * *recvcounts);
+    for (int i = 0; i < *sendcounts; i++) {
+        c_sendtypes[i] = MPI_Type_f2c(sendtypes[i]);
+    }
+    for (int i = 0; i < *recvcounts; i++) {
+        c_recvtypes[i] = MPI_Type_f2c(recvtypes[i]);
+    }
 
 
-  ret = MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf,
-                               recvcounts, rdispls, c_recvtypes, c_comm);
-  free(c_sendtypes);
-  free(c_recvtypes);
-  *ierr = ret;
-  return;
+    ret = MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf,
+                                 recvcounts, rdispls, c_recvtypes, c_comm);
+    free(c_sendtypes);
+    free(c_recvtypes);
+    *ierr = ret;
+    return;
 }
 }
+
+int
+MPI_Ineighbor_allgather(const void *sendbuf, int sendcount,
+                            MPI_Datatype sendtype, void *recvbuf,
+                            int recvcount, MPI_Datatype recvtype,
+                            MPI_Comm comm, MPI_Request *request)
+{
+    int ret;
+    double t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Ineighbor_allgather(sendbuf, sendcount, sendtype, recvbuf,
+                                       recvcount, recvtype, comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,sendcount,sendtype,Neighbor_alltoall,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Ineighbor_allgather(sendbuf, sendcount, sendtype, recvbuf,
+                                       recvcount, recvtype, comm, request);
+    }
+    return ret;
+}
+
+int MPI_Ineighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                             void *recvbuf, const int recvcounts[], const int displs[],
+                             MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+    int ret;
+    double t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Ineighbor_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,sendcount,sendtype,Neighbor_allgatherv,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Ineighbor_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, request);
+    }
+    return ret;
+}
+
 
 
 int

@@ -6,6 +6,13 @@ find_package(SQLite3 REQUIRED)
 
 set(CMAKE_CXX_COMPILER mpicxx)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -g -Wall")
+# Set default values
+set(NUM_BUCKETS 8 CACHE STRING "Number of buckets")
+set(BUCKETS "128,1024,8192,65536,262144,1048576,33554432" CACHE STRING "Message size buckets in bytes")
+
+# Generate the header file (the configure_file part remains the same)
+configure_file(utils.h.in ${CMAKE_SOURCE_DIR}/utils.h)
+
 
 add_library(mpisee SHARED commprof.cpp utils.cpp create_db.cpp)
 #add_executable(create_db create_db.cpp utils.cpp)
