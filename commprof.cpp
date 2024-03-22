@@ -2308,47 +2308,53 @@ MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const int sd
         t_elapsed = MPI_Wtime();
         ret = PMPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        // This not correct for the neighbor alltoallv
-        // Need to know the number of neighbors
-        // Do an MPI_TOPO_TEST
+        // Need to know the topology and the number of neighbors
         PMPI_Comm_rank(comm, &rank);
         PMPI_Topo_test(comm, &status);
-        if ( status == MPI_GRAPH ){
-            MPI_Graph_neighbors_count(comm, rank, &sz);
-            for ( i=0; i<sz; i++ ){
-                if ( sendcounts[i] > 0 )
-                    sum+=sendcounts[i];
-            }
-        }
-        else if (status == MPI_DIST_GRAPH) {
-            MPI_Dist_graph_neighbors_count(comm, &tmp, &sz, &temp);
-            for ( i=0; i<sz; i++ ){
-                if ( sendcounts[i] > 0 )
-                    sum+=sendcounts[i];
-            }
-        }
-        else if (status == MPI_CART ){ // Find the number of neighbors of a rank in Cartesian Communicator
-            // Find the dimensions to determine the max number neighbors
-            j = 0;
-            PMPI_Cartdim_get(comm, &ndims);
-            for ( i =0; i<ndims; ++i){
-                PMPI_Cart_shift(comm, i, -1, &temp, &tmp);
-                if (tmp != MPI_PROC_NULL) {
-                    sum += sendcounts[j];
+        switch (status) {
+            case MPI_GRAPH: {
+                MPI_Graph_neighbors_count(comm, rank, &sz);
+                for ( i=0; i<sz; i++ ){
+                    if ( sendcounts[i] > 0 )
+                        sum+=sendcounts[i];
                 }
-                j++;
-                PMPI_Cart_shift(comm, i, 1, &temp, &tmp);
-                if (tmp != MPI_PROC_NULL) {
-                    sum += sendcounts[j];
+                break;
+            }
+            case MPI_DIST_GRAPH: {
+                MPI_Dist_graph_neighbors_count(comm, &tmp, &sz, &temp);
+                for ( i=0; i<sz; i++ ){
+                    if ( sendcounts[i] > 0 )
+                        sum+=sendcounts[i];
                 }
-                j++;
+                break;
+            }
+            case MPI_CART: {
+                // Find the dimensions to determine the max number neighbors
+                j = 0;
+                PMPI_Cartdim_get(comm, &ndims);
+                for ( i =0; i<ndims; ++i){
+                    PMPI_Cart_shift(comm, i, 1, &temp, &tmp);
+                    if (temp != MPI_PROC_NULL) {
+                        sum += sendcounts[j];
+                    }
+                    j++;
+                    if (tmp != MPI_PROC_NULL) {
+                        sum += sendcounts[j];
+                    }
+                    j++;
+                }
+                break;
+            }
+            case MPI_KEYVAL_INVALID: {
+                mcpt_abort("MPI_TOPO_TEST returned MPI_KEYVAL_INVALID\n");
+                break;
+            }
+            default:{
+                mcpt_abort("Unknown Communicator type\n");
+                break;
             }
         }
-        else if ( status == MPI_KEYVAL_INVALID ){
-            mcpt_abort("MPI_TOPO_TEST returned MPI_KEYVAL_INVALID\n");
-        }
-
-        profile_this(comm,sum,MPI_DATATYPE_NULL,Neighbor_alltoallv,t_elapsed,0);
+        profile_this(comm,sum,sendtype,Neighbor_alltoallv,t_elapsed,0);
     }
     else{
         ret = PMPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm);
