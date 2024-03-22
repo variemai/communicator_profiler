@@ -2301,7 +2301,7 @@ int
 MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const int sdispls[], MPI_Datatype sendtype,
                            void *recvbuf, const int recvcounts[], const int rdispls[], MPI_Datatype recvtype, MPI_Comm comm)
 {
-    int ret,sz,i,status, rank, tmp, temp;
+    int ret,sz,i,status, rank, tmp, temp, ndims,j;
     int64_t sum=0;
     double t_elapsed;
     if ( prof_enabled == 1 ){
@@ -2315,17 +2315,37 @@ MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const int sd
         PMPI_Topo_test(comm, &status);
         if ( status == MPI_GRAPH ){
             MPI_Graph_neighbors_count(comm, rank, &sz);
+            for ( i=0; i<sz; i++ ){
+                if ( sendcounts[i] > 0 )
+                    sum+=sendcounts[i];
+            }
         }
         else if (status == MPI_DIST_GRAPH) {
             MPI_Dist_graph_neighbors_count(comm, &tmp, &sz, &temp);
+            for ( i=0; i<sz; i++ ){
+                if ( sendcounts[i] > 0 )
+                    sum+=sendcounts[i];
+            }
         }
-        else{ // Find the number of neighbors of a rank in Cartesian Communicator
-            sz = 0; // dummy value
+        else if (status == MPI_CART ){ // Find the number of neighbors of a rank in Cartesian Communicator
             // Find the dimensions to determine the max number neighbors
+            j = 0;
+            PMPI_Cartdim_get(comm, &ndims);
+            for ( i =0; i<ndims; ++i){
+                PMPI_Cart_shift(comm, i, -1, &temp, &tmp);
+                if (tmp != MPI_PROC_NULL) {
+                    sum += sendcounts[j];
+                }
+                j++;
+                PMPI_Cart_shift(comm, i, 1, &temp, &tmp);
+                if (tmp != MPI_PROC_NULL) {
+                    sum += sendcounts[j];
+                }
+                j++;
+            }
         }
-        for ( i=0; i<sz; i++ ){
-            if ( sendcounts[i] > 0 )
-                sum+=sendcounts[i];
+        else if ( status == MPI_KEYVAL_INVALID ){
+            mcpt_abort("MPI_TOPO_TEST returned MPI_KEYVAL_INVALID\n");
         }
 
         profile_this(comm,sum,MPI_DATATYPE_NULL,Neighbor_alltoallv,t_elapsed,0);
