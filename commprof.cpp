@@ -1450,7 +1450,35 @@ MPI_Alltoallw(const void *sendbuf, const int *sendcounts, const int *sdispls,
     return ret;
 }
 
-/* TODO F77 Wrapper Alltoallw */
+extern "C" {
+ void F77_MPI_ALLTOALLW(const void *sendbuf, const int *sendcnts, const int *sdispls,
+                        MPI_Fint * sendtypes, void *recvbuf, const int *recvcnts,
+                        const int *rdispls, MPI_Fint *recvtypes, MPI_Fint *comm ,
+                        MPI_Fint *ierr)
+{
+    int ret, comm_sz,i;
+    MPI_Datatype *c_sendtypes;
+    MPI_Datatype *c_recvtypes;
+    MPI_Comm c_comm;
+    c_comm = MPI_Comm_f2c(*comm);
+    MPI_Comm_size(c_comm, &comm_sz);
+
+    c_sendtypes = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * comm_sz);
+    c_recvtypes = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * comm_sz);
+    for (i=0; i<comm_sz; i++){
+        c_sendtypes[i] = MPI_Type_f2c(sendtypes[i]);
+        c_recvtypes[i] = MPI_Type_f2c(recvtypes[i]);
+    }
+
+
+    ret = MPI_Alltoallw(sendbuf, sendcnts, sdispls, c_sendtypes, recvbuf,
+                        recvcnts, rdispls, c_recvtypes, c_comm);
+    *ierr = ret;
+    return;
+
+}
+}
+
 
 int
 MPI_Allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
@@ -2364,20 +2392,31 @@ MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const int sd
 
 extern "C" {
 void
-mpi_neighbor_alltoallv_(const void  *sendbuf, const int  * sendcounts, const int  * sdispls,
-                                    MPI_Fint  *sendtype, void  *recvbuf, const int  *recvcounts, const int  * rdispls,
-                                    MPI_Fint  *recvtype, MPI_Fint  * comm , MPI_Fint *ierr)
+mpi_neighbor_alltoallv_(const void  *sendbuf, const int *sendcounts, const int *sdispls,
+                                    MPI_Fint *sendtype, void *recvbuf, const int *recvcounts, const int *rdispls,
+                                    MPI_Fint *recvtype, MPI_Fint *comm , MPI_Fint *ierr)
 {
     int ret;
+    int64_t sum=0;
+    double t_elapsed;
     MPI_Datatype c_sendtype;
     MPI_Datatype c_recvtype;
     MPI_Comm c_comm;
 
+    c_comm = MPI_Comm_f2c(*comm);
     c_sendtype = MPI_Type_f2c(*sendtype);
     c_recvtype = MPI_Type_f2c(*recvtype);
-    c_comm = MPI_Comm_f2c(*comm);
 
-    ret = MPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, c_sendtype, recvbuf, recvcounts, rdispls, c_recvtype, c_comm);
+
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, c_sendtype, recvbuf, recvcounts, rdispls, c_recvtype, c_comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(c_comm,sum,c_sendtype,Neighbor_alltoallv,t_elapsed,0);
+    }
+    else
+        ret = MPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, c_sendtype, recvbuf, recvcounts, rdispls, c_recvtype, c_comm);
+
     *ierr = ret;
     return;
 
@@ -2464,22 +2503,88 @@ void mpi_neighbor_alltoallw_(const void *sendbuf, const int *sendcounts,
                              const MPI_Aint *rdispls, const MPI_Fint *recvtypes,
                              MPI_Fint *comm, MPI_Fint *ierr)
 {
-    int ret;
+    int ret,sz,i,j,rank,status,tmp,temp,ndims;
+    double t_elapsed;
+    int64_t sum = 0;
     MPI_Comm c_comm;
     MPI_Datatype *c_sendtypes, *c_recvtypes;
     c_comm = MPI_Comm_f2c(*comm);
-    c_sendtypes = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * *sendcounts);
-    c_recvtypes = (MPI_Datatype *)malloc(sizeof(MPI_Datatype) * *recvcounts);
-    for (int i = 0; i < *sendcounts; i++) {
-        c_sendtypes[i] = MPI_Type_f2c(sendtypes[i]);
-    }
-    for (int i = 0; i < *recvcounts; i++) {
-        c_recvtypes[i] = MPI_Type_f2c(recvtypes[i]);
+
+    c_comm = MPI_Comm_f2c(*comm);
+    PMPI_Comm_rank(c_comm, &rank);
+    PMPI_Topo_test(c_comm, &status);
+
+    switch (status) {
+        // Need to know the topology and the number of neighbors
+        case MPI_GRAPH: {
+            MPI_Graph_neighbors_count(c_comm, rank, &sz);
+            c_sendtypes = (MPI_Datatype*)malloc(sizeof(MPI_Datatype)*sz);
+            c_recvtypes = (MPI_Datatype*)malloc(sizeof(MPI_Datatype)*sz);
+            for ( i=0; i<sz; i++ ){
+                if ( sendcounts[i] > 0 ){
+                    sum+=sendcounts[i];
+                    c_sendtypes[i] = MPI_Type_f2c(sendtypes[i]);
+                    c_recvtypes[i] = MPI_Type_f2c(recvtypes[i]);
+                }
+            break;
+            }
+        }
+        case MPI_DIST_GRAPH: {
+            MPI_Dist_graph_neighbors_count(c_comm, &tmp, &sz, &temp);
+            c_sendtypes = (MPI_Datatype*)malloc(sizeof(MPI_Datatype)*sz);
+            c_recvtypes = (MPI_Datatype*)malloc(sizeof(MPI_Datatype)*sz);
+            for ( i=0; i<sz; i++ ){
+                if ( sendcounts[i] > 0 ){
+                    sum+=sendcounts[i];
+                    c_sendtypes[i] = MPI_Type_f2c(sendtypes[i]);
+                    c_recvtypes[i] = MPI_Type_f2c(recvtypes[i]);
+                }
+            }
+            break;
+        }
+        case MPI_CART: {
+            // Find the dimensions to determine the max number neighbors
+            j = 0;
+            PMPI_Cartdim_get(c_comm, &ndims);
+            c_sendtypes = (MPI_Datatype*)malloc(sizeof(MPI_Datatype)*ndims*2);
+            c_recvtypes = (MPI_Datatype*)malloc(sizeof(MPI_Datatype)*ndims*2);
+            for ( i =0; i<ndims; ++i){
+                PMPI_Cart_shift(c_comm, i, 1, &temp, &tmp);
+                if (temp != MPI_PROC_NULL) {
+                    sum += sendcounts[j];
+                    c_sendtypes[j] = MPI_Type_f2c(sendtypes[j]);
+                    c_recvtypes[j] = MPI_Type_f2c(recvtypes[j]);
+                }
+                j++;
+                if (tmp != MPI_PROC_NULL) {
+                    sum += sendcounts[j];
+                    c_sendtypes[j] = MPI_Type_f2c(sendtypes[j]);
+                    c_recvtypes[j] = MPI_Type_f2c(recvtypes[j]);
+                }
+                j++;
+            }
+            break;
+        }
+        case MPI_KEYVAL_INVALID: {
+            mcpt_abort("MPI_TOPO_TEST returned MPI_KEYVAL_INVALID\n");
+            break;
+        }
+        default:{
+            mcpt_abort("Unknown Communicator type\n");
+            break;
+        }
     }
 
+    if(prof_enabled == 1){
+        t_elapsed = MPI_Wtime();
+        ret = MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(c_comm,sum,MPI_DATATYPE_NULL,Neighbor_alltoallw,t_elapsed,0);
+    }
+    else{
+        ret = MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm);
+    }
 
-    ret = MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf,
-                                 recvcounts, rdispls, c_recvtypes, c_comm);
     free(c_sendtypes);
     free(c_recvtypes);
     *ierr = ret;
