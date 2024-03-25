@@ -1103,6 +1103,38 @@ F77_MPI_SENDRECV(const void  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
 }
 }
 
+int MPI_Ssend(const void *buf, int count, MPI_Datatype datatype, int dest,
+              int tag, MPI_Comm comm)
+{
+    int ret;
+    double t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Ssend(buf, count, datatype, dest, tag, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,count,datatype,Ssend,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Ssend(buf, count, datatype, dest, tag, comm);
+    }
+    return ret;
+}
+
+extern "C" {
+void
+F77_MPI_SSEND(const void *buf, int *count, MPI_Fint  *datatype,
+              int  *dest, int  *tag, MPI_Fint  *comm , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_datatype;
+    MPI_Comm c_comm;
+    c_datatype = MPI_Type_f2c(*datatype);
+    c_comm = MPI_Comm_f2c(*comm);
+    ret = MPI_Ssend(buf, *count, c_datatype, *dest, *tag, c_comm);
+    *ierr = ret;
+}
+}
+
 
 int
 MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
@@ -2405,6 +2437,86 @@ F77_MPI_ISCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * da
 }
 }
 
+int
+MPI_Exscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+           MPI_Op op, MPI_Comm comm)
+{
+    int ret;
+    double t_elapsed;
+
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Exscan(sendbuf, recvbuf, count, datatype, op, comm);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,count,datatype,Exscan,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Exscan(sendbuf, recvbuf, count, datatype, op, comm);
+    }
+    return ret;
+}
+
+extern "C"{
+void
+F77_MPI_EXSCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * datatype,
+               MPI_Fint  * op, MPI_Fint  * comm , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_datatype;
+    MPI_Op c_op;
+    MPI_Comm c_comm;
+
+    c_datatype = MPI_Type_f2c(*datatype);
+    c_op = MPI_Op_f2c(*op);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Exscan(sendbuf, recvbuf, *count, c_datatype, c_op, c_comm);
+    *ierr = ret;
+    return;
+}
+}
+
+int
+MPI_Iexscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+            MPI_Op op, MPI_Comm comm, MPI_Request *request)
+{
+    int ret;
+    double t_elapsed;
+
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Iexscan(sendbuf, recvbuf, count, datatype, op, comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,count,datatype,Iexscan,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Iexscan(sendbuf, recvbuf, count, datatype, op, comm, request);
+    }
+    return ret;
+}
+
+extern "C"{
+void
+F77_MPI_IEXSCAN(const void  *sendbuf, void  *recvbuf, int  * count, MPI_Fint  * datatype,
+                MPI_Fint  * op, MPI_Fint  * comm, MPI_Fint  *request, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_datatype;
+    MPI_Op c_op;
+    MPI_Comm c_comm;
+    MPI_Request c_request;
+
+    c_datatype = MPI_Type_f2c(*datatype);
+    c_op = MPI_Op_f2c(*op);
+    c_comm = MPI_Comm_f2c(*comm);
+
+    ret = MPI_Iexscan(sendbuf, recvbuf, *count, c_datatype, c_op, c_comm, &c_request);
+    *ierr = ret;
+    if ( ret == MPI_SUCCESS )
+        *request = MPI_Request_c2f(c_request);
+    return;
+}
+}
 
 int
 MPI_Barrier ( MPI_Comm comm )
@@ -2436,6 +2548,41 @@ F77_MPI_BARRIER(MPI_Fint  * comm , MPI_Fint *ierr)
     c_comm = MPI_Comm_f2c(*comm);
     ret = MPI_Barrier(c_comm);
     *ierr = (MPI_Fint)ret;
+    return;
+}
+}
+
+int
+MPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
+{
+    int ret;
+    double t_elapsed;
+
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Ibarrier(comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,0,MPI_DATATYPE_NULL,Ibarrier,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Ibarrier(comm, request);
+    }
+    return ret;
+}
+
+extern "C"{
+void
+F77_MPI_IBARRIER(MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Comm c_comm;
+    MPI_Request c_request;
+
+    c_comm = MPI_Comm_f2c(*comm);
+    ret = MPI_Ibarrier(c_comm, &c_request);
+    *ierr = ret;
+    if ( ret == MPI_SUCCESS )
+        *request = MPI_Request_c2f(c_request);
     return;
 }
 }
@@ -3339,12 +3486,14 @@ MPI_Ineighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype
     double t_elapsed;
     if ( prof_enabled == 1 ){
         t_elapsed = MPI_Wtime();
-        ret = PMPI_Ineighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, request);
+        ret = PMPI_Ineighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf,
+                                      recvcount, recvtype, comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
         profile_this(comm,sendcount,sendtype,Ineighbor_alltoall,t_elapsed,0);
     }
     else{
-        ret = PMPI_Ineighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, request);
+        ret = PMPI_Ineighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf,
+                                      recvcount, recvtype, comm, request);
     }
     return ret;
 }
