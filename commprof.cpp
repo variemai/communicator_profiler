@@ -2404,16 +2404,20 @@ MPI_Neighbor_alltoallw(const void *sendbuf, const int *sendcounts,
             case MPI_GRAPH: {
                 MPI_Graph_neighbors_count(comm, rank, &sz);
                 for ( i=0; i<sz; i++ ){
-                    if ( sendcounts[i] > 0 )
-                        sum+=sendcounts[i];
+                    if ( sendcounts[i] > 0 ){
+                        PMPI_Type_size(sendtypes[i], &sz);
+                        sum+=sendcounts[i]*sz;
+                    }
                 }
                 break;
             }
             case MPI_DIST_GRAPH: {
                 MPI_Dist_graph_neighbors_count(comm, &tmp, &sz, &temp);
                 for ( i=0; i<sz; i++ ){
-                    if ( sendcounts[i] > 0 )
-                        sum+=sendcounts[i];
+                    if ( sendcounts[i] > 0 ){
+                        PMPI_Type_size(sendtypes[i], &sz);
+                        sum+=sendcounts[i]*sz;
+                    }
                 }
                 break;
             }
@@ -2576,6 +2580,171 @@ void mpi_ineighbor_allgatherv_(const void *sendbuf, int sendcount,
 }
 }
 
+
+int
+MPI_Ineighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                       void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                       MPI_Comm comm, MPI_Request *request)
+{
+    int ret;
+    double t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Ineighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm,sendcount,sendtype,Ineighbor_alltoall,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Ineighbor_alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm, request);
+    }
+    return ret;
+}
+
+int MPI_Ineighbor_alltoallv(const void *sendbuf, const int *sendcounts,
+                            const int *sdispls, MPI_Datatype sendtype,
+                            void *recvbuf, const int *recvcounts, const int *rdispls,
+                            MPI_Datatype recvtype, MPI_Comm comm, MPI_Request *request)
+{
+    int ret,rank,sz,i,status,tmp,temp,ndims,j;
+    double t_elapsed;
+    int64_t sum = 0;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Ineighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype,
+                                       recvbuf, recvcounts, rdispls, recvtype,
+                                       comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        PMPI_Comm_rank(comm, &rank);
+        PMPI_Topo_test(comm, &status);
+        switch (status) {
+            case MPI_GRAPH: {
+                MPI_Graph_neighbors_count(comm, rank, &sz);
+                for ( i=0; i<sz; i++ ){
+                    if ( sendcounts[i] > 0 )
+                        sum+=sendcounts[i];
+                }
+                break;
+            }
+            case MPI_DIST_GRAPH: {
+                MPI_Dist_graph_neighbors_count(comm, &tmp, &sz, &temp);
+                for ( i=0; i<sz; i++ ){
+                    if ( sendcounts[i] > 0 )
+                        sum+=sendcounts[i];
+                }
+                break;
+            }
+            case MPI_CART: {
+                // Find the dimensions to determine the max number neighbors
+                j = 0;
+                PMPI_Cartdim_get(comm, &ndims);
+                for ( i =0; i<ndims; ++i){
+                    PMPI_Cart_shift(comm, i, 1, &temp, &tmp);
+                    if (temp != MPI_PROC_NULL) {
+                        sum += sendcounts[j];
+                    }
+                    j++;
+                    if (tmp != MPI_PROC_NULL) {
+                        sum += sendcounts[j];
+                    }
+                    j++;
+                }
+                break;
+            }
+            case MPI_KEYVAL_INVALID: {
+                mcpt_abort("MPI_TOPO_TEST returned MPI_KEYVAL_INVALID\n");
+                break;
+            }
+            default:{
+                mcpt_abort("Unknown Communicator type\n");
+                break;
+            }
+        }
+        profile_this(comm,sum,sendtype,Ineighbor_alltoallv,t_elapsed,0);
+
+    }
+    else{
+        ret = PMPI_Ineighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype,
+                                       recvbuf, recvcounts, rdispls, recvtype,
+                                       comm, request);
+    }
+    return ret;
+
+}
+
+int
+MPI_Ineighbor_alltoallw(const void *sendbuf, const int *sendcounts,
+                        const MPI_Aint *sdispls, const MPI_Datatype *sendtypes,
+                        void *recvbuf, const int *recvcounts,
+                        const MPI_Aint *rdispls, const MPI_Datatype *recvtypes,
+                        MPI_Comm comm, MPI_Request *request)
+{
+    int ret,sz,i;
+    double t_elapsed;
+    int64_t sum = 0;
+    int status,rank,tmp,temp,ndims,j;
+    if ( prof_enabled == 1 ){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        // This not correct for the neighbor alltoallw
+        PMPI_Comm_rank(comm, &rank);
+        PMPI_Topo_test(comm, &status);
+        switch (status) {
+            case MPI_GRAPH: {
+                MPI_Graph_neighbors_count(comm, rank, &sz);
+                for ( i=0; i<sz; i++ ){
+                    if ( sendcounts[i] > 0 ){
+                        PMPI_Type_size(sendtypes[i], &sz);
+                        sum+=sendcounts[i]*sz;
+                    }
+                }
+                break;
+            }
+            case MPI_DIST_GRAPH: {
+                MPI_Dist_graph_neighbors_count(comm, &tmp, &sz, &temp);
+                for ( i=0; i<sz; i++ ){
+                    if ( sendcounts[i] > 0 ){
+                        PMPI_Type_size(sendtypes[i], &sz);
+                        sum+=sendcounts[i]*sz;
+                    }
+                }
+                break;
+            }
+            case MPI_CART: {
+                // Find the dimensions to determine the max number neighbors
+                j = 0;
+                PMPI_Cartdim_get(comm, &ndims);
+                for ( i =0; i<ndims; ++i){
+                    PMPI_Cart_shift(comm, i, 1, &temp, &tmp);
+                    if (temp != MPI_PROC_NULL) {
+                        PMPI_Type_size(sendtypes[j], &sz);
+                        sum += sendcounts[j]*sz;
+                    }
+                    j++;
+                    if (tmp != MPI_PROC_NULL) {
+                        PMPI_Type_size(sendtypes[j], &sz);
+                        sum += sendcounts[j]*sz;
+                    }
+                    j++;
+                }
+                break;
+            }
+            case MPI_KEYVAL_INVALID: {
+                mcpt_abort("MPI_TOPO_TEST returned MPI_KEYVAL_INVALID\n");
+                break;
+            }
+            default:{
+                mcpt_abort("Unknown Communicator type\n");
+                break;
+            }
+        }
+        profile_this(comm,sum,MPI_DATATYPE_NULL,Ineighbor_alltoallw,t_elapsed,0);
+    }
+    else{
+        ret = PMPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm, request);
+    }
+    return ret;
+}
 
 
 int
