@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <string>
 #define NAMELEN 256
-#define NUM_OF_PRIMS 58
+#define NUM_OF_PRIMS 59
 #define MAX_ARG_STRING_SIZE 4096
 #define MAX_ARGS 1024
 #define MAX_ARG_SIZE 64
@@ -48,6 +48,7 @@ Exscan,
 Scatter,
 Scatterv,
 Reduce_scatter,
+Reduce_scatter_block,
 Iallreduce,
 Ibcast,
 Ialltoall,
