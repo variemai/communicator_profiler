@@ -145,7 +145,7 @@ MPI_Get(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
             mcpt_abort("Window communicator not found\n");
         }
         else{
-            profile_this(comm, origin_count, origin_datatype, Get ,t_elapsed, 0);
+            profile_this(comm, target_count, target_datatype, Get ,t_elapsed, 0);
         }
     }
     else{
@@ -167,6 +167,218 @@ void mpi_get_(void *origin_addr, int *origin_count, MPI_Fint *origin_datatype,
 
     ret = MPI_Get(origin_addr, *origin_count, c_origin_datatype, *target_rank,
                   *target_disp, *target_count, c_target_datatype, c_win);
+    *ierr = ret;
+}
+}
+
+int
+MPI_Win_fence(int assert, MPI_Win win)
+{
+    int ret, flag;
+    double t_elapsed;
+    MPI_Comm comm;
+    if (prof_enabled == 1){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Win_fence(assert, win);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
+        if (flag == 0){
+            mcpt_abort("Window communicator not found\n");
+        }
+        else{
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Fence ,t_elapsed, 0);
+        }
+    }
+    else{
+        ret = PMPI_Win_fence(assert, win);
+    }
+    return ret;
+}
+
+extern "C" {
+void mpi_win_fence_(int *assert, MPI_Fint *win, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Win c_win = MPI_Win_f2c(*win);
+
+    ret = MPI_Win_fence(*assert, c_win);
+    *ierr = ret;
+}
+}
+
+int
+MPI_Win_start(MPI_Group group, int assert, MPI_Win win)
+{
+    int ret, flag;
+    double t_elapsed;
+    MPI_Comm comm;
+    if (prof_enabled == 1){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Win_start(group, assert, win);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
+        if (flag == 0){
+            mcpt_abort("Window communicator not found\n");
+        }
+        else{
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_start ,t_elapsed, 0);
+        }
+    }
+    else{
+        ret = PMPI_Win_start(group, assert, win);
+    }
+    return ret;
+}
+
+extern "C" {
+void mpi_win_start_(MPI_Fint *group, int *assert, MPI_Fint *win, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Group c_group = MPI_Group_f2c(*group);
+
+    ret = MPI_Win_start(c_group, *assert, c_win);
+    *ierr = ret;
+}
+}
+
+int
+MPI_Win_complete(MPI_Win win)
+{
+    int ret, flag;
+    double t_elapsed;
+    MPI_Comm comm;
+    if (prof_enabled == 1){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Win_complete(win);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
+        if (flag == 0){
+            mcpt_abort("Window communicator not found\n");
+        }
+        else{
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_complete ,t_elapsed, 0);
+        }
+    }
+    else{
+        ret = PMPI_Win_complete(win);
+    }
+    return ret;
+}
+
+extern "C" {
+void mpi_win_complete_(MPI_Fint *win, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Win c_win = MPI_Win_f2c(*win);
+
+    ret = MPI_Win_complete(c_win);
+    *ierr = ret;
+}
+}
+
+int
+MPI_Win_post(MPI_Group group, int assert, MPI_Win win)
+{
+    int ret, flag;
+    double t_elapsed;
+    MPI_Comm comm;
+    if (prof_enabled == 1){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Win_post(group, assert, win);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
+        if (flag == 0){
+            mcpt_abort("Window communicator not found\n");
+        }
+        else{
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_post ,t_elapsed, 0);
+        }
+    }
+    else{
+        ret = PMPI_Win_post(group, assert, win);
+    }
+    return ret;
+}
+
+extern "C" {
+void mpi_win_post_(MPI_Fint *group, int *assert, MPI_Fint *win, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Group c_group = MPI_Group_f2c(*group);
+
+    ret = MPI_Win_post(c_group, *assert, c_win);
+    *ierr = ret;
+}
+}
+
+int
+MPI_Win_wait(MPI_Win win)
+{
+    int ret, flag;
+    double t_elapsed;
+    MPI_Comm comm;
+    if (prof_enabled == 1){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Win_wait(win);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
+        if (flag == 0){
+            mcpt_abort("Window communicator not found\n");
+        }
+        else{
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_wait ,t_elapsed, 0);
+        }
+    }
+    else{
+        ret = PMPI_Win_wait(win);
+    }
+    return ret;
+}
+
+extern "C" {
+void mpi_win_wait_(MPI_Fint *win, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Win c_win = MPI_Win_f2c(*win);
+
+    ret = MPI_Win_wait(c_win);
+    *ierr = ret;
+}
+}
+
+int
+MPI_Win_test(MPI_Win win, int *flag)
+{
+    int ret, flag1;
+    double t_elapsed;
+    MPI_Comm comm;
+    if (prof_enabled == 1){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Win_test(win, flag);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        MPI_Win_get_attr(win, win_namekey(), &comm, &flag1);
+        if (flag1 == 0){
+            mcpt_abort("Window communicator not found\n");
+        }
+        else{
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_test ,t_elapsed, 0);
+        }
+    }
+    else{
+        ret = PMPI_Win_test(win, flag);
+    }
+    return ret;
+}
+
+extern "C" {
+void mpi_win_test_(MPI_Fint *win, int *flag, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Win c_win = MPI_Win_f2c(*win);
+
+    ret = MPI_Win_test(c_win, flag);
     *ierr = ret;
 }
 }
