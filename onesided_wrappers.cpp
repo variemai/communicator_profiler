@@ -76,7 +76,34 @@ extern "C" {
                   *target_disp, *target_count, c_target_datatype, c_win);
     *ierr = ret;
 }
+}
 
+int
+MPI_Rput(const void *origin_addr, int origin_count,
+        MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp,
+        int target_count, MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
+{
+    int ret, flag;
+    double t_elapsed;
+    MPI_Comm comm;
+    if (prof_enabled == 1){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Rput(origin_addr, origin_count, origin_datatype, target_rank,
+                   target_disp, target_count, target_datatype, win, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
+        if (flag == 0){
+            mcpt_abort("Window communicator not found\n");
+        }
+        else{
+            profile_this(comm, origin_count, origin_datatype, Rput ,t_elapsed, 0);
+        }
+    }
+    else{
+        ret = PMPI_Rput(origin_addr, origin_count, origin_datatype, target_rank,
+                   target_disp, target_count, target_datatype, win, request);
+    }
+    return ret;
 }
 
 int
