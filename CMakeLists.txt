@@ -14,7 +14,7 @@ set(BUCKETS "128,1024,8192,65536,262144,1048576,33554432" CACHE STRING "Message 
 configure_file(utils.h.in ${CMAKE_SOURCE_DIR}/utils.h)
 
 
-add_library(mpisee SHARED commprof.cpp utils.cpp create_db.cpp)
+add_library(mpisee SHARED commprof.cpp collectives_wrappers.cpp neighbor_wrappers.cpp utils.cpp create_db.cpp)
 #add_executable(create_db create_db.cpp utils.cpp)
 #target_include_directories(create_db PRIVATE ${MPI_CXX_INCLUDE_DIRS})
 #target_link_libraries(create_db PRIVATE ${MPI_CXX_LIBRARIES})
