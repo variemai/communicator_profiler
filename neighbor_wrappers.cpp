@@ -65,8 +65,8 @@ MPI_Neighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
 
 extern "C" {
 void
-mpi_neighbor_allgatherv_(const void  *sendbuf, int  * sendcount, MPI_Fint  * sendtype,
-                                    void  *recvbuf, const int  * recvcounts, const int  * displs,
+mpi_neighbor_allgatherv_(const void  *sendbuf, int  * sendcount, MPI_Fint *sendtype,
+                                    void  *recvbuf, const int  *recvcounts, const int *displs,
                                     MPI_Fint  * recvtype, MPI_Fint  * comm , MPI_Fint *ierr)
 {
     int ret;
@@ -80,7 +80,6 @@ mpi_neighbor_allgatherv_(const void  *sendbuf, int  * sendcount, MPI_Fint  * sen
 
     ret = MPI_Neighbor_allgatherv(sendbuf, *sendcount, c_sendtype, recvbuf, recvcounts, displs, c_recvtype, c_comm);
     *ierr = ret;
-    return;
 
 }
 }
@@ -106,7 +105,7 @@ MPI_Neighbor_alltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 extern "C" {
 void
 mpi_neighbor_alltoall_(const void  *sendbuf, int  * sendcount, MPI_Fint  *sendtype,
-                                    void  *recvbuf, int  * recvcount, MPI_Fint  *recvtype,
+                                    void  *recvbuf, int  *recvcount, MPI_Fint  *recvtype,
                                     MPI_Fint  * comm , MPI_Fint *ierr)
 {
     int ret;
@@ -120,7 +119,6 @@ mpi_neighbor_alltoall_(const void  *sendbuf, int  * sendcount, MPI_Fint  *sendty
 
     ret = MPI_Neighbor_alltoall(sendbuf, *sendcount, c_sendtype, recvbuf, *recvcount, c_recvtype, c_comm);
     *ierr = ret;
-    return;
 
 }
 }
@@ -218,7 +216,6 @@ mpi_neighbor_alltoallv_(const void  *sendbuf, const int *sendcounts, const int *
         ret = MPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, c_sendtype, recvbuf, recvcounts, rdispls, c_recvtype, c_comm);
 
     *ierr = ret;
-    return;
 
 }
 }
@@ -392,7 +389,6 @@ void mpi_neighbor_alltoallw_(const void *sendbuf, const int *sendcounts,
     free(c_sendtypes);
     free(c_recvtypes);
     *ierr = ret;
-    return;
 }
 }
 

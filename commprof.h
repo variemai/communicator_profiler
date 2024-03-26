@@ -15,15 +15,22 @@ extern int local_cid;
 extern int my_coms;
 
 extern "C" {
-int namekey();
+int
+namekey(void);
 }
 extern "C" {
-int namedel(MPI_Comm comm, int keyval, void *attr, void *s);
+int
+namedel(MPI_Comm comm, int keyval, void *attr, void *s);
 }
 
 extern "C" {
 prof_attrs*
 profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
              double t_elapsed,int root);
+}
+
+extern "C" {
+int
+win_namekey(void);
 }
 #endif
