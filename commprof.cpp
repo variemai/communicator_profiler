@@ -1135,6 +1135,45 @@ F77_MPI_SSEND(const void *buf, int *count, MPI_Fint  *datatype,
 }
 }
 
+int MPI_Issend(const void *buf, int count, MPI_Datatype datatype, int dest,
+               int tag, MPI_Comm comm, MPI_Request *request)
+{
+    int ret;
+    double t_elapsed;
+    if ( prof_enabled == 1 ){
+        t_elapsed =  MPI_Wtime();
+        ret = PMPI_Issend(buf, count, datatype, dest, tag, comm, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        profile_this(comm, count, datatype, Issend, t_elapsed, 0);
+    }
+    else{
+        ret = PMPI_Issend(buf, count, datatype, dest, tag, comm, request);
+    }
+    return ret;
+
+}
+
+extern "C"{
+void
+F77_MPI_ISSEND(const void *buf, int *count, MPI_Fint *datatype,
+               int *dest, int *tag, MPI_Fint *comm,
+               MPI_Fint *request , MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Datatype c_datatype;
+    MPI_Comm c_comm;
+    MPI_Request c_request;
+    c_datatype = MPI_Type_f2c(*datatype);
+    c_comm = MPI_Comm_f2c(*comm);
+    ret = MPI_Issend(buf, *count, c_datatype, *dest, *tag, c_comm, &c_request);
+    *ierr = ret;
+    if ( ret == MPI_SUCCESS )
+        *request = MPI_Request_c2f(c_request);
+    return;
+}
+}
+
+
 
 int
 MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
