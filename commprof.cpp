@@ -930,21 +930,22 @@ int
 MPI_Waitall(int count, MPI_Request array_of_requests[],
             MPI_Status array_of_statuses[])
 {
-    int ret,i;
+    int ret,i,j;
     double t_elapsed;
-    MPI_Comm comm = NULL;
-
+    MPI_Comm comm = MPI_COMM_NULL;
+    j = 0;
     if ( prof_enabled == 1 ){
+        for ( i =0; i<count; i++ ){
+            if ( j == 0 )
+                comm = requests_map[array_of_requests[i]];
+            j++;
+            requests_map.erase(array_of_requests[i]);
+        }
         t_elapsed = MPI_Wtime();
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        for ( i =0; i<count; i++ ){
-            if ( comm != NULL ){
-                comm = requests_map[array_of_requests[i]];
-                profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
-                return ret;
-            }
-        }
+        if ( comm != MPI_COMM_NULL)
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
     }
     else{
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
@@ -979,21 +980,24 @@ F77_MPI_WAITALL(int  * count, MPI_Fint  *array_of_requests,
 int
 MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *status)
 {
-    int ret,i;
+
+    int ret,i,j;
     double t_elapsed;
-    MPI_Comm comm = NULL;
+    MPI_Comm comm = MPI_COMM_NULL;
+    j = 0;
 
     if ( prof_enabled == 1 ){
+        for ( i =0; i<count; i++ ){
+            if ( j == 0 )
+                comm = requests_map[array_of_requests[i]];
+            j++;
+            requests_map.erase(array_of_requests[i]);
+        }
         t_elapsed = MPI_Wtime();
         ret = PMPI_Waitany(count, array_of_requests,index,status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        for ( i =0; i<count; i++ ){
-            comm = requests_map[array_of_requests[i]];
-            if ( comm != NULL ){
-                profile_this(comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
-                break;
-            }
-        }
+        if ( comm != MPI_COMM_NULL)
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
     }
     else{
         ret = PMPI_Waitany(count, array_of_requests,index,status);
