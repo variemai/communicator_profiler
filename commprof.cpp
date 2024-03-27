@@ -901,10 +901,11 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
         ret = PMPI_Wait(request, status);
         t_elapsed = MPI_Wtime() - t_elapsed;
         if ( comm == NULL  ){
-            fprintf(stderr, "MCPT: NULL COMMUNICATOR in MPI_Wait\n"); 
+            fprintf(stderr, "mpisee: NULL COMMUNICATOR in MPI_Wait\n");
             return ret;
         }
        profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+       requests_map.erase(*request);
     }
     else{
         ret = PMPI_Wait(request, status);

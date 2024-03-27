@@ -65,6 +65,7 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
             sum = count;
         }
         profile_this(comm,sum,datatype,Ibcast,t_elapsed,root);
+        requests_map[*request] = comm;
     }
     else{
 
@@ -144,6 +145,7 @@ MPI_Iallreduce(const void *sendbuf, void *recvbuf, int count,
         t_elapsed = MPI_Wtime() - t_elapsed;
 
         profile_this(comm, count, datatype, Iallreduce, t_elapsed, 0);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Iallreduce(sendbuf, recvbuf, count, datatype, op, comm, request);
@@ -235,6 +237,7 @@ MPI_Iallgather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         t_elapsed = MPI_Wtime() - t_elapsed;
 
         profile_this(comm,recvcount,recvtype,Iallgather,t_elapsed,0);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Iallgather(sendbuf, sendcount, sendtype, recvbuf, recvcount,
@@ -326,6 +329,7 @@ MPI_Ialltoall(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
                              recvtype, comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
         profile_this(comm,sendcount,sendtype,Ialltoall,t_elapsed,0);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Ialltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount,
@@ -436,6 +440,7 @@ int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispl
         /* We won't need this reduce just sum all in the end */
         /* PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm); */
         profile_this(comm,sum,sendtype,Ialltoallv,t_elapsed,0);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Ialltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf,
@@ -445,7 +450,8 @@ int MPI_Ialltoallv(const void *sendbuf, const int sendcounts[], const int sdispl
 }
 
 extern "C" {
-void F77_MPI_IALLTOALLV(const void *sendbuf, const int *sendcnts, const int *sdispls,
+void
+F77_MPI_IALLTOALLV(const void *sendbuf, const int *sendcnts, const int *sdispls,
                             MPI_Fint *sendtype, void *recvbuf, const int *recvcnts,
                             const int *rdispls, MPI_Fint *recvtype, MPI_Fint *comm,
                             MPI_Fint *request, MPI_Fint *ierr)
@@ -555,6 +561,7 @@ MPI_Ialltoallw(const void *sendbuf, const int sendcounts[], const int sdispls[],
         /* We won't need this reduce just sum all in the end */
         /* PMPI_Reduce(&sum, &sum_max, 1, MPI_INT, MPI_MAX, 0, comm); */
         profile_this(comm,sum,MPI_DATATYPE_NULL,Ialltoallw,t_elapsed,0);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Ialltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf,
@@ -667,6 +674,7 @@ MPI_Iallgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
 
         profile_this(comm,sum,recvtype,Iallgatherv,t_elapsed,0);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Iallgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts,
@@ -757,6 +765,7 @@ MPI_Ireduce(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype
         t_elapsed = MPI_Wtime() - t_elapsed;
 
         profile_this(comm,count,datatype,Ireduce,t_elapsed,root);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Ireduce(sendbuf, recvbuf, count, datatype, op, root, comm, request);
@@ -845,6 +854,7 @@ MPI_Igather(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
 
         t_elapsed = MPI_Wtime() - t_elapsed;
         profile_this(comm,sendcount,sendtype,Igather,t_elapsed,root);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Igather(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, request);
@@ -962,6 +972,7 @@ MPI_Igatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             sum = 0;
         }
         profile_this(comm, sum, recvtype, Igatherv, t_elapsed, root);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Igatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs,
@@ -1054,7 +1065,8 @@ F77_MPI_SCATTERV(const void  *sendbuf, const int  *sendcounts, const int  *displ
 }
 }
 
-int MPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[],
+int
+MPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[],
                   MPI_Datatype sendtype, void *recvbuf, int recvcount,
                   MPI_Datatype recvtype, int root, MPI_Comm comm, MPI_Request *request)
 {
@@ -1079,6 +1091,7 @@ int MPI_Iscatterv(const void *sendbuf, const int sendcounts[], const int displs[
             sum = 0;
         }
         profile_this(comm, sum, sendtype, Iscatterv, t_elapsed, root);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Iscatterv(sendbuf, sendcounts, displs, sendtype, recvbuf, recvcount,
@@ -1188,6 +1201,7 @@ MPI_Iscatter(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
             sum = 0;
         }
         profile_this(comm, sum, sendtype, Iscatter, t_elapsed, root);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Iscatter(sendbuf, sendcount, sendtype, recvbuf, recvcount,
@@ -1279,6 +1293,7 @@ MPI_Iscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
         t_elapsed = MPI_Wtime() - t_elapsed;
 
         profile_this(comm,count,datatype,Iscan,t_elapsed,0);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Iscan(sendbuf, recvbuf, count, datatype, op, comm, request);
@@ -1361,6 +1376,7 @@ MPI_Iexscan(const void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype
         ret = PMPI_Iexscan(sendbuf, recvbuf, count, datatype, op, comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
         profile_this(comm,count,datatype,Iexscan,t_elapsed,0);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Iexscan(sendbuf, recvbuf, count, datatype, op, comm, request);
@@ -1435,6 +1451,7 @@ MPI_Ibarrier(MPI_Comm comm, MPI_Request *request)
         ret = PMPI_Ibarrier(comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
         profile_this(comm,0,MPI_DATATYPE_NULL,Ibarrier,t_elapsed,0);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Ibarrier(comm, request);
@@ -1517,6 +1534,7 @@ MPI_Ireduce_scatter(const void *sendbuf, void *recvbuf, const int *recvcounts,
         PMPI_Comm_rank(comm, &rank);
         sum = recvcounts[rank];
         profile_this(comm, sum, datatype, Ireduce_scatter, t_elapsed, 0);
+        requests_map[*request] = comm;
     }
     else{
         ret = PMPI_Ireduce_scatter(sendbuf, recvbuf, recvcounts, datatype, op, comm, request);
