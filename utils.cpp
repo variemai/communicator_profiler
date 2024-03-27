@@ -15,6 +15,7 @@ const char prim_names[][NUM_OF_PRIMS]={
     ENUM_TO_STRING(Isend),
     ENUM_TO_STRING(Irecv),
     ENUM_TO_STRING(Sendrecv),
+    ENUM_TO_STRING(Isendrecv),
     ENUM_TO_STRING(Ssend),
     ENUM_TO_STRING(Issend),
     ENUM_TO_STRING(Rsend),

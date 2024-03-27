@@ -199,6 +199,52 @@ void mpi_get_(void *origin_addr, int *origin_count, MPI_Fint *origin_datatype,
 }
 
 int
+MPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
+        int target_rank, MPI_Aint target_disp, int target_count,
+        MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
+{
+    int ret, flag;
+    double t_elapsed;
+    MPI_Comm comm;
+    if (prof_enabled == 1){
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Rget(origin_addr, origin_count, origin_datatype, target_rank,
+                   target_disp, target_count, target_datatype, win, request);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
+        if (flag == 0){
+            mcpt_abort("Window communicator not found\n");
+        }
+        else{
+            profile_this(comm, target_count, target_datatype, Rget ,t_elapsed, 0);
+        }
+    }
+    else{
+        ret = PMPI_Rget(origin_addr, origin_count, origin_datatype, target_rank,
+                   target_disp, target_count, target_datatype, win, request);
+    }
+    return ret;
+}
+
+extern "C" {
+void mpi_rget_(void *origin_addr, int *origin_count, MPI_Fint *origin_datatype,
+        int *target_rank, int *target_disp, int *target_count,
+        MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *request, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Datatype c_origin_datatype = MPI_Type_f2c(*origin_datatype);
+    MPI_Datatype c_target_datatype = MPI_Type_f2c(*target_datatype);
+    MPI_Request c_request;
+
+    ret = MPI_Rget(origin_addr, *origin_count, c_origin_datatype, *target_rank,
+                  *target_disp, *target_count, c_target_datatype, c_win, &c_request);
+    *request = MPI_Request_c2f(c_request);
+    *ierr = ret;
+}
+}
+
+int
 MPI_Win_fence(int assert, MPI_Win win)
 {
     int ret, flag;
