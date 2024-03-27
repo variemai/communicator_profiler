@@ -207,51 +207,51 @@ F77_MPI_SENDRECV(const void  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
 }
 }
 
-int
-MPI_Isendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
-                  int dest, int sendtag, void *recvbuf, int recvcount,
-                  MPI_Datatype recvtype, int source, int recvtag,
-                  MPI_Comm comm, MPI_Request *request)
-{
-    int ret;
-    double t_elapsed;
-    if ( prof_enabled == 1){
-        t_elapsed =  MPI_Wtime();
-        ret = PMPI_Isendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
-                             recvcount, recvtype, source, recvtag, comm, request);
-        t_elapsed = MPI_Wtime() - t_elapsed;
-        profile_this(comm,sendcount,sendtype,Isendrecv,t_elapsed,source);
-        requests_map[*request] = comm;
-    }
-    else{
-        ret = PMPI_Isendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
-                             recvcount, recvtype, source, recvtag, comm, request);
-    }
-    return ret;
-}
+// int
+// MPI_Isendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
+//                   int dest, int sendtag, void *recvbuf, int recvcount,
+//                   MPI_Datatype recvtype, int source, int recvtag,
+//                   MPI_Comm comm, MPI_Request *request)
+// {
+//     int ret;
+//     double t_elapsed;
+//     if ( prof_enabled == 1){
+//         t_elapsed =  MPI_Wtime();
+//         ret = PMPI_Isendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
+//                              recvcount, recvtype, source, recvtag, comm, request);
+//         t_elapsed = MPI_Wtime() - t_elapsed;
+//         profile_this(comm,sendcount,sendtype,Isendrecv,t_elapsed,source);
+//         requests_map[*request] = comm;
+//     }
+//     else{
+//         ret = PMPI_Isendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
+//                              recvcount, recvtype, source, recvtag, comm, request);
+//     }
+//     return ret;
+// }
 
-extern "C" {
-void mpi_isendrecv_(const void  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
-                       int  * dest, int  * sendtag, void  *recvbuf, int  * recvcount,
-                       MPI_Fint  * recvtype, int  * source, int  * recvtag,
-                       MPI_Fint  * comm, MPI_Fint  *request , MPI_Fint *ierr)
-{
-    int ret;
-    MPI_Datatype c_sendtype;
-    MPI_Datatype c_recvtype;
-    MPI_Comm c_comm;
-    MPI_Request c_request;
-    c_sendtype = MPI_Type_f2c(*sendtype);
-    c_recvtype = MPI_Type_f2c(*recvtype);
-    c_comm = MPI_Comm_f2c(*comm);
-    ret = MPI_Isendrecv(sendbuf, *sendcount, c_sendtype, *dest, *sendtag, recvbuf,
-                        *recvcount, c_recvtype, *source, *recvtag, c_comm, &c_request);
-    *ierr = ret;
-    if ( ret == MPI_SUCCESS )
-        *request = MPI_Request_c2f(c_request);
-    return;
-}
-}
+// extern "C" {
+// void mpi_isendrecv_(const void  *sendbuf, int  * sendcount,MPI_Fint  * sendtype,
+//                        int  * dest, int  * sendtag, void  *recvbuf, int  * recvcount,
+//                        MPI_Fint  * recvtype, int  * source, int  * recvtag,
+//                        MPI_Fint  * comm, MPI_Fint  *request , MPI_Fint *ierr)
+// {
+//     int ret;
+//     MPI_Datatype c_sendtype;
+//     MPI_Datatype c_recvtype;
+//     MPI_Comm c_comm;
+//     MPI_Request c_request;
+//     c_sendtype = MPI_Type_f2c(*sendtype);
+//     c_recvtype = MPI_Type_f2c(*recvtype);
+//     c_comm = MPI_Comm_f2c(*comm);
+//     ret = MPI_Isendrecv(sendbuf, *sendcount, c_sendtype, *dest, *sendtag, recvbuf,
+//                         *recvcount, c_recvtype, *source, *recvtag, c_comm, &c_request);
+//     *ierr = ret;
+//     if ( ret == MPI_SUCCESS )
+//         *request = MPI_Request_c2f(c_request);
+//     return;
+// }
+// }
 
 
 int
