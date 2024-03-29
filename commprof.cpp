@@ -1076,21 +1076,24 @@ F77_MPI_TEST(MPI_Fint  *request, int  *flag, MPI_Status  *status , MPI_Fint *ier
 int
 MPI_Testany(int count, MPI_Request *array_of_requests, int *index, int *flag, MPI_Status *status)
 {
-    int ret,i;
+
+    int ret,i,j;
     double t_elapsed;
-    MPI_Comm comm = NULL;
+    MPI_Comm comm = MPI_COMM_NULL;
+    j = 0;
 
     if ( prof_enabled == 1 ){
-        t_elapsed = MPI_Wtime();
-        ret = PMPI_Testany(count, array_of_requests, index, flag, status);
-        t_elapsed = MPI_Wtime() - t_elapsed;
         for ( i =0; i<count; i++ ){
-            comm = requests_map[array_of_requests[i]];
-            if ( comm != NULL ){
-                profile_this(comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
-                break;
-            }
+            if ( j == 0 )
+                comm = requests_map[array_of_requests[i]];
+            j++;
+            requests_map.erase(array_of_requests[i]);
         }
+        t_elapsed = MPI_Wtime();
+        ret = PMPI_Waitany(count, array_of_requests,index,status);
+        t_elapsed = MPI_Wtime() - t_elapsed;
+        if ( comm != MPI_COMM_NULL)
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Testany, t_elapsed, 0);
     }
     else{
         ret = PMPI_Testany(count, array_of_requests, index, flag, status);
