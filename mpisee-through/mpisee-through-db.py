@@ -1065,6 +1065,34 @@ def fetch_data_and_plot(db_path,colors,comm=""):
     finally:
         conn.close()
 
+def default_query(db):
+    conn = sqlite3.connect(db)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+       SELECT
+    o.operation,
+    MIN(d.buffer_size_min) AS buffer_size_min,
+    MAX(d.buffer_size_max) AS buffer_size_max,
+    MAX(d.time) AS max_time
+FROM data d
+JOIN operations o ON d.operation_id = o.id
+GROUP BY o.operation
+        """)
+
+        result = cursor.fetchall()
+        if not result:
+            print("No data found.")
+            return
+        for row in result:
+            print(row)
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+
 def get_all_comms(db):
     conn = sqlite3.connect(db)
     cursor = conn.cursor()
@@ -1188,7 +1216,7 @@ def main():
         plot_comms_ops_stacked_bar_chart(data)
         #plot_mpi_operations_bar_chart(data)
     elif args.pt2pt:
-        print_data_pt2pt(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax,enum_primitives['Issend'])
+        print_data_pt2pt(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax,enum_primitives['Ibsend'])
     elif args.collectives:
         print_data_collectives(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax,enum_primitives['Bcast'])
     elif args.buffsize:
@@ -1200,7 +1228,8 @@ def main():
     elif args.mpitime:
         mpi_time(db_path,args.sort,rank_list)
     else:
-        query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
+        default_query(db_path)
+        #query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
 
         #get_all_comms(db_path)
 
