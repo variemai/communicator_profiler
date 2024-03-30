@@ -10,6 +10,7 @@ import matplotlib.colors as mcolors
 import matplotlib.cm as cm
 import numpy as np
 import colorsys
+import operator
 
 
 from signal import signal, SIGPIPE, SIG_DFL
@@ -499,6 +500,72 @@ def query_all_data(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
                       JOIN comms c ON d.comm_id = c.id
                       JOIN operations o ON d.operation_id = o.id """
     exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
+
+
+def default_query(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
+    sql = """
+    SELECT
+    c.name AS comm_name,
+    c.size AS comm_size,
+    d.rank,
+    o.operation,
+    MIN(d.buffer_size_min) AS buffer_size_min,
+    MAX(d.buffer_size_max) AS buffer_size_max,
+    SUM(d.calls) AS calls,
+    MAX(d.time) AS time_s
+FROM data d
+JOIN comms c ON d.comm_id = c.id
+JOIN operations o ON d.operation_id = o.id
+GROUP BY c.name, c.size, d.rank, o.operation;
+        """
+
+    conn = sqlite3.connect(dbpath)
+    cursor = conn.cursor()
+    try:
+        # Execute the query
+        cursor.execute(sql)
+
+        # Print header
+        print_decoration(BOLD)
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'MPI Operation':<20}"
+              f"{'Buffer Size Range':<20}{'Calls':<15}{'Time (s)':<15}")
+        print_decoration(RESET)
+
+        data = cursor.fetchall()  # Retrieve all data
+
+        results = {}
+
+        for row in data:
+            comm_name, comm_size, rank, operation, buf_min, buf_max, calls, time = row
+            key = (comm_name, comm_size, operation, buf_min, buf_max)
+            if key not in results or results[key]['time_s'] < time:
+                results[key] = {
+                'comm_name': comm_name,
+                'comm_size': comm_size,
+                'rank': rank,
+                'operation': operation,
+                'buffer_size_min': buf_min,
+                'buffer_size_max': buf_max,
+                'calls': calls,
+                'time_s': time
+            }
+        results = dict(sorted(results.items(), key=lambda item: item[1]['time_s'], reverse=True))
+        for result in results.values():
+            buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
+            print(f"{result['comm_name']:<15}{result['comm_size']:<15}{result['rank']:<10}{result['operation']:<20}"
+                  f"{buffer_size:<20}{result['calls']:<15}{result['time_s']:<15}")  # Adjust formatting as needed
+
+
+
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        if conn:
+            conn.close()
+
+
 
 def clear_table_if_exists(db_path, table_name):
     conn = sqlite3.connect(db_path)
@@ -1065,32 +1132,6 @@ def fetch_data_and_plot(db_path,colors,comm=""):
     finally:
         conn.close()
 
-def default_query(db):
-    conn = sqlite3.connect(db)
-    cursor = conn.cursor()
-    try:
-        cursor.execute("""
-       SELECT
-    o.operation,
-    MIN(d.buffer_size_min) AS buffer_size_min,
-    MAX(d.buffer_size_max) AS buffer_size_max,
-    MAX(d.time) AS max_time
-FROM data d
-JOIN operations o ON d.operation_id = o.id
-GROUP BY o.operation
-        """)
-
-        result = cursor.fetchall()
-        if not result:
-            print("No data found.")
-            return
-        for row in result:
-            print(row)
-
-    except sqlite3.Error as e:
-        print("An error occurred:", e)
-    finally:
-        conn.close()
 
 
 def get_all_comms(db):
@@ -1228,7 +1269,7 @@ def main():
     elif args.mpitime:
         mpi_time(db_path,args.sort,rank_list)
     else:
-        default_query(db_path)
+        default_query(db_path,args.sort,args.nresults,rank_list,comms)
         #query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
 
         #get_all_comms(db_path)
