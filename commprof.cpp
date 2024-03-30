@@ -894,7 +894,7 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
     int ret;
     double t_elapsed;
 
-    MPI_Comm comm ;
+    MPI_Comm comm = MPI_COMM_NULL;
     if ( prof_enabled == 1 ){
         comm = requests_map[*request];
         t_elapsed = MPI_Wtime();
@@ -904,7 +904,8 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
             fprintf(stderr, "mpisee: NULL COMMUNICATOR in MPI_Wait\n");
             return ret;
         }
-       profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+        if ( comm != MPI_COMM_NULL )
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
        requests_map.erase(*request);
     }
     else{
