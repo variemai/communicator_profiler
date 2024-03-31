@@ -1160,6 +1160,7 @@ def get_all_comms(db):
 def main():
     parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
     parser.add_argument("-d", "--db_path", required=True, help="Path to the mpisee SQLite database file.")
+    parser.add_argument("-a", "--all",  action='store_true', required=False, help="Print all data.")
     parser.add_argument("-l", "--comm_plot", required=False, action='store_true', help="Plot data for a specific communicator.")
     parser.add_argument("-i", "--mpiop_plot", required=False, action='store_true', help="Plot time for n top MPI Operations and their communicators.")
     parser.add_argument("-e", "--exectime", required=False, action='store_true', help="Print the execution time for each process.")
@@ -1268,6 +1269,8 @@ def main():
         print_execution_time(db_path,args.sort,rank_list)
     elif args.mpitime:
         mpi_time(db_path,args.sort,rank_list)
+    elif args.all:
+        query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
     else:
         default_query(db_path,args.sort,args.nresults,rank_list,comms)
         #query_all_data(db_path,args.sort,args.nresults,rank_list,comms)

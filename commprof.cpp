@@ -946,12 +946,15 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
     double t_elapsed;
     MPI_Comm comm ;
     if ( prof_enabled == 1 ){
-        auto it = requests_map.find(array_of_requests[0]);
-        if (it != requests_map.end()) {
-            comm = requests_map[array_of_requests[0]];
-        }
-        else {
-            comm = MPI_COMM_NULL;
+        for (i = 0; i < count; i++) {
+            auto it = requests_map.find(array_of_requests[i]);
+            if (it != requests_map.end()) {
+                comm = requests_map[array_of_requests[i]];
+                break;
+            }
+            else {
+                comm = MPI_COMM_NULL;
+            }
         }
         t_elapsed = MPI_Wtime();
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
