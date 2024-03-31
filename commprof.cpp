@@ -29,6 +29,7 @@ int ac;
 char *av[MAX_ARGS];
 std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 std::vector<prof_attrs*> local_communicators;
+// int global_rank; // For debugging purposes
 
 /* Tool date */
 int mpisee_major_version = 1;
@@ -156,8 +157,10 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
     prof_attrs *communicator = NULL;
     int64_t sum = 0;
     /* int rank; */
-    if ( comm == MPI_COMM_NULL  )
+    if ( comm == MPI_COMM_NULL  ){
+        mcpt_abort("mpisee: NULL communicator in profile_this\n");
         return communicator;
+    }
     flag = 0;
     PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
     if ( datatype != MPI_DATATYPE_NULL ){
@@ -258,6 +261,7 @@ _MPI_Init(int *argc, char ***argv){
         }
     }
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    // global_rank = rank; // For debugging purposes
 
     local_communicators.push_back(communicator);
     if ( rc != MPI_SUCCESS ){
@@ -477,7 +481,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
      */
     PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
     my_coms = comms;
-    if ( *newcomm == MPI_COMM_NULL  ){
+    if ( *newcomm == MPI_COMM_NULL ){
         return ret;
     }
     PMPI_Comm_rank(comm, &rank);
@@ -893,20 +897,27 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
 {
     int ret;
     double t_elapsed;
-
-    MPI_Comm comm = MPI_COMM_NULL;
+    MPI_Comm comm;
     if ( prof_enabled == 1 ){
-        comm = requests_map[*request];
+        auto it = requests_map.find(*request);
+        if (it != requests_map.end()) {
+            comm = requests_map[*request];
+        }
+        else {
+            comm = MPI_COMM_NULL;
+        }
+
         t_elapsed = MPI_Wtime();
         ret = PMPI_Wait(request, status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        if ( comm == NULL  ){
-            fprintf(stderr, "mpisee: NULL COMMUNICATOR in MPI_Wait\n");
+        if ( comm != MPI_COMM_NULL  ){
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+            requests_map.erase(*request);
+        }
+        else {
+            mcpt_abort("mpisee: NULL COMMUNICATOR in MPI_Wait\n");
             return ret;
         }
-        if ( comm != MPI_COMM_NULL )
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
-       requests_map.erase(*request);
     }
     else{
         ret = PMPI_Wait(request, status);
@@ -931,22 +942,30 @@ int
 MPI_Waitall(int count, MPI_Request array_of_requests[],
             MPI_Status array_of_statuses[])
 {
-    int ret,i,j;
+    int ret,i;
     double t_elapsed;
-    MPI_Comm comm = MPI_COMM_NULL;
-    j = 0;
+    MPI_Comm comm ;
     if ( prof_enabled == 1 ){
-        for ( i =0; i<count; i++ ){
-            if ( j == 0 )
-                comm = requests_map[array_of_requests[i]];
-            j++;
-            requests_map.erase(array_of_requests[i]);
+        auto it = requests_map.find(array_of_requests[0]);
+        if (it != requests_map.end()) {
+            comm = requests_map[array_of_requests[0]];
+        }
+        else {
+            comm = MPI_COMM_NULL;
         }
         t_elapsed = MPI_Wtime();
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        if ( comm != MPI_COMM_NULL)
+        if ( comm != MPI_COMM_NULL){
             profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+            for (i = 0; i < count; i++) {
+                requests_map.erase(array_of_requests[i]);
+            }
+        }
+        else{
+            mcpt_abort("mpisee: NULL COMMUNICATOR in MPI_Waitall\n");
+            return ret;
+        }
     }
     else{
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
@@ -982,23 +1001,35 @@ int
 MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *status)
 {
 
-    int ret,i,j;
+    int ret,i;
     double t_elapsed;
-    MPI_Comm comm = MPI_COMM_NULL;
-    j = 0;
+    MPI_Comm *comm_array;
 
     if ( prof_enabled == 1 ){
+        comm_array = (MPI_Comm*) malloc (sizeof(MPI_Comm)*count);
         for ( i =0; i<count; i++ ){
-            if ( j == 0 )
-                comm = requests_map[array_of_requests[i]];
-            j++;
-            requests_map.erase(array_of_requests[i]);
+            auto it = requests_map.find(array_of_requests[i]);
+            if (it != requests_map.end()) {
+                comm_array[i] = requests_map[array_of_requests[i]];
+            }
+            else {
+                comm_array[i] = MPI_COMM_NULL;
+            }
         }
         t_elapsed = MPI_Wtime();
         ret = PMPI_Waitany(count, array_of_requests,index,status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        if ( comm != MPI_COMM_NULL)
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
+        if ( comm_array[*index] != MPI_COMM_NULL){
+            profile_this(comm_array[*index], 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
+            requests_map.erase(array_of_requests[*index]);
+
+        }
+        else{
+            mcpt_abort("mpisee: NULL COMMUNICATOR in MPI_Waitany\n");
+            return ret;
+        }
+
+        free(comm_array);
     }
     else{
         ret = PMPI_Waitany(count, array_of_requests,index,status);
@@ -1038,17 +1069,28 @@ MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
 
     int ret;
     double t_elapsed;
+    MPI_Comm comm;
 
-    MPI_Comm comm = NULL;
     if ( prof_enabled == 1 ){
-        comm = requests_map[*request];
+        auto it = requests_map.find(*request);
+        if (it != requests_map.end()) {
+            comm = requests_map[*request];
+        }
+        else {
+            comm = MPI_COMM_NULL;
+        }
         t_elapsed = MPI_Wtime();
         ret = PMPI_Test(request,flag,status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        if ( comm == NULL ){
+        if ( comm != MPI_COMM_NULL ){
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Test, t_elapsed, 0);
+            if ( *flag == 1 ){
+                requests_map.erase(*request);
+            }
+        }
+        else{
             return ret;
         }
-        profile_this(comm, 0, MPI_DATATYPE_NULL, Test, t_elapsed, 0);
     }
     else{
         ret = PMPI_Test(request,flag,status);
@@ -1078,23 +1120,33 @@ int
 MPI_Testany(int count, MPI_Request *array_of_requests, int *index, int *flag, MPI_Status *status)
 {
 
-    int ret,i,j;
+
+    int ret,i;
     double t_elapsed;
-    MPI_Comm comm = MPI_COMM_NULL;
-    j = 0;
+    MPI_Comm *comm_array;
 
     if ( prof_enabled == 1 ){
+        comm_array = (MPI_Comm*) malloc (sizeof(MPI_Comm)*count);
         for ( i =0; i<count; i++ ){
-            if ( j == 0 )
-                comm = requests_map[array_of_requests[i]];
-            j++;
-            requests_map.erase(array_of_requests[i]);
+            auto it = requests_map.find(array_of_requests[i]);
+            if (it != requests_map.end()) {
+                comm_array[i] = requests_map[array_of_requests[i]];
+            }
+            else {
+                comm_array[i] = MPI_COMM_NULL;
+            }
         }
         t_elapsed = MPI_Wtime();
         ret = PMPI_Waitany(count, array_of_requests,index,status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        if ( comm != MPI_COMM_NULL)
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Testany, t_elapsed, 0);
+        if ( comm_array[*index] != MPI_COMM_NULL){
+            profile_this(comm_array[*index], 0, MPI_DATATYPE_NULL, Testany, t_elapsed, 0);
+            if ( *flag == 1 ){
+                requests_map.erase(array_of_requests[*index]);
+            }
+        }
+
+        free(comm_array);
     }
     else{
         ret = PMPI_Testany(count, array_of_requests, index, flag, status);
