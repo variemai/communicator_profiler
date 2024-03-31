@@ -961,14 +961,14 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
         t_elapsed = MPI_Wtime() - t_elapsed;
         if ( comm != MPI_COMM_NULL){
             profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
-            // for (i = 0; i < count; i++) {
-            //     requests_map.erase(array_of_requests[i]);
-            // }
+            for (i = 0; i < count; i++) {
+                requests_map.erase(array_of_requests[i]);
+            }
         }
-        else{
-            mcpt_abort("mpisee: NULL COMMUNICATOR in MPI_Waitall\n");
-            return ret;
-        }
+        // else{
+        //     mcpt_abort("NULL COMMUNICATOR in MPI_Waitall\n");
+        //     return ret;
+        // }
     }
     else{
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
