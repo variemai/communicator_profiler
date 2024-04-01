@@ -197,7 +197,7 @@ def exec_query_and_print(db_path,sql,order,num_of_rows,ranks,comms,*args):
         # Print header
         print_decoration(BOLD)
         print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'MPI Operation':<20}"
-              f"{'Buffer Size Range':<20}{'Calls':<15}{'Time (s)':<15}{'% of MPI Time':<20}{'% of Total Time':<10}")
+              f"{'Buffer Size Range (Bytes)':<30}{'Calls':<15}{'Time (s)':<15}{'% of MPI Time':<20}{'% of Total Time':<10}")
         print_decoration(RESET)
         # Print rows
         r = 0
@@ -217,7 +217,7 @@ def exec_query_and_print(db_path,sql,order,num_of_rows,ranks,comms,*args):
             percentage_exec_time = (time/exec_time)*100
             percentage_mpi_time = (time/mpi_time)*100
             print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
-                  f"{buffer_size:<20}{calls:<15}{time:<15.3f}{percentage_mpi_time:<20.3f}{percentage_exec_time:<10.3f}")
+                  f"{buffer_size:<30}{calls:<15}{time:<15.3f}{percentage_mpi_time:<20.3f}{percentage_exec_time:<10.3f}")
             r+=1
             if num_of_rows > 0 and r >= num_of_rows:
                 break
@@ -278,7 +278,7 @@ def print_all_data(db_path):
 
         # Print header
         print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
-              f"{'Buffer Size Range':<25}{'Calls':<15}{'Time':<20}")
+              f"{'Buffer Size Range (Bytes)':<25}{'Calls':<15}{'Time':<20}")
 
         # Print rows
         for row in cursor.fetchall():
@@ -354,14 +354,14 @@ def print_data_by_comm(db_path, comm):
 
         # Print header
         print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
-              f"{'Buffer Size Range':<25}{'Calls':<15}{'Time':<20}")
+              f"{'Buffer Size Range':<30}{'Calls':<15}{'Time':<20}")
 
         # Print rows
         for row in cursor.fetchall():
             name, size, rank, operation, buf_min, buf_max, calls, time = row
             buffer_size = f"{buf_min} - {buf_max}"
             print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
-                  f"{buffer_size:<25}{calls:<15}{time:<20}")
+                  f"{buffer_size:<30}{calls:<15}{time:<20}")
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
@@ -502,7 +502,7 @@ def query_all_data(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
     exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
 
 
-def default_query(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
+def default_query(dbpath):
     sql = """
     SELECT
     c.name AS comm_name,
@@ -528,7 +528,7 @@ GROUP BY c.name, c.size, d.rank, o.operation;
         # Print header
         print_decoration(BOLD)
         print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'MPI Operation':<20}"
-              f"{'Buffer Size Range':<20}{'Calls':<15}{'Time (s)':<15}")
+              f"{'Buffer Size Range (Bytes)':<25}{'Calls':<25}{'Time (s)':<15}")
         print_decoration(RESET)
 
         data = cursor.fetchall()  # Retrieve all data
@@ -1272,7 +1272,7 @@ def main():
     elif args.all:
         query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
     else:
-        default_query(db_path,args.sort,args.nresults,rank_list,comms)
+        default_query(db_path)
         #query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
 
         #get_all_comms(db_path)
