@@ -370,7 +370,7 @@ def print_data_by_comm(db_path, comm):
         if conn:
             conn.close()
 
-def print_data_by_prim(db_path, MPI_prim):
+def print_data_by_prim(db_path, MPI_prim,nresults=10):
     # Connect to the SQLite database
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -385,7 +385,7 @@ def print_data_by_prim(db_path, MPI_prim):
     WHERE o.operation = ?
     ORDER BY d.time DESC
     """
-
+    j = 0
     try:
         # Execute the query
         cursor.execute(sql,(MPI_prim,))
@@ -396,10 +396,13 @@ def print_data_by_prim(db_path, MPI_prim):
 
         # Print rows
         for row in cursor.fetchall():
+            if (j >= nresults):
+                break
             name, size, rank, operation, buf_min, buf_max, calls, time = row
             buffer_size = f"{buf_min} - {buf_max}"
             print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
                   f"{buffer_size:<25}{calls:<15}{time:<20}")
+            j+=1
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
@@ -591,7 +594,10 @@ GROUP BY c.name, c.size, d.rank, o.operation;
     i = 0
     try:
         # Execute the query
-        cursor.execute(sql)
+        if MPI_prim == None:
+            cursor.execute(sql)
+        else:
+            cursor.execute(sql,(MPI_prim,))
 
         # Print header
         print_decoration(BOLD)
@@ -627,8 +633,6 @@ GROUP BY c.name, c.size, d.rank, o.operation;
             i += 1
 
 
-
-
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
     finally:
@@ -637,6 +641,69 @@ GROUP BY c.name, c.size, d.rank, o.operation;
             conn.close()
 
 
+def default_query_summary(dbpath,MPI_prim):
+    sql = """
+        SELECT
+        c.name AS comm_name,
+        c.size AS comm_size,
+        o.operation,
+        MIN(d.buffer_size_min) AS buffer_size_min,
+        MAX(d.buffer_size_max) AS buffer_size_max,
+        SUM(d.calls) AS calls,
+        MAX(d.time) AS time_s
+        FROM data d
+        JOIN comms c ON d.comm_id = c.id
+        JOIN operations o ON d.operation_id = o.id
+        WHERE o.operation = ?
+        GROUP BY c.name, c.size, d.rank, o.operation;
+        """
+
+    conn = sqlite3.connect(dbpath)
+    cursor = conn.cursor()
+    time = 0.0
+    try:
+        cursor.execute(sql,(MPI_prim,))
+
+        # Print header
+        print_decoration(BOLD)
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'MPI Operation':<20}"
+              f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}")
+        print_decoration(RESET)
+
+        data = cursor.fetchall()  # Retrieve all data
+
+        results = {}
+
+        for row in data:
+            comm_name, comm_size, operation, buf_min, buf_max, calls, time = row
+            key = (comm_name, comm_size, operation, buf_min, buf_max)
+            if key not in results or results[key]['time_s'] < time:
+                results[key] = {
+                'comm_name': comm_name,
+                'comm_size': comm_size,
+                'operation': operation,
+                'buffer_size_min': buf_min,
+                'buffer_size_max': buf_max,
+                'calls': calls,
+                'time_s': time
+            }
+        results = dict(sorted(results.items(), key=lambda item: item[1]['time_s'], reverse=True))
+        for result in results.values():
+            time += result['time_s']
+            buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
+            print(f"{result['comm_name']:<15}{result['comm_size']:<15}{result['operation']:<20}"
+                  f"{buffer_size:<25}{result['calls']:<15}{result['time_s']:<15.3f}")
+
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        print_decoration(BOLD)
+        print(f"\nTotal time for {MPI_prim}: {time:.3f} s")
+        print_decoration(RESET)
+        if conn:
+            conn.close()
 
 def clear_table_if_exists(db_path, table_name):
     conn = sqlite3.connect(db_path)
@@ -1242,7 +1309,7 @@ def main():
     parser.add_argument("-b", "--buffsize", type=str, required=False, help="Show the data for a specific buffer size range defined as min:max.")
     parser.add_argument("-t", "--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
     #parser.add_argument("-m", "--mpitime", action='store_true', required=False, help="Show MPI time of specific ranks. Shows all ranks by default.")
-    parser.add_argument("-m", "--mpiprim", action='store_true', required=False, help="Show the time of specific MPI operations. Shows all ranks by default.")
+    parser.add_argument("-m", "--mpiprim", required=False, type=str, default=None, help="Show the time of specific MPI operations. Shows all ranks by default.")
     parser.add_argument("-n", "--nresults", required=False, type=int, default=0, help="Show the first N results. By default all are printed.")
     parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
     args = parser.parse_args()
@@ -1342,11 +1409,14 @@ def main():
     elif args.all:
         query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
     else:
+        if args.mpiprim:
+            default_query_summary(db_path,MPI_prim=args.mpiprim)
         if args.nresults:
-            default_query(db_path,num_of_rows=args.nresults)
-        else:
-            default_query(db_path)
-            #print_data_by_prim(db_path,"Allreduce")
+            default_query(db_path,MPI_prim=None,num_of_rows=args.nresults)
+            #print_data_by_prim(db_path,"Allreduce",args.nresults)
+        #else:
+            #default_query(db_path)
+        #    print_data_by_prim(db_path,"Allreduce")
             #print_data_by_comm(db_path,comms)
 
         #query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
