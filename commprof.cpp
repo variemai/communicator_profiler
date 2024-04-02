@@ -1027,10 +1027,10 @@ MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *s
             requests_map.erase(array_of_requests[*index]);
 
         }
-        else{
-            mcpt_abort("mpisee: NULL COMMUNICATOR in MPI_Waitany\n");
-            return ret;
-        }
+        // else{
+        //     mcpt_abort("mpisee: NULL COMMUNICATOR in MPI_Waitany\n");
+        //     return ret;
+        // }
 
         free(comm_array);
     }
@@ -1056,10 +1056,6 @@ F77_MPI_WAITANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
     ret = MPI_Waitany(*count, c_array_of_requests, index, status);
 
     *ierr = (MPI_Fint)ret;
-    if ( ret == MPI_SUCCESS ) {
-        array_of_requests[*index] = MPI_Request_c2f(c_array_of_requests[*index]);
-        if ( *index >= 0 ) (*index)++;
-    }
     free(c_array_of_requests);
     return;
 
@@ -1176,10 +1172,6 @@ F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
     ret = MPI_Testany(*count, c_array_of_requests, index, flag, status);
 
     *ierr = (MPI_Fint)ret;
-    if ( ret == MPI_SUCCESS ) {
-        array_of_requests[*index] = MPI_Request_c2f(c_array_of_requests[*index]);
-        if ( *index >= 0 ) (*index)++;
-    }
     free(c_array_of_requests);
     return;
 
