@@ -553,7 +553,7 @@ GROUP BY c.name, c.size, d.rank, o.operation;
         for result in results.values():
             buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
             print(f"{result['comm_name']:<15}{result['comm_size']:<15}{result['rank']:<10}{result['operation']:<20}"
-                  f"{buffer_size:<20}{result['calls']:<15}{result['time_s']:<15}")  # Adjust formatting as needed
+                  f"{buffer_size:<25}{result['calls']:<15}{result['time_s']:<15}")  # Adjust formatting as needed
 
 
 
