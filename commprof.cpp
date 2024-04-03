@@ -65,11 +65,27 @@ namekey(void)
 
 extern "C" {
 int
+win_namedel(MPI_Comm comm, int keyval, void *attr, void *s){
+    MPI_Comm *com = (MPI_Comm*)attr;
+    free(com);
+    return MPI_SUCCESS;
+}
+}
+
+
+extern "C" {
+int
 win_namekey(void){
     static int win_keyval = MPI_KEYVAL_INVALID;
 
     if (win_keyval == MPI_KEYVAL_INVALID) {
-        MPI_Win_create_keyval(MPI_WIN_NULL_COPY_FN, MPI_WIN_NULL_DELETE_FN, &win_keyval, NULL);
+#ifdef MPICH_NAME
+        MPI_Win_create_keyval(MPI_WIN_NULL_COPY_FN, win_namedel, &win_keyval, NULL);
+#endif
+#ifdef OMPI_MAJOR_VERSION
+        PMPI_Win_create_keyval(MPI_WIN_NULL_COPY_FN, MPI_WIN_NULL_DELETE_FN, &win_keyval, NULL);
+#endif
+
     }
     return win_keyval;
 

@@ -12,7 +12,16 @@ MPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info,
     ret = PMPI_Win_create(base, size, disp_unit, info, comm, win);
     if (ret == MPI_SUCCESS)
     {
+ #ifdef MPICH_NAME
+        MPI_Comm *comm_ptr = (MPI_Comm *)malloc(sizeof(MPI_Comm));
+        *comm_ptr = comm;
+        MPI_Win_set_attr(*win, win_namekey(), comm_ptr);
+ #endif
+ #ifdef OMPI_MAJOR_VERSION
         MPI_Win_set_attr(*win, win_namekey(), comm);
+ #endif
+
+
     }
     return ret;
 }
