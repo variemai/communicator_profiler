@@ -11,6 +11,7 @@ import matplotlib.cm as cm
 import numpy as np
 import colorsys
 import operator
+import csv
 
 
 from signal import signal, SIGPIPE, SIG_DFL
@@ -1033,6 +1034,18 @@ def plot_mpi_operations_pie_chart(operations_names,mpi_operation_colors,avg_time
     plt.show()
     plt.close(fig)  # Close the figure to free memory
 
+def output_to_csv(plot_data,csv_file):
+    # Prepare the data for writing to a CSV file
+    rows = []
+    for operation, comm_data in plot_data.items():
+        for comm, avg_time in comm_data.items():
+            rows.append([operation, comm, avg_time])
+
+    # Write the data to a CSV file
+    with open(csv_file,'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Call', 'Communicator', 'Time'])
+        writer.writerows(rows)
 
 def plot_comms_ops_stacked_bar_chart(plot_data):
     # Define specific colors for each MPI operation
@@ -1045,19 +1058,21 @@ def plot_comms_ops_stacked_bar_chart(plot_data):
     colors = assign_colors(plot_data)
 
      # Calculate total average time for each communicator
+    #print(operations)
     communicator_totals = {}
     for op in operations:
         for comm_with_size, avg_time in plot_data[op].items():
             communicator_totals[comm_with_size] = communicator_totals.get(comm_with_size, 0) + avg_time
 
     # Sort communicators by total average time and select top 10
-    top_communicators = sorted(communicator_totals, key=communicator_totals.get, reverse=True)[:10]
+    top_communicators = sorted(communicator_totals, key=communicator_totals.get, reverse=True)[:20]
+    #print(top_communicators)
 
     # Prepare the plot data
     #communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
 
     # Set up the figure and axis
-    fig, ax = plt.subplots(figsize=(6, 4))
+    fig, ax = plt.subplots(figsize=(8, 5))
 
     # Bar width and spacing
     bar_width = 0.9  # You can adjust this value to change the bar width
@@ -1069,6 +1084,7 @@ def plot_comms_ops_stacked_bar_chart(plot_data):
 
     for op, color in zip(operations, colors):
         avg_times = [plot_data[op].get(comm_with_size, 0) for comm_with_size in top_communicators]
+        #print(avg_times, op)
         ax.bar(ind, avg_times, bar_width, label=op, color=color, bottom=bottoms)
         bottoms += np.array(avg_times)  # Increment the starting point for the next stack
 
@@ -1133,7 +1149,7 @@ def get_average_time_per_operation_top(db_path, n):
     JOIN comms c ON d.comm_id = c.id
     JOIN operations o ON d.operation_id = o.id
     GROUP BY o.operation, d.buffer_size_min, d.buffer_size_max, c.name
-    HAVING AVG(d.time) > 0.2
+    HAVING AVG(d.time) > 0.001
     ORDER BY avg_time DESC
     """
     plot_data = {}
@@ -1151,7 +1167,10 @@ def get_average_time_per_operation_top(db_path, n):
 
         # Get the top N MPI operations by the total average time
         sorted_ops = sorted(plot_data.items(), key=lambda item: sum(item[1].values()), reverse=True)
-        top_ops_data = dict(sorted_ops[:n])
+        if ( n > 0 ):
+            top_ops_data = dict(sorted_ops[:n])
+        else:
+           top_ops_data = dict(sorted_ops)
         return top_ops_data
 
     except sqlite3.Error as e:
@@ -1312,6 +1331,7 @@ def main():
     parser.add_argument("-m", "--mpiprim", required=False, type=str, default=None, help="Show the time of specific MPI operations. Shows all ranks by default.")
     parser.add_argument("-n", "--nresults", required=False, type=int, default=0, help="Show the first N results. By default all are printed.")
     parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
+    parser.add_argument("--csv", required=False, type=str, help="Output to a csv file")
     args = parser.parse_args()
 
     #header_path = '../utils.h'
@@ -1395,6 +1415,13 @@ def main():
             n = args.nresults
         data = get_average_time_per_operation_top(db_path,n)
         plot_comms_ops_stacked_bar_chart(data)
+    elif args.csv:
+        if not args.nresults:
+            n = 0
+        else:
+            n = args.nresults
+        data = get_average_time_per_operation_top(db_path,n)
+        output_to_csv(data,args.csv)
         #plot_mpi_operations_bar_chart(data)
     elif args.pt2pt:
         print_data_pt2pt(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax,enum_primitives['Ibsend'])
