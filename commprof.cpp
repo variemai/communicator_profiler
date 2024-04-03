@@ -29,6 +29,7 @@ int ac;
 char *av[MAX_ARGS];
 std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 std::vector<prof_attrs*> local_communicators;
+std::unordered_map<MPI_Win, MPI_Comm> comm_map;
 // int global_rank; // For debugging purposes
 
 /* Tool date */
@@ -278,7 +279,6 @@ _MPI_Init(int *argc, char ***argv){
     }
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     // global_rank = rank; // For debugging purposes
-
     local_communicators.push_back(communicator);
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
@@ -335,6 +335,7 @@ application %s\n",appname);
     local_cid++;
     local_communicators.push_back(communicator);
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    // global_rank = rank; // For debugging purposes
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }

@@ -13,9 +13,7 @@ MPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info,
     if (ret == MPI_SUCCESS)
     {
  #ifdef MPICH_NAME
-        MPI_Comm *comm_ptr = (MPI_Comm *)malloc(sizeof(MPI_Comm));
-        *comm_ptr = comm;
-        MPI_Win_set_attr(*win, win_namekey(), comm_ptr);
+        comm_map[*win] = comm;
  #endif
  #ifdef OMPI_MAJOR_VERSION
         MPI_Win_set_attr(*win, win_namekey(), comm);
@@ -47,21 +45,28 @@ MPI_Put(const void *origin_addr, int origin_count,
         MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp,
         int target_count, MPI_Datatype target_datatype, MPI_Win win)
 {
-    int ret, flag;
+    int ret;
     double t_elapsed;
-    MPI_Comm comm;
+    MPI_Comm comm = MPI_COMM_NULL;
     if (prof_enabled == 1){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Put(origin_addr, origin_count, origin_datatype, target_rank,
                    target_disp, target_count, target_datatype, win);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        #ifdef MPICH_NAME
+        comm = comm_map[win];
+        if (comm == MPI_COMM_NULL){
+            mcpt_abort("Window communicator not found\n");
+        }
+        #endif
+        #ifdef OMPI_MAJOR_VERSION
+        int flag;
         MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
         if (flag == 0){
             mcpt_abort("Window communicator not found\n");
         }
-        else{
-            profile_this(comm, origin_count, origin_datatype, Put ,t_elapsed, 0);
-        }
+        #endif
+        profile_this(comm, origin_count, origin_datatype, Put ,t_elapsed, 0);
     }
     else{
         ret = PMPI_Put(origin_addr, origin_count, origin_datatype, target_rank,
@@ -92,21 +97,28 @@ MPI_Rput(const void *origin_addr, int origin_count,
         MPI_Datatype origin_datatype, int target_rank, MPI_Aint target_disp,
         int target_count, MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
-    int ret, flag;
+    int ret;
     double t_elapsed;
-    MPI_Comm comm;
+    MPI_Comm comm = MPI_COMM_NULL;
     if (prof_enabled == 1){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Rput(origin_addr, origin_count, origin_datatype, target_rank,
                    target_disp, target_count, target_datatype, win, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        #ifdef MPICH_NAME
+        comm = comm_map[win];
+        if (comm == MPI_COMM_NULL){
+            mcpt_abort("Window communicator not found\n");
+        }
+        #endif
+        #ifdef OMPI_MAJOR_VERSION
+        int flag;
         MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
         if (flag == 0){
             mcpt_abort("Window communicator not found\n");
         }
-        else{
-            profile_this(comm, origin_count, origin_datatype, Rput ,t_elapsed, 0);
-        }
+        #endif
+        profile_this(comm, origin_count, origin_datatype, Rput ,t_elapsed, 0);
     }
     else{
         ret = PMPI_Rput(origin_addr, origin_count, origin_datatype, target_rank,
@@ -115,27 +127,52 @@ MPI_Rput(const void *origin_addr, int origin_count,
     return ret;
 }
 
+extern "C" {
+void mpi_rput_(const void *origin_addr, int *origin_count,
+        MPI_Fint *origin_datatype, int *target_rank, int *target_disp,
+        int *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *request, MPI_Fint *ierr)
+{
+    int ret;
+    MPI_Win c_win = MPI_Win_f2c(*win);
+    MPI_Datatype c_origin_datatype = MPI_Type_f2c(*origin_datatype);
+    MPI_Datatype c_target_datatype = MPI_Type_f2c(*target_datatype);
+    MPI_Request c_request;
+
+    ret = MPI_Rput(origin_addr, *origin_count, c_origin_datatype, *target_rank,
+                  *target_disp, *target_count, c_target_datatype, c_win, &c_request);
+    *request = MPI_Request_c2f(c_request);
+    *ierr = ret;
+}
+}
+
 int
 MPI_Accumulate(const void *origin_addr, int origin_count,
                MPI_Datatype origin_datatype, int target_rank,
                MPI_Aint target_disp, int target_count,
                MPI_Datatype target_datatype, MPI_Op op, MPI_Win win)
 {
-    int ret, flag;
+    int ret;
     double t_elapsed;
-    MPI_Comm comm;
+    MPI_Comm comm = MPI_COMM_NULL;
     if (prof_enabled == 1){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Accumulate(origin_addr, origin_count, origin_datatype, target_rank,
                    target_disp, target_count, target_datatype, op, win);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        #ifdef MPICH_NAME
+        comm = comm_map[win];
+        if (comm == MPI_COMM_NULL){
+            mcpt_abort("Window communicator not found\n");
+        }
+        #endif
+        #ifdef OMPI_MAJOR_VERSION
+        int flag;
         MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
         if (flag == 0){
             mcpt_abort("Window communicator not found\n");
         }
-        else{
-            profile_this(comm, origin_count, origin_datatype, Accumulate ,t_elapsed, 0);
-        }
+        #endif
+        profile_this(comm, origin_count, origin_datatype, Accumulate ,t_elapsed, 0);
     }
     else{
         ret = PMPI_Accumulate(origin_addr, origin_count, origin_datatype, target_rank,
@@ -168,21 +205,28 @@ MPI_Get(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
         int target_rank, MPI_Aint target_disp, int target_count,
         MPI_Datatype target_datatype, MPI_Win win)
 {
-    int ret, flag;
+    int ret;
     double t_elapsed;
-    MPI_Comm comm;
+    MPI_Comm comm = MPI_COMM_NULL;
     if (prof_enabled == 1){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Get(origin_addr, origin_count, origin_datatype, target_rank,
                    target_disp, target_count, target_datatype, win);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        #ifdef MPICH_NAME
+        comm = comm_map[win];
+        if (comm == MPI_COMM_NULL){
+            mcpt_abort("Window communicator not found\n");
+        }
+        #endif
+        #ifdef OMPI_MAJOR_VERSION
+        int flag;
         MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
         if (flag == 0){
             mcpt_abort("Window communicator not found\n");
         }
-        else{
-            profile_this(comm, target_count, target_datatype, Get ,t_elapsed, 0);
-        }
+        #endif
+        profile_this(comm, target_count, target_datatype, Get ,t_elapsed, 0);
     }
     else{
         ret = PMPI_Get(origin_addr, origin_count, origin_datatype, target_rank,
@@ -212,21 +256,28 @@ MPI_Rget(void *origin_addr, int origin_count, MPI_Datatype origin_datatype,
         int target_rank, MPI_Aint target_disp, int target_count,
         MPI_Datatype target_datatype, MPI_Win win, MPI_Request *request)
 {
-    int ret, flag;
+    int ret;
     double t_elapsed;
-    MPI_Comm comm;
+    MPI_Comm comm = MPI_COMM_NULL;
     if (prof_enabled == 1){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Rget(origin_addr, origin_count, origin_datatype, target_rank,
                    target_disp, target_count, target_datatype, win, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        #ifdef MPICH_NAME
+        comm = comm_map[win];
+        if (comm == MPI_COMM_NULL){
+            mcpt_abort("Window communicator not found\n");
+        }
+        #endif
+        #ifdef OMPI_MAJOR_VERSION
+        int flag;
         MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
         if (flag == 0){
             mcpt_abort("Window communicator not found\n");
         }
-        else{
-            profile_this(comm, target_count, target_datatype, Rget ,t_elapsed, 0);
-        }
+        #endif
+        profile_this(comm, target_count, target_datatype, Rget ,t_elapsed, 0);
     }
     else{
         ret = PMPI_Rget(origin_addr, origin_count, origin_datatype, target_rank,
@@ -256,20 +307,27 @@ void mpi_rget_(void *origin_addr, int *origin_count, MPI_Fint *origin_datatype,
 int
 MPI_Win_fence(int assert, MPI_Win win)
 {
-    int ret, flag;
+    int ret;
     double t_elapsed;
-    MPI_Comm comm;
+    MPI_Comm comm = MPI_COMM_NULL;
     if (prof_enabled == 1){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Win_fence(assert, win);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        #ifdef MPICH_NAME
+        comm = comm_map[win];
+        if (comm == MPI_COMM_NULL){
+            mcpt_abort("Window communicator not found\n");
+        }
+        #endif
+        #ifdef OMPI_MAJOR_VERSION
+        int flag;
         MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
         if (flag == 0){
             mcpt_abort("Window communicator not found\n");
         }
-        else{
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Fence ,t_elapsed, 0);
-        }
+        #endif
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Fence ,t_elapsed, 0);
     }
     else{
         ret = PMPI_Win_fence(assert, win);
@@ -291,20 +349,27 @@ void mpi_win_fence_(int *assert, MPI_Fint *win, MPI_Fint *ierr)
 int
 MPI_Win_start(MPI_Group group, int assert, MPI_Win win)
 {
-    int ret, flag;
+    int ret;
     double t_elapsed;
-    MPI_Comm comm;
+    MPI_Comm comm = MPI_COMM_NULL;
     if (prof_enabled == 1){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Win_start(group, assert, win);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        #ifdef MPICH_NAME
+        comm = comm_map[win];
+        if (comm == MPI_COMM_NULL){
+            mcpt_abort("Window communicator not found\n");
+        }
+        #endif
+        #ifdef OMPI_MAJOR_VERSION
+        int flag;
         MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
         if (flag == 0){
             mcpt_abort("Window communicator not found\n");
         }
-        else{
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_start ,t_elapsed, 0);
-        }
+        #endif
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_start ,t_elapsed, 0);
     }
     else{
         ret = PMPI_Win_start(group, assert, win);
@@ -327,20 +392,27 @@ void mpi_win_start_(MPI_Fint *group, int *assert, MPI_Fint *win, MPI_Fint *ierr)
 int
 MPI_Win_complete(MPI_Win win)
 {
-    int ret, flag;
+    int ret;
     double t_elapsed;
-    MPI_Comm comm;
+    MPI_Comm comm = MPI_COMM_NULL;
     if (prof_enabled == 1){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Win_complete(win);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        #ifdef MPICH_NAME
+        comm = comm_map[win];
+        if (comm == MPI_COMM_NULL){
+            mcpt_abort("Window communicator not found\n");
+        }
+        #endif
+        #ifdef OMPI_MAJOR_VERSION
+        int flag;
         MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
         if (flag == 0){
             mcpt_abort("Window communicator not found\n");
         }
-        else{
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_complete ,t_elapsed, 0);
-        }
+        #endif
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_complete ,t_elapsed, 0);
     }
     else{
         ret = PMPI_Win_complete(win);
@@ -362,20 +434,27 @@ void mpi_win_complete_(MPI_Fint *win, MPI_Fint *ierr)
 int
 MPI_Win_post(MPI_Group group, int assert, MPI_Win win)
 {
-    int ret, flag;
+    int ret;
     double t_elapsed;
-    MPI_Comm comm;
+    MPI_Comm comm = MPI_COMM_NULL;
     if (prof_enabled == 1){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Win_post(group, assert, win);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        #ifdef MPICH_NAME
+        comm = comm_map[win];
+        if (comm == MPI_COMM_NULL){
+            mcpt_abort("Window communicator not found\n");
+        }
+        #endif
+        #ifdef OMPI_MAJOR_VERSION
+        int flag;
         MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
         if (flag == 0){
             mcpt_abort("Window communicator not found\n");
         }
-        else{
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_post ,t_elapsed, 0);
-        }
+        #endif
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_post ,t_elapsed, 0);
     }
     else{
         ret = PMPI_Win_post(group, assert, win);
@@ -398,20 +477,27 @@ void mpi_win_post_(MPI_Fint *group, int *assert, MPI_Fint *win, MPI_Fint *ierr)
 int
 MPI_Win_wait(MPI_Win win)
 {
-    int ret, flag;
+    int ret;
     double t_elapsed;
-    MPI_Comm comm;
+    MPI_Comm comm = MPI_COMM_NULL;
     if (prof_enabled == 1){
         t_elapsed = MPI_Wtime();
         ret = PMPI_Win_wait(win);
         t_elapsed = MPI_Wtime() - t_elapsed;
+        #ifdef MPICH_NAME
+        comm = comm_map[win];
+        if (comm == MPI_COMM_NULL){
+            mcpt_abort("Window communicator not found\n");
+        }
+        #endif
+        #ifdef OMPI_MAJOR_VERSION
+        int flag;
         MPI_Win_get_attr(win, win_namekey(), &comm, &flag);
         if (flag == 0){
             mcpt_abort("Window communicator not found\n");
         }
-        else{
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_wait ,t_elapsed, 0);
-        }
+        #endif
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_wait ,t_elapsed, 0);
     }
     else{
         ret = PMPI_Win_wait(win);
