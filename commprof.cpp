@@ -30,6 +30,7 @@ char *av[MAX_ARGS];
 std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 std::vector<prof_attrs*> local_communicators;
 std::unordered_map<MPI_Win, MPI_Comm> comm_map;
+std::vector<MPI_Comm> comms_table;
 // int global_rank; // For debugging purposes
 
 /* Tool date */
@@ -280,6 +281,7 @@ _MPI_Init(int *argc, char ***argv){
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     // global_rank = rank; // For debugging purposes
     local_communicators.push_back(communicator);
+    comms_table.push_back(MPI_COMM_WORLD);
     if ( rc != MPI_SUCCESS ){
         mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
     }
@@ -674,6 +676,7 @@ MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
     init_comm(buf, &communicator, old_comm, comm_cart);
     free(buf);
     PMPI_Comm_set_attr(*comm_cart, namekey(), communicator);
+    comms_table.push_back(*comm_cart);
     return ret;
 }
 
@@ -1201,6 +1204,13 @@ MPI_Comm_free(MPI_Comm *comm)
 {
     int ret,flag;
     prof_attrs *com_info, *tmp;
+    // Find the communicator in the comms_table and remove it
+    auto it = std::find(comms_table.begin(), comms_table.end(), *comm);
+    if (it != comms_table.end()) {
+        comms_table.erase(it);
+    } else {
+        mcpt_abort("Comm_free: Comm not found in comms_table\n");
+    }
     PMPI_Comm_get_attr(*comm, namekey(), &tmp, &flag);
     if (flag) {
         auto it = std::find(local_communicators.begin(), local_communicators.end(), tmp);
@@ -1241,7 +1251,7 @@ F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
 static int
 _Finalize(void) {
     prof_attrs *array = NULL;
-    int rank, size;
+    int rank, size, temp_rank;
     int i, k, j, len;
     prof_attrs *recv_buffer = NULL;
     int  num_of_comms, resultlen;
@@ -1260,6 +1270,11 @@ _Finalize(void) {
     num_of_comms = local_communicators.size();
 
     // Do all processes have the same number of communicators?
+    std::cout << "mpisee: comms_table size = " << comms_table.size() << std::endl;
+    // Iterate over the communicator and call an MPI_Allreduce
+    for(int i = 0; i < comms_table.size(); i++) {
+        MPI_Comm_rank(comms_table[i], &temp_rank);
+    }
     recvcounts = (int *)malloc(sizeof(int) * size);
     if (recvcounts == NULL) {
         mcpt_abort("malloc error for recvcounts Rank: %d\n", rank);

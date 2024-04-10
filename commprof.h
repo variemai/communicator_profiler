@@ -10,6 +10,7 @@ extern int prof_enabled;
 extern prof_attrs **local_data;
 // extern prof_attrs **local_comms;
 extern std::vector<prof_attrs*> local_communicators;
+extern std::vector<MPI_Comm> comms_table;
 extern std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 extern std::unordered_map<MPI_Win, MPI_Comm> comm_map;
 extern int local_cid;
