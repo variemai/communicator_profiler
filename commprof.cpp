@@ -24,7 +24,7 @@
 
 int prof_enabled = 1;
 int local_cid= 0;
-int my_coms = 1;
+int my_coms = 0;
 int ac;
 char *av[MAX_ARGS];
 std::unordered_map<MPI_Request, MPI_Comm> requests_map;
@@ -34,7 +34,7 @@ std::vector<MPI_Comm> comms_table;
 // int global_rank; // For debugging purposes
 
 /* Tool date */
-int mpisee_major_version = 1;
+int mpisee_major_version = 2;
 int mpisee_minor_version = 0;
 char mpisee_build_date[sizeof(__DATE__)] = __DATE__;
 char mpisee_build_time[sizeof(__TIME__)] = __TIME__;
@@ -147,8 +147,9 @@ init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
         }
 
     }
-    local_communicators.push_back(*communicator);
     my_coms++;
+    (*communicator)->comms = my_coms;
+    local_communicators.push_back(*communicator);
     local_cid++;
     return;
 }
@@ -197,6 +198,26 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
         fprintf(stderr, "mpisee: empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
     }
     return communicator;
+}
+}
+
+// Temporary function to overwrite the name of the communicator
+extern "C" {
+void
+overwrite_name(MPI_Comm comm, int id0, int id1) {
+    int flag, requiredSize;
+    prof_attrs *communicator = NULL;
+    PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    if (flag) {
+        requiredSize = snprintf(NULL,0, "%d.%d", id0, id1);
+        char *newName = (char *)malloc(requiredSize + 1);
+        snprintf(newName, requiredSize + 1, "%d.%d", id0, id1);
+        strcpy(communicator->name, newName);
+        free(newName);
+    }
+    else {
+        fprintf(stderr, "mpisee: empty flag when overwriting name - this might be a bug\n");
+    }
 }
 }
 
@@ -278,6 +299,7 @@ _MPI_Init(int *argc, char ***argv){
             communicator->buckets_msgs[i][j] = 0;
         }
     }
+    communicator->comms = my_coms;
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
     // global_rank = rank; // For debugging purposes
     local_communicators.push_back(communicator);
@@ -530,6 +552,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     init_comm(buf, &communicator, comm, newcomm);
     free(buf);
     PMPI_Comm_set_attr(*newcomm, namekey(), communicator);
+    comms_table.push_back(*newcomm);
     return ret;
 }
 
@@ -616,10 +639,10 @@ MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
     // requests_map[*request] = comm;
 // #endif
 
-    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
-    my_coms = comms;
-    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
-        return ret;
+    //PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
+    //my_coms = comms;
+    //if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
+    //    return ret;
     communicator = get_comm_name(comm);
     buf = (char *)malloc(sizeof(char) * 8);
     if (buf == NULL) {
@@ -1202,8 +1225,18 @@ F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
 int
 MPI_Comm_free(MPI_Comm *comm)
 {
-    int ret,flag;
+    int ret,flag, temp_rank, temp_root, rank, buf[2] = {-1, -1};
     prof_attrs *com_info, *tmp;
+
+    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    PMPI_Comm_rank(*comm, &temp_rank);
+    PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, *comm);
+    buf[0] = rank;
+    buf[1] = my_coms;
+    PMPI_Bcast(buf, 2, MPI_INT, temp_root, *comm);
+    overwrite_name(*comm, buf[0], buf[1]);
+
     // Find the communicator in the comms_table and remove it
     auto it = std::find(comms_table.begin(), comms_table.end(), *comm);
     if (it != comms_table.end()) {
@@ -1251,8 +1284,9 @@ F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
 static int
 _Finalize(void) {
     prof_attrs *array = NULL;
-    int rank, size, temp_rank;
-    int i, k, j, len;
+    prof_attrs *com_info = NULL;
+    int rank, size, temp_rank, temp_root, buf[2] = {-1, -1};
+    int i, k, j, len,flag;
     prof_attrs *recv_buffer = NULL;
     int  num_of_comms, resultlen;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
@@ -1272,9 +1306,16 @@ _Finalize(void) {
     // Do all processes have the same number of communicators?
     std::cout << "mpisee: comms_table size = " << comms_table.size() << std::endl;
     // Iterate over the communicator and call an MPI_Allreduce
-    for(int i = 0; i < comms_table.size(); i++) {
-        MPI_Comm_rank(comms_table[i], &temp_rank);
+    for(i = 0; i < comms_table.size(); i++) {
+        PMPI_Comm_rank(comms_table[i], &temp_rank);
+        PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, comms_table[i]);
+        PMPI_Attr_get(comms_table[i], namekey(), &com_info, &flag);
+        buf[0] = rank;
+        buf[1] = com_info->comms;
+        PMPI_Bcast(buf, 2, MPI_INT, temp_root, comms_table[i]);
+        overwrite_name(comms_table[i], buf[0], buf[1]);
     }
+
     recvcounts = (int *)malloc(sizeof(int) * size);
     if (recvcounts == NULL) {
         mcpt_abort("malloc error for recvcounts Rank: %d\n", rank);
@@ -1312,24 +1353,25 @@ _Finalize(void) {
     }
 
     MPI_Datatype profiler_data;
-    MPI_Aint base, displacements[4];
-    int blocklengths[4] = {NAMELEN, 1, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS};
-    MPI_Datatype types[4] = {MPI_CHAR, MPI_INT, MPI_DOUBLE, MPI_UINT64_T};
+    MPI_Aint base, displacements[5];
+    int blocklengths[5] = {NAMELEN, 1, 1, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS};
+    MPI_Datatype types[5] = {MPI_CHAR, MPI_INT, MPI_INT, MPI_DOUBLE, MPI_UINT64_T};
     prof_attrs dummy;
 
     // Create a dummy instance to calculate displacements
     MPI_Get_address(&dummy, &base);
     MPI_Get_address(&dummy.name, &displacements[0]);
     MPI_Get_address(&dummy.size, &displacements[1]);
-    MPI_Get_address(&dummy.buckets_time, &displacements[2]);
-    MPI_Get_address(&dummy.buckets_msgs, &displacements[3]);
+    MPI_Get_address(&dummy.comms, &displacements[2]);
+    MPI_Get_address(&dummy.buckets_time, &displacements[3]);
+    MPI_Get_address(&dummy.buckets_msgs, &displacements[4]);
 
     // Convert addresses to displacements
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 5; i++) {
         displacements[i] = MPI_Aint_diff(displacements[i], base);
     }
 
-    MPI_Type_create_struct(4, blocklengths, displacements, types, &profiler_data);
+    MPI_Type_create_struct(5, blocklengths, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
 
@@ -1458,6 +1500,9 @@ _Finalize(void) {
             numElements = recvcounts[proc];
 
           for (j = 0; j < numElements; ++j) {
+              std::cout << "mpisee: Name = " << recv_buffer[startIdx + j].name
+                        << ", size = " << recv_buffer[startIdx + j].size
+                        << std::endl;
               comms.push_back({recv_buffer[startIdx + j].name,
                       recv_buffer[startIdx + j].size});
           }
