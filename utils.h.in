@@ -111,6 +111,7 @@ struct DataEntry {
 typedef struct profiler_attributes{
     char name[NAMELEN];
     int size;
+    int comms;
     double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS];
     uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
 }prof_attrs;
