@@ -110,19 +110,19 @@ get_comm_name(MPI_Comm comm)
         mcpt_abort("malloc get_comm_name failed\nAborting...\n");
     }
     memset(communicator, 0, sizeof(prof_attrs));
-    if ( comm != MPI_COMM_WORLD ){
-        PMPI_Comm_get_attr(comm, namekey(), &com_info, &flag);
-        if ( flag ){
-            strcpy(communicator->name, com_info->name);
-        }
-        else{
-            mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",
-                       __FILE__,__LINE__);
-        }
-    }
-    else{
-        strcpy(communicator->name, "W");
-    }
+    // if ( comm != MPI_COMM_WORLD ){
+        // PMPI_Comm_get_attr(comm, namekey(), &com_info, &flag);
+        // if ( flag ){
+        //     strcpy(communicator->name, com_info->name);
+        // }
+        // else{
+        //     mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",
+        //                __FILE__,__LINE__);
+        // }
+    // }
+    // else{
+    //     strcpy(communicator->name, "W");
+    // }
     return communicator;
 }
 }
@@ -132,13 +132,13 @@ void
 init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm){
     size_t length;
     int comm_size,i,j;
-    if ( buf == NULL || communicator == NULL ||
-         comm == MPI_COMM_NULL || newcomm == NULL){
-        mcpt_abort("Newcomm called with NULL\n");
-    }
+    // if ( buf == NULL || communicator == NULL ||
+    //      comm == MPI_COMM_NULL || newcomm == NULL){
+    //     mcpt_abort("Newcomm called with NULL\n");
+    // }
     PMPI_Comm_size(*newcomm, &comm_size);
     length = strlen((*communicator)->name);
-    strcpy(&(*communicator)->name[length], buf);
+    // strcpy(&(*communicator)->name[length], buf);
     (*communicator)->size = comm_size;
     for (i = 0; i < NUM_OF_PRIMS; i++) {
         for (j = 0; j < NUM_BUCKETS; j++) {
@@ -520,18 +520,18 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
      * parent communicator. Even if Comm_split fails for a process
      * that process must call this Allreduce
      */
-    PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
-    my_coms = comms;
-    if ( *newcomm == MPI_COMM_NULL ){
-        return ret;
-    }
-    PMPI_Comm_rank(comm, &rank);
+    // PMPI_Allreduce(&my_coms, &comms, 1, MPI_INT, MPI_MAX, comm);
+    // my_coms = comms;
+    // if ( *newcomm == MPI_COMM_NULL ){
+    //     return ret;
+    // }
+    // PMPI_Comm_rank(comm, &rank);
     /*
      * Get the minimum rank. Note that the rank is the rank from the parent
      * communicator. Every new communicator will have an id based on the
      * minimum rank of a process in the parent communicator
      */
-    PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
+    // PMPI_Allreduce(&rank, &min_rank, 1, MPI_INT, MPI_MIN, *newcomm);
     /* Use the parent's name as a prefix for the newly created communicator */
     communicator = get_comm_name(comm);
     buf = (char *)malloc(sizeof(char) * 16);
@@ -1232,8 +1232,9 @@ MPI_Comm_free(MPI_Comm *comm)
 
     PMPI_Comm_rank(*comm, &temp_rank);
     PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, *comm);
+    PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
     buf[0] = rank;
-    buf[1] = my_coms;
+    buf[1] = com_info->comms;
     PMPI_Bcast(buf, 2, MPI_INT, temp_root, *comm);
     overwrite_name(*comm, buf[0], buf[1]);
 
@@ -1306,10 +1307,10 @@ _Finalize(void) {
     // Do all processes have the same number of communicators?
     std::cout << "mpisee: comms_table size = " << comms_table.size() << std::endl;
     // Iterate over the communicator and call an MPI_Allreduce
-    for(i = 0; i < comms_table.size(); i++) {
+    for(long unsigned i = 0; i < comms_table.size(); ++i) {
         PMPI_Comm_rank(comms_table[i], &temp_rank);
         PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, comms_table[i]);
-        PMPI_Attr_get(comms_table[i], namekey(), &com_info, &flag);
+        PMPI_Comm_get_attr(comms_table[i], namekey(), &com_info, &flag);
         buf[0] = rank;
         buf[1] = com_info->comms;
         PMPI_Bcast(buf, 2, MPI_INT, temp_root, comms_table[i]);
@@ -1440,7 +1441,7 @@ _Finalize(void) {
         }
 
         PMPI_Get_library_version(version, &resultlen);
-        for (i = 0; i < strlen(version); i++)
+        for (size_t i = 0; i < strlen(version); i++)
         {
             if(version[i] == '\n')
             {
@@ -1524,7 +1525,7 @@ _Finalize(void) {
           numElements = recvcounts[proc];
 
           for (j = 0; j < numElements; ++j) {
-            if (i < commIds.size()) {
+            if (i < (int)commIds.size()) {
                 commId = commIds[i];
             } else {
               std::cout << "mpisee: index in commids (" << i
