@@ -450,22 +450,57 @@ void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
 
 void executeBatchInsert(sqlite3* db, const std::vector<DataEntry>& entries) {
     // Start transaction
+    // executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
+
+    // for (const auto& entry : entries) {
+    //     std::string insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES ("
+    //                             + std::to_string(entry.rank) + ", "
+    //                             + std::to_string(entry.commId) + ", "
+    //                             + std::to_string(entry.operationId) + ", "
+    //                             + std::to_string(entry.bufferSizeMax) + ", "
+    //                             + std::to_string(entry.bufferSizeMin) + ", "
+    //                             + std::to_string(entry.calls) + ", "
+    //                             + std::to_string(entry.time) + ")";
+    //     executeSQL(db, insertSql, "INSERT INTO data");
+    // }
+
+    // // Commit transaction
+    // executeSQL(db, "END TRANSACTION", "End Transaction");
+
+    const std::string insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+    sqlite3_stmt *stmt;
+    int result = sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        std::cerr << "Error preparing statement: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+
+    // Start a single transaction
     executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
 
     for (const auto& entry : entries) {
-        std::string insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES ("
-                                + std::to_string(entry.rank) + ", "
-                                + std::to_string(entry.commId) + ", "
-                                + std::to_string(entry.operationId) + ", "
-                                + std::to_string(entry.bufferSizeMax) + ", "
-                                + std::to_string(entry.bufferSizeMin) + ", "
-                                + std::to_string(entry.calls) + ", "
-                                + std::to_string(entry.time) + ")";
-        executeSQL(db, insertSql, "INSERT INTO data");
+        sqlite3_bind_int(stmt, 1, entry.rank);
+        sqlite3_bind_int(stmt, 2, entry.commId);
+        sqlite3_bind_int(stmt, 3, entry.operationId);
+        sqlite3_bind_int(stmt, 4, entry.bufferSizeMax);
+        sqlite3_bind_int(stmt, 5, entry.bufferSizeMin);
+        sqlite3_bind_int(stmt, 6, entry.calls);
+        sqlite3_bind_double(stmt, 7, entry.time);
+
+        result = sqlite3_step(stmt);
+        if (result != SQLITE_DONE) {
+            std::cerr << "Error during insert: " << sqlite3_errmsg(db) << std::endl;
+        }
+
+        sqlite3_reset(stmt); // Reset bindings for the next insertion
     }
 
-    // Commit transaction
+    // Commit the transaction
     executeSQL(db, "END TRANSACTION", "End Transaction");
+
+    sqlite3_finalize(stmt);
+
 }
 
 
