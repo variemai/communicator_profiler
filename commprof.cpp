@@ -100,14 +100,20 @@ prof_attrs*
 alloc_init_commprof(MPI_Comm comm, char c)
 {
     prof_attrs *comm_prof = NULL;
-    int comm_size;
+    int comm_size,i,j;
     comm_prof = (prof_attrs*) malloc(sizeof(prof_attrs));
     if (comm_prof == NULL){
         mcpt_abort("malloc alloc_init_commprof failed\nAborting...\n");
     }
     PMPI_Comm_size(comm, &comm_size);
     comm_prof->size = comm_size;
-    // Buckets are already initialized to 0
+    // Initialize the buckets
+    for (i = 0; i < NUM_OF_PRIMS; i++) {
+        for (j = 0; j < NUM_BUCKETS; j++) {
+            comm_prof->buckets_time[i][j] = 0.0;
+            comm_prof->buckets_msgs[i][j] = 0;
+        }
+    }
     comm_prof->id = c;
     my_coms++;
     comm_prof->comms = my_coms;

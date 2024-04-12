@@ -113,8 +113,8 @@ typedef struct profiler_attributes{
     int size;
     int comms;
     char id;
-    double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS] = {{0.0}};
-    uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS] = {{0}};
+    double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS];
+    uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
 }prof_attrs;
 
 typedef struct profiler_data{
