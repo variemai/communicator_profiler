@@ -5,7 +5,7 @@
 #include <mpi.h>
 #include <unistd.h>
 #include <string>
-#define NAMELEN 256
+#define NAMELEN 32
 #define NUM_OF_PRIMS 74
 #define MAX_ARG_STRING_SIZE 4096
 #define MAX_ARGS 1024
@@ -112,9 +112,17 @@ typedef struct profiler_attributes{
     char name[NAMELEN];
     int size;
     int comms;
+    char id;
+    double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS] = {{0.0}};
+    uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS] = {{0}};
+}prof_attrs;
+
+typedef struct profiler_data{
+    char name[NAMELEN];
+    int size;
     double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS];
     uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
-}prof_attrs;
+}prof_data;
 
 typedef struct request_data{
     MPI_Request *req;
