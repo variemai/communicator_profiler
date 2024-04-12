@@ -105,7 +105,6 @@ alloc_init_commprof(MPI_Comm comm, char c)
     if (comm_prof == NULL){
         mcpt_abort("malloc alloc_init_commprof failed\nAborting...\n");
     }
-    memset(comm_prof, 0, sizeof(prof_attrs));
     PMPI_Comm_size(comm, &comm_size);
     comm_prof->size = comm_size;
     // Buckets are already initialized to 0
@@ -131,7 +130,7 @@ get_comm_name(MPI_Comm comm)
     if (communicator == NULL){
         mcpt_abort("malloc get_comm_name failed\nAborting...\n");
     }
-    memset(communicator, 0, sizeof(prof_attrs));
+    //memset(communicator, 0, sizeof(prof_attrs));
     // if ( comm != MPI_COMM_WORLD ){
         // PMPI_Comm_get_attr(comm, namekey(), &com_info, &flag);
         // if ( flag ){
