@@ -97,15 +97,14 @@ win_namekey(void){
 // Initialize the profiling structure for the communicator
 // Called by communicator creation functions
 prof_attrs*
-alloc_init_commprof(MPI_Comm comm, char c)
+alloc_init_commprof(int comm_size, char c)
 {
     prof_attrs *comm_prof = NULL;
-    int comm_size,i,j;
+    int i,j;
     comm_prof = (prof_attrs*) malloc(sizeof(prof_attrs));
     if (comm_prof == NULL){
         mcpt_abort("malloc alloc_init_commprof failed\nAborting...\n");
     }
-    PMPI_Comm_size(comm, &comm_size);
     comm_prof->size = comm_size;
     // Initialize the buckets
     for (i = 0; i < NUM_OF_PRIMS; i++) {
@@ -466,12 +465,12 @@ MPI_Init(int *argc, char ***argv)
 int
 MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
 {
-    int ret;
+    int ret, comm_size;
     prof_attrs *com_prof;
     ret = PMPI_Comm_create(comm, group, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
-
+    PMPI_Comm_size(*newcomm, &comm_size);
     com_prof = alloc_init_commprof(*newcomm,'c');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
@@ -508,12 +507,13 @@ F77_MPI_COMM_CREATE(MPI_Fint  * comm, MPI_Fint  * group, MPI_Fint  *comm_out ,
 int
 MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
 {
-    int ret;
+    int ret, comm_size;
     prof_attrs *com_prof;
     ret = PMPI_Comm_split(comm, color, key, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
-    com_prof = alloc_init_commprof(*newcomm,'s');
+    PMPI_Comm_size(comm, &comm_size);
+    com_prof = alloc_init_commprof(comm_size,'s');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
     return ret;
@@ -539,12 +539,13 @@ F77_MPI_COMM_SPLIT(MPI_Fint  * comm, int  * color, int  * key,
 int
 MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
 {
-    int ret;
+    int ret,comm_size;
     prof_attrs *com_prof;
     ret = PMPI_Comm_dup(comm, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
-    com_prof = alloc_init_commprof(*newcomm,'d');
+    PMPI_Comm_size(comm, &comm_size);
+    com_prof = alloc_init_commprof(comm_size,'d');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
     return ret;
@@ -570,11 +571,14 @@ int
 MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
 {
 
-    int ret;
+    int ret,comm_size;
     prof_attrs *com_prof;
     ret = PMPI_Comm_idup(comm, newcomm, request);
+    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
+        return ret;
+    PMPI_Comm_size(comm, &comm_size);
     requests_map[*request] = comm;
-    com_prof = alloc_init_commprof(*newcomm,'i');
+    com_prof = alloc_init_commprof(comm_size,'i');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
     return ret;
@@ -603,13 +607,14 @@ int
 MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
                 const int *periods, int reorder, MPI_Comm *comm_cart)
 {
-    int ret;
+    int ret,comm_size;
     prof_attrs *com_prof;
     ret = PMPI_Cart_create(old_comm, ndims, dims, periods, reorder, comm_cart);
     if ( comm_cart == NULL || *comm_cart == MPI_COMM_NULL ){
         return ret;
     }
-    com_prof = alloc_init_commprof(*comm_cart, 'a');
+    PMPI_Comm_size(old_comm, &comm_size);
+    com_prof = alloc_init_commprof(comm_size, 'a');
     PMPI_Comm_set_attr(*comm_cart, namekey(), com_prof);
     comms_table.push_back(*comm_cart);
     return ret;
@@ -637,14 +642,15 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, const int  *dims,
 int
 MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
 {
-    int ret;
+    int ret,comm_size;
     prof_attrs *com_prof;
 
     ret = PMPI_Cart_sub(comm, remain_dims, new_comm);
     if ( new_comm == NULL || *new_comm == MPI_COMM_NULL ){
         return ret;
     }
-    com_prof = alloc_init_commprof(*new_comm, 'b');
+    PMPI_Comm_size(comm, &comm_size);
+    com_prof = alloc_init_commprof(comm_size, 'b');
     PMPI_Comm_set_attr(*new_comm, namekey(), com_prof);
     comms_table.push_back(*new_comm);
     return ret;
@@ -671,14 +677,15 @@ int
 MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
                  const int *edges, int reorder, MPI_Comm *comm_graph)
 {
-    int ret;
+    int ret,comm_size;
     prof_attrs *com_prof;
 
     ret = PMPI_Graph_create(comm_old, nnodes, index, edges, reorder, comm_graph);
     if ( comm_graph == NULL || *comm_graph == MPI_COMM_NULL ){
         return ret;
     }
-    com_prof = alloc_init_commprof(*comm_graph, 'r');
+    PMPI_Comm_size(comm_old, &comm_size);
+    com_prof = alloc_init_commprof(comm_size, 'r');
     PMPI_Comm_set_attr(*comm_graph, namekey(), com_prof);
     comms_table.push_back(*comm_graph);
     return ret;
@@ -715,13 +722,14 @@ MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int *nodes,
                       const int *weights, MPI_Info info, int reorder,
                       MPI_Comm *newcomm)
 {
-    int ret;
+    int ret,comm_size;
     prof_attrs *com_prof;
     ret = PMPI_Dist_graph_create(comm_old, n, nodes, degrees, targets, weights, info, reorder, newcomm);
         if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
     }
-    com_prof = alloc_init_commprof(*newcomm, 'g');
+    PMPI_Comm_size(comm_old, &comm_size);
+    com_prof = alloc_init_commprof(comm_size, 'g');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
 
@@ -753,14 +761,15 @@ mpi_dist_graph_create_(MPI_Fint *comm_old, int *n, const int *nodes,
 int
 MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
                     MPI_Comm *newcomm){
-    int ret;
+    int ret,comm_size;
     prof_attrs *com_prof;
 
     ret = PMPI_Comm_split_type(comm, split_type, key, info, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
     }
-    com_prof = alloc_init_commprof(*newcomm, 't');
+    PMPI_Comm_size(comm, &comm_size);
+    com_prof = alloc_init_commprof(comm_size, 't');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
     return ret;
@@ -787,13 +796,14 @@ F77_MPI_COMM_SPLIT_TYPE(MPI_Fint  * comm, int  * split_type, int  * key,
 int
 MPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *newcomm)
 {
-    int ret;
+    int ret, comm_size;
     prof_attrs *com_prof;
     ret = PMPI_Comm_create_group(comm, group, tag, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
     }
-    com_prof = alloc_init_commprof(*newcomm, 'u');
+    PMPI_Comm_size(comm, &comm_size);
+    com_prof = alloc_init_commprof(comm_size, 'u');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
     return ret;
@@ -1107,17 +1117,17 @@ F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
 int
 MPI_Comm_free(MPI_Comm *comm)
 {
-    int ret,flag, temp_rank, temp_root, rank, buf[2] = {-1, -1};
+    int ret,flag, temp_rank, rank, buf[2] = {-1, -1};
     prof_attrs *com_info, *tmp;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     PMPI_Comm_rank(*comm, &temp_rank);
-    PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, *comm);
+    //PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, *comm);
     PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
     buf[0] = rank;
     buf[1] = com_info->comms;
-    PMPI_Bcast(buf, 2, MPI_INT, temp_root, *comm);
+    PMPI_Bcast(buf, 2, MPI_INT, 0, *comm);
     overwrite_name(*comm, buf[0], buf[1], com_info->id);
 
     // Find the communicator in the comms_table and remove it
@@ -1168,7 +1178,7 @@ static int
 _Finalize(void) {
     prof_data *array = NULL;
     prof_attrs *com_info = NULL;
-    int rank, size, temp_rank, temp_root, buf[2] = {-1, -1};
+    int rank, size, temp_rank, buf[2] = {-1, -1};
     int i, k, j, len,flag;
     prof_data *recv_buffer = NULL;
     int  num_of_comms, resultlen;
@@ -1190,11 +1200,11 @@ _Finalize(void) {
     // Iterate over the communicator and call an MPI_Allreduce
     for(long unsigned i = 0; i < comms_table.size(); ++i) {
         PMPI_Comm_rank(comms_table[i], &temp_rank);
-        PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, comms_table[i]);
+        //PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, comms_table[i]);
         PMPI_Comm_get_attr(comms_table[i], namekey(), &com_info, &flag);
         buf[0] = rank;
         buf[1] = com_info->comms;
-        PMPI_Bcast(buf, 2, MPI_INT, temp_root, comms_table[i]);
+        PMPI_Bcast(buf, 2, MPI_INT, 0, comms_table[i]);
         overwrite_name(comms_table[i], buf[0], buf[1],com_info->id);
     }
 
