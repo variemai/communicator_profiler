@@ -471,7 +471,7 @@ MPI_Comm_create(MPI_Comm comm, MPI_Group group, MPI_Comm *newcomm)
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
     PMPI_Comm_size(*newcomm, &comm_size);
-    com_prof = alloc_init_commprof(*newcomm,'c');
+    com_prof = alloc_init_commprof(comm_size,'c');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
     return ret;
