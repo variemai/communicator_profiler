@@ -228,27 +228,27 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
 // Compose the communicator's name
 // Called only in Finalize and Comm_free
 void
-overwrite_name(MPI_Comm comm, int id0, int id1, char c) {
-    int flag, requiredSize,r;
-    prof_attrs *communicator = NULL;
+overwrite_name(prof_attrs **com_prof, int id0, int id1) {
+    int requiredSize,r;
+    //prof_attrs *communicator = NULL;
 
-    PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
-    if (flag) {
-        requiredSize = snprintf(NULL,0, "%c%d.%d",c, id0, id1);
+    //PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    //if (flag) {
+        requiredSize = snprintf(NULL,0, "%c%d.%d",(*com_prof)->id, id0, id1);
         if (requiredSize < 0 || requiredSize + 1 >= NAMELEN) {
             mcpt_abort("Error during initial size calculation (snprintf)\n");
         }
         // +1 for the null terminator
-        r = snprintf(communicator->name, requiredSize + 1, "%c%d.%d",c, id0, id1);
+        r = snprintf((*com_prof)->name, requiredSize + 1, "%c%d.%d",(*com_prof)->id, id0, id1);
         if (r < 0) {
             mcpt_abort("Error during final formatting (snprintf)\n");
         } else if (r >= NAMELEN) {
             mcpt_abort("Name truncated during formatting\n");
         }
-    }
-    else {
-        mcpt_abort("empty flag when overwriting name - this might be a bug\n");
-    }
+    // }
+    // else {
+    //     mcpt_abort("empty flag when overwriting name - this might be a bug\n");
+    // }
 }
 
 int
@@ -1128,7 +1128,7 @@ MPI_Comm_free(MPI_Comm *comm)
     buf[0] = rank;
     buf[1] = com_info->comms;
     PMPI_Bcast(buf, 2, MPI_INT, 0, *comm);
-    overwrite_name(*comm, buf[0], buf[1], com_info->id);
+    overwrite_name(&com_info, buf[0], buf[1]);
 
     // Find the communicator in the comms_table and remove it
     auto it = std::find(comms_table.begin(), comms_table.end(), *comm);
@@ -1205,7 +1205,7 @@ _Finalize(void) {
         buf[0] = rank;
         buf[1] = com_info->comms;
         PMPI_Bcast(buf, 2, MPI_INT, 0, comms_table[i]);
-        overwrite_name(comms_table[i], buf[0], buf[1],com_info->id);
+        overwrite_name(&com_info, buf[0], buf[1]);
     }
 
     recvcounts = (int *)malloc(sizeof(int) * size);
