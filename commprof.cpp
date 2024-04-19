@@ -1361,8 +1361,8 @@ _Finalize(void) {
         insertMetadata(mem_db, version, size, av, ac, mpisee_major_version,
                        mpisee_minor_version, mpisee_build_date,
                        mpisee_build_time, env_var);
+        printMetadata(mem_db);
         std::cout << "mpisee: Writing the MPI operations table" << std::endl;
-
 
         insertIntoOperationsEmpty(mem_db, prim_names[0]);
         std::vector<std::string> operations = convertToArrayOfPrims();
@@ -1483,37 +1483,37 @@ _Finalize(void) {
         //Attach in-memory database
         rc = sqlite3_exec(db, "ATTACH DATABASE ':memory:' AS mem_db", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error attaching in-memory database\n");
+            mcpt_abort("Error attaching in-memory database\n");
         }
 
         // Copy the in-memory database to the file
-        rc = sqlite3_exec(db, "SELECT * FROM mem_db.sqlite_master", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.sqlite_master\n");
-        }
+        // rc = sqlite3_exec(db, "SELECT * FROM mem_db.sqlite_master", NULL, NULL, NULL);
+        // if (rc != SQLITE_OK) {
+        //     mcpt_abort("Error copying in-memory database.sqlite_master\n");
+        // }
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.metadata", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.metadata (code %d)\n",rc);
+            mcpt_abort("Error copying in-memory mem_db.metadata (code %d)\n",rc);
         }
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.operations", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.operations\n");
+            mcpt_abort("Error copying in-memory database.operations\n");
         }
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.exectimes", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.exectimes\n");
+            mcpt_abort("Error copying in-memory database.exectimes\n");
         }
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.mappings", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.mappings\n");
+            mcpt_abort("Error copying in-memory database.mappings\n");
         }
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.comms", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.comms\n");
+            mcpt_abort("Error copying in-memory database.comms\n");
         }
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.data", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.data\n");
+            mcpt_abort("Error copying in-memory database.data\n");
         }
         sqlite3_exec(db, "DETACH mem_db", NULL, NULL, NULL);
         sqlite3_close(db);
