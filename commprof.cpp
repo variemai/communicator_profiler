@@ -1494,12 +1494,12 @@ _Finalize(void) {
 
             // Create corresponding table in the file database and copy data
             char *sql = sqlite3_mprintf("CREATE TABLE IF NOT EXISTS %Q AS SELECT * FROM mem_db.%Q", table_name, table_name);
+            printf("SQL Query: %s\n", sql); // Or use std::cout << "SQL Query: " << sql << std::endl;
             rc = sqlite3_exec(db, sql, NULL, NULL, NULL);
             sqlite3_free(sql);
 
             if (rc != SQLITE_OK) {
-
-                mcpt_abort("Error copying table %s (code %d), query %s\n", table_name, rc,sql);
+                mcpt_abort("Error copying table %s (code %d)%s\n", table_name, rc);
             }
         }
         sqlite3_finalize(stmt);
