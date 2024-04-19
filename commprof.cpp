@@ -1491,7 +1491,7 @@ _Finalize(void) {
         // if (rc != SQLITE_OK) {
         //     mcpt_abort("Error copying in-memory database.sqlite_master\n");
         // }
-        rc = sqlite3_exec(db, "SELECT * FROM mem_db.metadata", NULL, NULL, NULL);
+        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS metadata AS SELECT * FROM mem_db.metadata", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
             mcpt_abort("Error copying in-memory mem_db.metadata (code %d)\n",rc);
         }
