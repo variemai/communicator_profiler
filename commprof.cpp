@@ -1445,6 +1445,8 @@ _Finalize(void) {
             //   mcpt_abort("commId out of bounds\n");
 
             // }
+            std::cout << "mpisee: Comm name = " << recv_buffer[startIdx + j].name
+                      << std::endl;
             commId = getCommId(mem_db, recv_buffer[startIdx + j].name);
             if (commId < 0) {
               mcpt_abort("commId < 0\n");
