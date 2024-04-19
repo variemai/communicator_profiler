@@ -338,59 +338,54 @@ int insertIntoComms(sqlite3 *db, const std::string &name, int size ) {
 }
 
 std::vector<int> CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
-   sqlite3_stmt *insertStmt, *getIdStmt;
-   std::vector<int> ids;
-   int rc;
-   std::string insertSql =
-     "INSERT OR IGNORE INTO comms (name, size) VALUES (?, ?)";
-   std::string getIdSql = "SELECT id FROM comms WHERE name = ?";
+    std::vector<int> ids;
+    sqlite3_stmt *insertStmt, *getIdStmt;
+    int rc;
 
-   rc = sqlite3_prepare_v2(db, insertSql.c_str(), -1, &insertStmt, nullptr);
-   if (rc != SQLITE_OK) {
-     std::cerr << "Failed to prepare insert statement: " << sqlite3_errmsg(db)
-               << std::endl;
+    std::string insertSql = "INSERT OR IGNORE INTO comms (name, size) VALUES (?, ?)";
+    std::string getIdSql = "SELECT id FROM comms WHERE name = ?";
 
-     return ids; // Return an empty vector or handle the error as appropriate
-   }
-   sqlite3_prepare_v2(db, getIdSql.c_str(), -1, &getIdStmt, nullptr);
-   if (rc != SQLITE_OK) {
-     std::cerr << "Failed to prepare getId statement: " << sqlite3_errmsg(db)
-               << std::endl;
-             sqlite3_finalize(insertStmt); // Clean up
-     return ids; // Return an empty vector or handle the error as appropriate
-   }
+    rc = sqlite3_prepare_v2(db, insertSql.c_str(), -1, &insertStmt, nullptr);
+    if (rc != SQLITE_OK) {
+        std::cerr << "Failed to prepare insert statement: " << sqlite3_errmsg(db) << std::endl;
+        return ids; // Return an empty vector
+    }
 
-   // Start transaction
-   executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
+    rc = sqlite3_prepare_v2(db, getIdSql.c_str(), -1, &getIdStmt, nullptr);
+    if (rc != SQLITE_OK) {
+        std::cerr << "Failed to prepare getId statement: " << sqlite3_errmsg(db) << std::endl;
+        sqlite3_finalize(insertStmt);
+        return ids;
+    }
 
-   for (const auto& comm : comms) {
-     sqlite3_bind_text(insertStmt, 1, comm.name.c_str(), -1, SQLITE_STATIC);
-     sqlite3_bind_int(insertStmt, 2, comm.size);
-     rc = sqlite3_step(insertStmt);
-     if (rc != SQLITE_DONE) {
-       std::cerr << "Insert operation failed: " << sqlite3_errmsg(db)
-                 << std::endl;
-       break;
-     }
-     sqlite3_reset(insertStmt); // Reset the statement to insert next record
+    for (const auto& comm : comms) {
+        sqlite3_bind_text(insertStmt, 1, comm.name.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_int(insertStmt, 2, comm.size);
 
+        rc = sqlite3_step(insertStmt);
+        if (rc != SQLITE_DONE) {
+            std::cerr << "Insert operation failed: " << sqlite3_errmsg(db) << std::endl;
+            break; // Stop on error
+        }
 
-     // Get the ID of the communicator
-     sqlite3_bind_text(getIdStmt, 1, comm.name.c_str(), -1, SQLITE_STATIC);
-     if (sqlite3_step(getIdStmt) == SQLITE_ROW) {
-       int id = sqlite3_column_int(getIdStmt, 0);
-       ids.push_back(id); // Store the ID
-     } else {
-       std::cerr << "Failed to get ID: " << sqlite3_errmsg(db) << std::endl;
-     }
-     sqlite3_reset(getIdStmt);
-   }
+        sqlite3_reset(insertStmt);
 
-   // Finalize statement and commit transaction
-   sqlite3_finalize(insertStmt);
-   sqlite3_finalize(getIdStmt);
-   executeSQL(db, "END TRANSACTION", "End Transaction");
-   return ids;
+        sqlite3_bind_text(getIdStmt, 1, comm.name.c_str(), -1, SQLITE_STATIC);
+        rc = sqlite3_step(getIdStmt);
+        if (rc == SQLITE_ROW) {
+            int id = sqlite3_column_int(getIdStmt, 0);
+            ids.push_back(id);
+        } else {
+            std::cerr << "Failed to get ID: " << sqlite3_errmsg(db) << std::endl;
+        }
+
+        sqlite3_reset(getIdStmt);
+    }
+
+    sqlite3_finalize(insertStmt);
+    sqlite3_finalize(getIdStmt);
+    return ids;
+
 }
 
 

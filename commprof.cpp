@@ -1308,7 +1308,7 @@ _Finalize(void) {
         int rc,commId,maxsize,minsize;
         //int powers_of_2[NUM_BUCKETS - 1];
         sqlite3 *db = NULL;
-        //sqlite3* mem_db; // Declare the in-memory database handle
+        sqlite3* mem_db = NULL; // Declare the in-memory database handle
         char *outfile = NULL;
         int l, proc, startIdx, numElements;
         double t;
@@ -1349,36 +1349,36 @@ _Finalize(void) {
             }
         }
 
-        // Attach in-memory database
-        // rc = sqlite3_exec(db, "ATTACH DATABASE ':memory:' AS mem_db", NULL, NULL, NULL);
-        // if (rc != SQLITE_OK) {
-        //     mcpt_abort("mpisee: Error attaching in-memory database\n");
-        // }
+        //Attach in-memory database
+        rc = sqlite3_exec(db, "ATTACH DATABASE ':memory:' AS mem_db", NULL, NULL, NULL);
+        if (rc != SQLITE_OK) {
+            mcpt_abort("mpisee: Error attaching in-memory database\n");
+        }
 
-        createTables(db);
+        createTables(mem_db);
         std::cout << "mpisee: Writing the metadata table" << std::endl;
 
-        insertMetadata(db, version, size, av, ac, mpisee_major_version,
+        insertMetadata(mem_db, version, size, av, ac, mpisee_major_version,
                        mpisee_minor_version, mpisee_build_date,
                        mpisee_build_time, env_var);
 
         std::cout << "mpisee: Writing the MPI operations table" << std::endl;
 
 
-        insertIntoOperationsEmpty(db, prim_names[0]);
+        insertIntoOperationsEmpty(mem_db, prim_names[0]);
         std::vector<std::string> operations = convertToArrayOfPrims();
-        BatchInsertIntoOperations(db, operations);
+        BatchInsertIntoOperations(mem_db, operations);
         operations.clear();
         operations.shrink_to_fit();
 
         std::vector<double> times;
         if (alltimes != NULL){
           std::cout << "mpisee: Writing the exectimes table" << std::endl;
-          insertIntoTimes(db, alltimes[0]);
+          insertIntoTimes(mem_db, alltimes[0]);
           for (i = 1; i < size; i++) {
             times.push_back(alltimes[i]);
           }
-          BatchInsertIntoTimes(db, times);
+          BatchInsertIntoTimes(mem_db, times);
           times.clear();
           times.shrink_to_fit();
           free(alltimes);
@@ -1387,10 +1387,10 @@ _Finalize(void) {
         }
 
         std::string machineName(proc_names);
-        insertIntoMappings(db, machineName);
+        insertIntoMappings(mem_db, machineName);
         std::vector<std::string> machines =
             convertToArrayOfStrings(proc_names, size, MPI_MAX_PROCESSOR_NAME);
-        BatchInsertIntoMappings(db, machines);
+        BatchInsertIntoMappings(mem_db, machines);
         machines.clear();
         machines.shrink_to_fit();
         free(proc_names);
@@ -1417,7 +1417,7 @@ _Finalize(void) {
           }
         }
 
-        commIds=CommsInsert(db, comms);
+        commIds=CommsInsert(mem_db, comms);
         comms.clear();
         comms.shrink_to_fit();
 
@@ -1465,10 +1465,10 @@ _Finalize(void) {
           }
         }
 
-        executeBatchInsert(db, entries);
+        executeBatchInsert(mem_db, entries);
         t = MPI_Wtime() - t;
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
-        /*
+
         // Copy the in-memory database to the file
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.sqlite_master", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
@@ -1499,7 +1499,6 @@ _Finalize(void) {
             mcpt_abort("mpisee: Error copying in-memory database.data\n");
         }
         sqlite3_exec(db, "DETACH mem_db", NULL, NULL, NULL);
-        */
         sqlite3_close(db);
         free(outfile);
         free(recv_buffer);
