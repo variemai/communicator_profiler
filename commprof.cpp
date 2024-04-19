@@ -1361,7 +1361,6 @@ _Finalize(void) {
         insertMetadata(mem_db, version, size, av, ac, mpisee_major_version,
                        mpisee_minor_version, mpisee_build_date,
                        mpisee_build_time, env_var);
-        printMetadata(mem_db);
         std::cout << "mpisee: Writing the MPI operations table" << std::endl;
 
 
@@ -1412,8 +1411,8 @@ _Finalize(void) {
               // std::cout << "mpisee: Name = " << recv_buffer[startIdx + j].name
               //           << ", size = " << recv_buffer[startIdx + j].size
               //           << std::endl;
-              // comms.push_back({recv_buffer[startIdx + j].name,
-              //         recv_buffer[startIdx + j].size});
+              comms.push_back({recv_buffer[startIdx + j].name,
+                      recv_buffer[startIdx + j].size});
           }
         }
         i = CommsInsert(mem_db, comms);
