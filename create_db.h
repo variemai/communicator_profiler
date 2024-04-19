@@ -52,4 +52,6 @@ void printData(sqlite3* db);
 
 void printCommsTable(sqlite3 *db);
 
+int loadOrSaveDb(sqlite3 *pInMemory, const char *zFilename, int isSave);
+
 #endif

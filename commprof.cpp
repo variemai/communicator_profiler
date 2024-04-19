@@ -1451,7 +1451,7 @@ _Finalize(void) {
         std::cout << "mpisee: Time to create the in-memory database : " << t << " seconds" << std::endl;
 
         if (env_var != NULL) {
-          rc = sqlite3_open(env_var, &db);
+          rc = loadOrSaveDb(mem_db, env_var, 1);
           if (rc) {
               std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
               return 1;
@@ -1464,7 +1464,7 @@ _Finalize(void) {
           }
         }
         else{
-          rc = sqlite3_open("mpisee_profile.db", &db);
+          rc = loadOrSaveDb(mem_db,"mpisee_profile.db", 1);
           if (rc) {
               std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
               return 1;
@@ -1477,37 +1477,6 @@ _Finalize(void) {
           }
         }
 
-
-        //Attach in-memory database
-        rc = sqlite3_exec(db, "ATTACH DATABASE ':memory:' AS mem_db", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            std::cerr << "Error attaching in-memory database: " << sqlite3_errmsg(db) << std::endl;
-            mcpt_abort("Error attaching in-memory database\n");
-        }
-
-
-
-        // Get a list of all tables in the mem_db database
-        sqlite3_stmt *stmt;
-        sqlite3_prepare_v2(mem_db, "SELECT name FROM sqlite_master WHERE type='table'", -1, &stmt, NULL);
-        while (sqlite3_step(stmt) == SQLITE_ROW) {
-            const unsigned char *table_name = sqlite3_column_text(stmt, 0);
-
-            // Create corresponding table in the file database and copy data
-            //char *sql = sqlite3_mprintf("CREATE TABLE IF NOT EXISTS %Q AS SELECT * FROM mem_db.%Q", table_name, table_name);
-            std::stringstream query_builder;
-            query_builder << "CREATE TABLE IF NOT EXISTS " << table_name << " AS SELECT * FROM mem_db." << table_name;
-            std::string sql = query_builder.str();
-            std::cout << "SQL Query: " << sql << std::endl;
-            fflush(stdout);
-            rc = sqlite3_exec(db, sql.c_str(), NULL, NULL, NULL);
-
-            if (rc != SQLITE_OK) {
-                mcpt_abort("Error copying table %s (code %d)\n", table_name, rc);
-            }
-        }
-        sqlite3_finalize(stmt);
-        sqlite3_exec(db, "DETACH mem_db", NULL, NULL, NULL);
         sqlite3_close(db);
         free(outfile);
         free(recv_buffer);
