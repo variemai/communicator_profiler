@@ -1313,33 +1313,8 @@ _Finalize(void) {
         char *outfile = NULL;
         int l, proc, startIdx, numElements;
         double t;
-        const char *env_var = getenv("MPISEE_OUTFILE");
-        if (env_var != NULL) {
-          rc = sqlite3_open(env_var, &db);
-          if (rc) {
-              std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
-              return 1;
-          } else {
-              std::cout << "mpisee: Opened database successfully" << std::endl;
-          }
-          outfile = strdup(env_var);
-          if (outfile == NULL) {
-              mcpt_abort("mpisee: strdup returned NULL\n");
-          }
-        }
-        else{
-          rc = sqlite3_open("mpisee_profile.db", &db);
-          if (rc) {
-              std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
-              return 1;
-          } else {
-              std::cout << "mpisee: Opened database successfully" << std::endl;
-          }
-          outfile = strdup("mpisee_profile.db");
-          if (outfile == NULL) {
-              mcpt_abort("mpisee: strdup returned NULL\n");
-          }
-        }
+
+        const char*env_var = getenv("MPISEE_OUTFILE");
 
         PMPI_Get_library_version(version, &resultlen);
         for (size_t i = 0; i < strlen(version); i++)
@@ -1354,14 +1329,6 @@ _Finalize(void) {
         if (rc != SQLITE_OK) {
             mcpt_abort("mpisee: Can't open in-memory database: %s\n", sqlite3_errmsg(mem_db));
         }
-
-        //Attach in-memory database
-        rc = sqlite3_exec(db, "ATTACH DATABASE mem_db", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("Error attaching in-memory database\n");
-        }
-
-
 
         createTables(mem_db);
         std::cout << "mpisee: Writing the metadata table" << std::endl;
@@ -1401,11 +1368,6 @@ _Finalize(void) {
         machines.clear();
         machines.shrink_to_fit();
         free(proc_names);
-
-        // Precompute powers of 2 for each bucket
-        // for (i = 0; i < NUM_BUCKETS - 1; i++) {
-        //     powers_of_2[i] = 1 << buckets[i];
-        // }
 
         std::vector<CommData> comms;
         std::vector<int> commIds;
@@ -1487,6 +1449,42 @@ _Finalize(void) {
         executeBatchInsert(mem_db, entries);
         t = MPI_Wtime() - t;
         std::cout << "mpisee: Time to create the in-memory database : " << t << " seconds" << std::endl;
+
+        if (env_var != NULL) {
+          rc = sqlite3_open(env_var, &db);
+          if (rc) {
+              std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
+              return 1;
+          } else {
+              std::cout << "mpisee: Opened database successfully" << std::endl;
+          }
+          outfile = strdup(env_var);
+          if (outfile == NULL) {
+              mcpt_abort("mpisee: strdup returned NULL\n");
+          }
+        }
+        else{
+          rc = sqlite3_open("mpisee_profile.db", &db);
+          if (rc) {
+              std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
+              return 1;
+          } else {
+              std::cout << "mpisee: Opened database successfully" << std::endl;
+          }
+          outfile = strdup("mpisee_profile.db");
+          if (outfile == NULL) {
+              mcpt_abort("mpisee: strdup returned NULL\n");
+          }
+        }
+
+
+        //Attach in-memory database
+        rc = sqlite3_exec(db, "ATTACH DATABASE ':memory:' AS mem_db", NULL, NULL, NULL);
+        if (rc != SQLITE_OK) {
+            std::cerr << "Error attaching in-memory database: " << sqlite3_errmsg(db) << std::endl;
+            mcpt_abort("Error attaching in-memory database\n");
+        }
+
 
 
         // Get a list of all tables in the mem_db database
