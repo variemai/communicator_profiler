@@ -1349,11 +1349,11 @@ _Finalize(void) {
             }
         }
 
-        //Attach in-memory database
-        rc = sqlite3_exec(db, "ATTACH DATABASE ':memory:' AS mem_db", NULL, NULL, NULL);
+        rc = sqlite3_open(":memory:", &mem_db);
         if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error attaching in-memory database\n");
+            mcpt_abort("mpisee: Can't open in-memory database: %s\n", sqlite3_errmsg(mem_db));
         }
+
 
         createTables(mem_db);
         std::cout << "mpisee: Writing the metadata table" << std::endl;
@@ -1416,10 +1416,9 @@ _Finalize(void) {
               //         recv_buffer[startIdx + j].size});
           }
         }
-        i = 0;
         i = CommsInsert(mem_db, comms);
         if ( i < 0 ) {
-            mcpt_abort("mpisee: CommsInsert returned < 0\n");
+            mcpt_abort("mpisee: CommsInsert returned < %d\n",i);
         }
         comms.clear();
         comms.shrink_to_fit();
@@ -1481,6 +1480,12 @@ _Finalize(void) {
         executeBatchInsert(mem_db, entries);
         t = MPI_Wtime() - t;
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
+
+        //Attach in-memory database
+        rc = sqlite3_exec(db, "ATTACH DATABASE ':memory:' AS mem_db", NULL, NULL, NULL);
+        if (rc != SQLITE_OK) {
+            mcpt_abort("mpisee: Error attaching in-memory database\n");
+        }
 
         // Copy the in-memory database to the file
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.sqlite_master", NULL, NULL, NULL);
