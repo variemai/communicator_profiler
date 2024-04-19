@@ -1498,7 +1498,8 @@ _Finalize(void) {
             sqlite3_free(sql);
 
             if (rc != SQLITE_OK) {
-                mcpt_abort("Error copying table %s (code %d)\n", table_name, rc);
+
+                mcpt_abort("Error copying table %s (code %d), query %s\n", table_name, rc,sql);
             }
         }
         sqlite3_finalize(stmt);
