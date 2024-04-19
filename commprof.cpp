@@ -1416,8 +1416,11 @@ _Finalize(void) {
               //         recv_buffer[startIdx + j].size});
           }
         }
-
-        CommsInsert(mem_db, comms);
+        i = 0;
+        i = CommsInsert(mem_db, comms);
+        if ( i < 0 ) {
+            mcpt_abort("mpisee: CommsInsert returned < 0\n");
+        }
         comms.clear();
         comms.shrink_to_fit();
         // if ( commIds.size() < 1 ) {

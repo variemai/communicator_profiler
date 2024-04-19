@@ -38,7 +38,7 @@ void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
 
 void executeBatchInsert(sqlite3 *db, const std::vector<DataEntry> &entries);
 
-void CommsInsert(sqlite3 *db, const std::vector<CommData> &comms);
+int CommsInsert(sqlite3 *db, const std::vector<CommData> &comms);
 
 void BatchInsertIntoMappings(sqlite3 *db,
                              const std::vector<std::string> &machines);
