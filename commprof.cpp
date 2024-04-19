@@ -1493,7 +1493,7 @@ _Finalize(void) {
         }
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.metadata", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.metadata\n");
+            mcpt_abort("mpisee: Error copying in-memory database.metadata (code %d)\n",rc);
         }
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.operations", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
