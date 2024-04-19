@@ -343,7 +343,7 @@ int insertIntoComms(sqlite3 *db, const std::string &name, int size ) {
 int CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
     // std::vector<int> ids;
     sqlite3_stmt *insertStmt, *getIdStmt;
-    int rc, ret;
+    int rc;
 
     std::string insertSql = "INSERT OR IGNORE INTO comms (name, size) VALUES (?, ?)";
     // std::string getIdSql = "SELECT id FROM comms WHERE name = ?";
@@ -406,7 +406,7 @@ int CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
     sqlite3_finalize(insertStmt);
     // sqlite3_finalize(getIdStmt);
     // return ids;
-
+    return 0;
 }
 
 
