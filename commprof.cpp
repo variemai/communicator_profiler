@@ -1360,7 +1360,7 @@ _Finalize(void) {
           std::cout << "mpisee: Execution times NULL" << std::endl;
         }
 
-        std::string machineName(proc_names);
+        std::string machineName(proc_name);
         insertIntoMappings(mem_db, machineName);
         std::vector<std::string> machines =
             convertToArrayOfStrings(proc_names, size, MPI_MAX_PROCESSOR_NAME);
