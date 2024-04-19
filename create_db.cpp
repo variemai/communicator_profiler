@@ -355,10 +355,10 @@ int CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
         return -1;
         // return ids; // Return an empty vector
     }
-    else {
-        std::cout << "Prepared insert statement" << std::endl;
-        fflush(stdout);
-    }
+    // else {
+    //     std::cout << "Prepared insert statement" << std::endl;
+    //     fflush(stdout);
+    // }
 
     // rc = sqlite3_prepare_v2(db, getIdSql.c_str(), -1, &getIdStmt, nullptr);
     // if (rc != SQLITE_OK) {
@@ -382,10 +382,10 @@ int CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
             fflush(stderr);
             return -2; // Stop on error
         }
-        else {
-            std::cout << "Inserted comm: " << comm.name << std::endl;
-            fflush(stdout);
-        }
+        // else {
+        //     std::cout << "Inserted comm: " << comm.name << std::endl;
+        //     fflush(stdout);
+        // }
 
         sqlite3_reset(insertStmt);
 

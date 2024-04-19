@@ -1446,8 +1446,8 @@ _Finalize(void) {
             //   mcpt_abort("commId out of bounds\n");
 
             // }
-            std::cout << "mpisee: Comm name = " << recv_buffer[startIdx + j].name
-                      << std::endl;
+            // std::cout << "mpisee: Comm name = " << recv_buffer[startIdx + j].name
+            //           << std::endl;
             commId = getCommId(mem_db, recv_buffer[startIdx + j].name);
             if (commId < 0) {
               mcpt_abort("commId < 0\n");
@@ -1491,27 +1491,27 @@ _Finalize(void) {
         if (rc != SQLITE_OK) {
             mcpt_abort("mpisee: Error copying in-memory database.sqlite_master\n");
         }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS metadata AS SELECT * FROM mem_db.metadata", NULL, NULL, NULL);
+        rc = sqlite3_exec(db, "SELECT * FROM mem_db.metadata", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
             mcpt_abort("mpisee: Error copying in-memory database.metadata\n");
         }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS operations AS SELECT * FROM mem_db.operations", NULL, NULL, NULL);
+        rc = sqlite3_exec(db, "SELECT * FROM mem_db.operations", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
             mcpt_abort("mpisee: Error copying in-memory database.operations\n");
         }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS exectimes AS SELECT * FROM mem_db.exectimes", NULL, NULL, NULL);
+        rc = sqlite3_exec(db, "SELECT * FROM mem_db.exectimes", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
             mcpt_abort("mpisee: Error copying in-memory database.exectimes\n");
         }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS mappings AS SELECT * FROM mem_db.mappings", NULL, NULL, NULL);
+        rc = sqlite3_exec(db, "SELECT * FROM mem_db.mappings", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
             mcpt_abort("mpisee: Error copying in-memory database.mappings\n");
         }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS comms AS SELECT * FROM mem_db.comms", NULL, NULL, NULL);
+        rc = sqlite3_exec(db, "SELECT * FROM mem_db.comms", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
             mcpt_abort("mpisee: Error copying in-memory database.comms\n");
         }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS data AS SELECT * FROM mem_db.data", NULL, NULL, NULL);
+        rc = sqlite3_exec(db, "SELECT * FROM mem_db.data", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
             mcpt_abort("mpisee: Error copying in-memory database.data\n");
         }
