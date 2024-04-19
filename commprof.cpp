@@ -21,7 +21,6 @@
 #include "symbols.h"
 #include "create_db.h"
 #include <iostream>
-#include <sstream>
 
 int prof_enabled = 1;
 int local_cid= 0;
@@ -1448,33 +1447,29 @@ _Finalize(void) {
 
         executeBatchInsert(mem_db, entries);
         t = MPI_Wtime() - t;
-        std::cout << "mpisee: Time to create the in-memory database : " << t << " seconds" << std::endl;
+        std::cout << "mpisee: Time to create the in-memory database: " << t << " seconds" << std::endl;
 
         if (env_var != NULL) {
-          rc = loadOrSaveDb(mem_db, env_var, 1);
-          if (rc) {
-              std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
-              return 1;
-          } else {
-              std::cout << "mpisee: Opened database successfully" << std::endl;
-          }
-          outfile = strdup(env_var);
-          if (outfile == NULL) {
-              mcpt_abort("mpisee: strdup returned NULL\n");
-          }
+            t = MPI_Wtime();
+            rc = loadOrSaveDb(mem_db, env_var, 1);
+            t = MPI_Wtime() - t;
+            if (rc) {
+                std::cerr << "mpisee: Can't write the database to file: " << sqlite3_errmsg(db) << std::endl;
+                return 1;
+            } else {
+              std::cout << "mpisee: Database written to file:" << env_var << ", time to write :" << t << std::endl;
+            }
         }
         else{
-          rc = loadOrSaveDb(mem_db,"mpisee_profile.db", 1);
-          if (rc) {
-              std::cerr << "mpisee: Can't open database: " << sqlite3_errmsg(db) << std::endl;
-              return 1;
-          } else {
-              std::cout << "mpisee: Opened database successfully" << std::endl;
-          }
-          outfile = strdup("mpisee_profile.db");
-          if (outfile == NULL) {
-              mcpt_abort("mpisee: strdup returned NULL\n");
-          }
+            t = MPI_Wtime();
+            rc = loadOrSaveDb(mem_db,"mpisee_profile.db", 1);
+            t = MPI_Wtime() - t;
+            if (rc) {
+                std::cerr << "mpisee: Can't write the database to file: " << sqlite3_errmsg(db) << std::endl;
+                return 1;
+            } else {
+              std::cout << "mpisee: Database written to file mpisee_profile.db, time to write :" << t << std::endl;
+            }
         }
 
         sqlite3_close(db);
