@@ -92,7 +92,7 @@ prof_attrs **comm_table = NULL;
 void mcpt_abort (const char *fmt, ...){
   va_list args;
   va_start (args, fmt);
-  fprintf (stderr, "\n\n: mpisee ABORTING ");
+  fprintf (stderr, "\n: mpisee ABORTING ");
   vfprintf (stderr, fmt, args);
   va_end (args);
   fflush (stderr);

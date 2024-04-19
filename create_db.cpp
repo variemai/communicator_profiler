@@ -117,20 +117,23 @@ void executeSQL(sqlite3* db, const std::string& sql, const char* name) {
 
 int getCommId(sqlite3* db, const std::string& commName) {
     sqlite3_stmt* stmt;
-    int commId = -1;  // Default to an invalid ID
-    // Prepare SQL query to select the ID from comms where name and size match
-    std::string sql = "SELECT id FROM comms WHERE name = '" + commName + "'";
+    int commId = -1;
+    std::string sql = "SELECT id FROM comms WHERE name = ?";
+
     if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
         sqlite3_bind_text(stmt, 1, commName.c_str(), -1, SQLITE_STATIC);
 
         if (sqlite3_step(stmt) == SQLITE_ROW) {
-            commId = sqlite3_column_int(stmt, 0);  // Get the id from the query result
+            commId = sqlite3_column_int(stmt, 0);
+        } else {
+            std::cerr << "No communicator found with name: " << commName << std::endl;
+            return -1;
         }
         sqlite3_finalize(stmt);
     } else {
         std::cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << std::endl;
     }
-    return commId; // return the retrieved ID
+    return commId;
 }
 
 int getMappingId(sqlite3* db, const std::string& machineName) {

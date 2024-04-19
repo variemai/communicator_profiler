@@ -1409,21 +1409,21 @@ _Finalize(void) {
 
           for (j = 0; j < numElements; ++j) {
               // Debugging print: communicator names
-              std::cout << "mpisee: Name = " << recv_buffer[startIdx + j].name
-                        << ", size = " << recv_buffer[startIdx + j].size
-                        << std::endl;
-              comms.push_back({recv_buffer[startIdx + j].name,
-                      recv_buffer[startIdx + j].size});
+              // std::cout << "mpisee: Name = " << recv_buffer[startIdx + j].name
+              //           << ", size = " << recv_buffer[startIdx + j].size
+              //           << std::endl;
+              // comms.push_back({recv_buffer[startIdx + j].name,
+              //         recv_buffer[startIdx + j].size});
           }
         }
 
         commIds=CommsInsert(mem_db, comms);
         comms.clear();
         comms.shrink_to_fit();
-        if ( commIds.size() < 1 ) {
-            mcpt_abort("mpisee: commIds.size < 1 \n");
-        }
-        std::cout << "mpisee: Comminicator table:" << std::endl;
+        // if ( commIds.size() < 1 ) {
+        //     mcpt_abort("mpisee: commIds.size < 1 \n");
+        // }
+        // std::cout << "mpisee: Comminicator table:" << std::endl;
 
         std::vector<DataEntry> entries;
         std::cout << "mpisee: Writing the main data table"
@@ -1437,13 +1437,17 @@ _Finalize(void) {
           numElements = recvcounts[proc];
 
           for (j = 0; j < numElements; ++j) {
-            if (i < (int)commIds.size()) {
-                commId = commIds[i];
-            } else {
-              std::cout << "mpisee: index in commids (" << i
-                        << ") out of bounds" << std::endl;
-              mcpt_abort("commId out of bounds\n");
+            // if (i < (int)commIds.size()) {
+            //     commId = commIds[i];
+            // } else {
+            //   std::cout << "mpisee: index in commids (" << i
+            //             << ") out of bounds" << std::endl;
+            //   mcpt_abort("commId out of bounds\n");
 
+            // }
+            commId = getCommId(mem_db, recv_buffer[startIdx + j].name);
+            if (commId < 0) {
+              mcpt_abort("commId < 0\n");
             }
             prof_data &item = recv_buffer[startIdx + j];
 
