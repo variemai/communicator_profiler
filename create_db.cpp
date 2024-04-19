@@ -340,7 +340,7 @@ int insertIntoComms(sqlite3 *db, const std::string &name, int size ) {
     return commId;
 }
 
-std::vector<int> CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
+void CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
     // std::vector<int> ids;
     sqlite3_stmt *insertStmt, *getIdStmt;
     int rc;
@@ -403,7 +403,7 @@ std::vector<int> CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
     }
 
     sqlite3_finalize(insertStmt);
-    sqlite3_finalize(getIdStmt);
+    // sqlite3_finalize(getIdStmt);
     // return ids;
 
 }

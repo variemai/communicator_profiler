@@ -1417,7 +1417,7 @@ _Finalize(void) {
           }
         }
 
-        commIds=CommsInsert(mem_db, comms);
+        CommsInsert(mem_db, comms);
         comms.clear();
         comms.shrink_to_fit();
         // if ( commIds.size() < 1 ) {
