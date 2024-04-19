@@ -1306,9 +1306,7 @@ _Finalize(void) {
 
     if ( rank == 0 ){
         int rc,commId,maxsize,minsize;
-        //int powers_of_2[NUM_BUCKETS - 1];
         sqlite3 *db = NULL;
-        //sqlite3* mem_db; // Declare the in-memory database handle
         char *outfile = NULL;
         int l, proc, startIdx, numElements;
         double t;
@@ -1349,11 +1347,6 @@ _Finalize(void) {
             }
         }
 
-        // Attach in-memory database
-        // rc = sqlite3_exec(db, "ATTACH DATABASE ':memory:' AS mem_db", NULL, NULL, NULL);
-        // if (rc != SQLITE_OK) {
-        //     mcpt_abort("mpisee: Error attaching in-memory database\n");
-        // }
 
         createTables(db);
         std::cout << "mpisee: Writing the metadata table" << std::endl;
@@ -1386,7 +1379,7 @@ _Finalize(void) {
           std::cout << "mpisee: Execution times NULL" << std::endl;
         }
 
-        std::string machineName(proc_names);
+        std::string machineName(proc_name);
         insertIntoMappings(db, machineName);
         std::vector<std::string> machines =
             convertToArrayOfStrings(proc_names, size, MPI_MAX_PROCESSOR_NAME);
@@ -1395,10 +1388,6 @@ _Finalize(void) {
         machines.shrink_to_fit();
         free(proc_names);
 
-        // Precompute powers of 2 for each bucket
-        // for (i = 0; i < NUM_BUCKETS - 1; i++) {
-        //     powers_of_2[i] = 1 << buckets[i];
-        // }
 
         std::vector<CommData> comms;
         std::vector<int> commIds;
@@ -1468,38 +1457,6 @@ _Finalize(void) {
         executeBatchInsert(db, entries);
         t = MPI_Wtime() - t;
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
-        /*
-        // Copy the in-memory database to the file
-        rc = sqlite3_exec(db, "SELECT * FROM mem_db.sqlite_master", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.sqlite_master\n");
-        }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS metadata AS SELECT * FROM mem_db.metadata", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.metadata\n");
-        }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS operations AS SELECT * FROM mem_db.operations", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.operations\n");
-        }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS exectimes AS SELECT * FROM mem_db.exectimes", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.exectimes\n");
-        }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS mappings AS SELECT * FROM mem_db.mappings", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.mappings\n");
-        }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS comms AS SELECT * FROM mem_db.comms", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.comms\n");
-        }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS data AS SELECT * FROM mem_db.data", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("mpisee: Error copying in-memory database.data\n");
-        }
-        sqlite3_exec(db, "DETACH mem_db", NULL, NULL, NULL);
-        */
         sqlite3_close(db);
         free(outfile);
         free(recv_buffer);
