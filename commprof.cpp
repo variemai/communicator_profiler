@@ -21,6 +21,7 @@
 #include "symbols.h"
 #include "create_db.h"
 #include <iostream>
+#include <sstream>
 
 int prof_enabled = 1;
 int local_cid= 0;
@@ -1493,10 +1494,13 @@ _Finalize(void) {
             const unsigned char *table_name = sqlite3_column_text(stmt, 0);
 
             // Create corresponding table in the file database and copy data
-            char *sql = sqlite3_mprintf("CREATE TABLE IF NOT EXISTS %Q AS SELECT * FROM mem_db.%Q", table_name, table_name);
-            printf("SQL Query: %s\n", sql); // Or use std::cout << "SQL Query: " << sql << std::endl;
-            rc = sqlite3_exec(db, sql, NULL, NULL, NULL);
-            sqlite3_free(sql);
+            //char *sql = sqlite3_mprintf("CREATE TABLE IF NOT EXISTS %Q AS SELECT * FROM mem_db.%Q", table_name, table_name);
+            std::stringstream query_builder;
+            query_builder << "CREATE TABLE IF NOT EXISTS " << table_name << " AS SELECT * FROM mem_db." << table_name;
+            std::string sql = query_builder.str();
+            std::cout << "SQL Query: " << sql << std::endl;
+            fflush(stdout);
+            rc = sqlite3_exec(db, sql.c_str(), NULL, NULL, NULL);
 
             if (rc != SQLITE_OK) {
                 mcpt_abort("Error copying table %s (code %d)%s\n", table_name, rc);
