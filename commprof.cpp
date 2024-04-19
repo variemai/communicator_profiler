@@ -1355,6 +1355,13 @@ _Finalize(void) {
             mcpt_abort("mpisee: Can't open in-memory database: %s\n", sqlite3_errmsg(mem_db));
         }
 
+        //Attach in-memory database
+        rc = sqlite3_exec(db, "ATTACH DATABASE mem_db", NULL, NULL, NULL);
+        if (rc != SQLITE_OK) {
+            mcpt_abort("Error attaching in-memory database\n");
+        }
+
+
 
         createTables(mem_db);
         std::cout << "mpisee: Writing the metadata table" << std::endl;
@@ -1481,11 +1488,6 @@ _Finalize(void) {
         t = MPI_Wtime() - t;
         std::cout << "mpisee: Time to create the in-memory database : " << t << " seconds" << std::endl;
 
-        //Attach in-memory database
-        rc = sqlite3_exec(db, "ATTACH DATABASE ':memory:' AS mem_db", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("Error attaching in-memory database\n");
-        }
 
         // Get a list of all tables in the mem_db database
         sqlite3_stmt *stmt;
@@ -1503,7 +1505,7 @@ _Finalize(void) {
             rc = sqlite3_exec(db, sql.c_str(), NULL, NULL, NULL);
 
             if (rc != SQLITE_OK) {
-                mcpt_abort("Error copying table %s (code %d)%s\n", table_name, rc);
+                mcpt_abort("Error copying table %s (code %d)\n", table_name, rc);
             }
         }
         sqlite3_finalize(stmt);
