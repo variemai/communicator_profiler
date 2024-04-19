@@ -1467,8 +1467,8 @@ _Finalize(void) {
 
         executeBatchInsert(db, entries);
         t = MPI_Wtime() - t;
-        /*
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
+        /*
         // Copy the in-memory database to the file
         rc = sqlite3_exec(db, "SELECT * FROM mem_db.sqlite_master", NULL, NULL, NULL);
         if (rc != SQLITE_OK) {
