@@ -1478,7 +1478,7 @@ _Finalize(void) {
 
         executeBatchInsert(mem_db, entries);
         t = MPI_Wtime() - t;
-        std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
+        std::cout << "mpisee: Time to create the in-memory database : " << t << " seconds" << std::endl;
 
         //Attach in-memory database
         rc = sqlite3_exec(db, "ATTACH DATABASE ':memory:' AS mem_db", NULL, NULL, NULL);
@@ -1486,35 +1486,22 @@ _Finalize(void) {
             mcpt_abort("Error attaching in-memory database\n");
         }
 
-        // Copy the in-memory database to the file
-        // rc = sqlite3_exec(db, "SELECT * FROM mem_db.sqlite_master", NULL, NULL, NULL);
-        // if (rc != SQLITE_OK) {
-        //     mcpt_abort("Error copying in-memory database.sqlite_master\n");
-        // }
-        rc = sqlite3_exec(db, "CREATE TABLE IF NOT EXISTS metadata AS SELECT * FROM mem_db.metadata", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("Error copying in-memory mem_db.metadata (code %d)\n",rc);
+        // Get a list of all tables in the mem_db database
+        sqlite3_stmt *stmt;
+        sqlite3_prepare_v2(mem_db, "SELECT name FROM sqlite_master WHERE type='table'", -1, &stmt, NULL);
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            const unsigned char *table_name = sqlite3_column_text(stmt, 0);
+
+            // Create corresponding table in the file database and copy data
+            char *sql = sqlite3_mprintf("CREATE TABLE IF NOT EXISTS %Q AS SELECT * FROM mem_db.%Q", table_name, table_name);
+            rc = sqlite3_exec(db, sql, NULL, NULL, NULL);
+            sqlite3_free(sql);
+
+            if (rc != SQLITE_OK) {
+                mcpt_abort("Error copying table %s (code %d)\n", table_name, rc);
+            }
         }
-        rc = sqlite3_exec(db, "SELECT * FROM mem_db.operations", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("Error copying in-memory database.operations\n");
-        }
-        rc = sqlite3_exec(db, "SELECT * FROM mem_db.exectimes", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("Error copying in-memory database.exectimes\n");
-        }
-        rc = sqlite3_exec(db, "SELECT * FROM mem_db.mappings", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("Error copying in-memory database.mappings\n");
-        }
-        rc = sqlite3_exec(db, "SELECT * FROM mem_db.comms", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("Error copying in-memory database.comms\n");
-        }
-        rc = sqlite3_exec(db, "SELECT * FROM mem_db.data", NULL, NULL, NULL);
-        if (rc != SQLITE_OK) {
-            mcpt_abort("Error copying in-memory database.data\n");
-        }
+        sqlite3_finalize(stmt);
         sqlite3_exec(db, "DETACH mem_db", NULL, NULL, NULL);
         sqlite3_close(db);
         free(outfile);
