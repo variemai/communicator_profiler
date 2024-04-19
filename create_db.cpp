@@ -340,7 +340,7 @@ int insertIntoComms(sqlite3 *db, const std::string &name, int size ) {
 std::vector<int> CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
     std::vector<int> ids;
     sqlite3_stmt *insertStmt, *getIdStmt;
-    int rc;
+    int rc, id;
 
     std::string insertSql = "INSERT OR IGNORE INTO comms (name, size) VALUES (?, ?)";
     std::string getIdSql = "SELECT id FROM comms WHERE name = ?";
@@ -373,7 +373,7 @@ std::vector<int> CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
         sqlite3_bind_text(getIdStmt, 1, comm.name.c_str(), -1, SQLITE_STATIC);
         rc = sqlite3_step(getIdStmt);
         if (rc == SQLITE_ROW) {
-            int id = sqlite3_column_int(getIdStmt, 0);
+            id = sqlite3_column_int(getIdStmt, 0);
             ids.push_back(id);
         } else {
             std::cerr << "Failed to get ID: " << sqlite3_errmsg(db) << std::endl;

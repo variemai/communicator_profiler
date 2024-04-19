@@ -1420,6 +1420,10 @@ _Finalize(void) {
         commIds=CommsInsert(mem_db, comms);
         comms.clear();
         comms.shrink_to_fit();
+        if ( commIds.size() < 1 ) {
+            mcpt_abort("mpisee: commIds.size < 1 \n");
+        }
+        std::cout << "mpisee: Comminicator table:" << std::endl;
 
         std::vector<DataEntry> entries;
         std::cout << "mpisee: Writing the main data table"
