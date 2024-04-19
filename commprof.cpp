@@ -1409,9 +1409,9 @@ _Finalize(void) {
 
           for (j = 0; j < numElements; ++j) {
               // Debugging print: communicator names
-              // std::cout << "mpisee: Name = " << recv_buffer[startIdx + j].name
-              //           << ", size = " << recv_buffer[startIdx + j].size
-              //           << std::endl;
+              std::cout << "mpisee: Name = " << recv_buffer[startIdx + j].name
+                        << ", size = " << recv_buffer[startIdx + j].size
+                        << std::endl;
               comms.push_back({recv_buffer[startIdx + j].name,
                       recv_buffer[startIdx + j].size});
           }
