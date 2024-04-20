@@ -1385,7 +1385,7 @@ _Finalize(void) {
                       recv_buffer[startIdx + j].size});
           }
         }
-        CommsInsert(mem_db, comms);
+        commIds = CommsInsert(mem_db, comms);
         comms.clear();
         comms.shrink_to_fit();
 
@@ -1400,20 +1400,17 @@ _Finalize(void) {
           numElements = recvcounts[proc];
 
           for (j = 0; j < numElements; ++j) {
-            // if (i < (int)commIds.size()) {
-            //     commId = commIds[i];
-            // } else {
-            //   std::cout << "mpisee: index in commids (" << i
-            //             << ") out of bounds" << std::endl;
-            //   mcpt_abort("commId out of bounds\n");
-
-            // }
+            if (i < (int)commIds.size()) {
+                commId = commIds[i];
+            } else {
+              std::cout << "mpisee: index in commids (" << i
+                        << ") out of bounds" << std::endl;
+              mcpt_abort("commId out of bounds\n");
+            }
             // std::cout << "mpisee: Comm name = " << recv_buffer[startIdx + j].name
             //           << std::endl;
-            commId = getCommId(mem_db, recv_buffer[startIdx + j].name);
-            if (commId < 0) {
-              mcpt_abort("commId < 0\n");
-            }
+            //commId = getCommId(mem_db, recv_buffer[startIdx + j].name);
+
             prof_data &item = recv_buffer[startIdx + j];
 
             for (k = 0; k < NUM_OF_PRIMS; k++) {
