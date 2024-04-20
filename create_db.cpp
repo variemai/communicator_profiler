@@ -340,73 +340,40 @@ int insertIntoComms(sqlite3 *db, const std::string &name, int size ) {
     return commId;
 }
 
-int CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
-    // std::vector<int> ids;
-    sqlite3_stmt *insertStmt, *getIdStmt;
-    int rc;
+void CommsInsert(sqlite3 *db, const std::vector<CommData>& comms) {
+      const std::string insertSql = "INSERT OR IGNORE INTO comms (name, size) VALUES (?, ?)";
 
-    std::string insertSql = "INSERT OR IGNORE INTO comms (name, size) VALUES (?, ?)";
-    // std::string getIdSql = "SELECT id FROM comms WHERE name = ?";
-
-    rc = sqlite3_prepare_v2(db, insertSql.c_str(), -1, &insertStmt, nullptr);
-    if (rc != SQLITE_OK) {
-        std::cerr << "Failed to prepare insert statement: " << sqlite3_errmsg(db) << std::endl;
+    sqlite3_stmt *stmt;
+    int result = sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        std::cerr << "mpisee: Error preparing statement: " << sqlite3_errmsg(db) << std::endl;
         fflush(stderr);
-        return -1;
-        // return ids; // Return an empty vector
+        return;
     }
-    // else {
-    //     std::cout << "Prepared insert statement" << std::endl;
-    //     fflush(stdout);
-    // }
 
-    // rc = sqlite3_prepare_v2(db, getIdSql.c_str(), -1, &getIdStmt, nullptr);
-    // if (rc != SQLITE_OK) {
-    //     std::cerr << "Failed to prepare getId statement: " << sqlite3_errmsg(db) << std::endl;
-    //     sqlite3_finalize(insertStmt);
-    //     fflush(stderr);
-    //     // return ids;
-    // }
-    // else {
-    //     std::cout << "Prepared getId statement" << std::endl;
-    //     fflush(stdout);
-    // }
+    // Start a single transaction
+    executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
 
     for (const auto& comm : comms) {
-        sqlite3_bind_text(insertStmt, 1, comm.name.c_str(), -1, SQLITE_STATIC);
-        sqlite3_bind_int(insertStmt, 2, comm.size);
+        sqlite3_bind_text(stmt, 1, comm.name.c_str(), -1, SQLITE_STATIC);
+        sqlite3_bind_int(stmt, 2, comm.size);
 
-        rc = sqlite3_step(insertStmt);
-        if (rc != SQLITE_DONE) {
-            std::cerr << "Insert operation failed: " << sqlite3_errmsg(db) << std::endl;
+        result = sqlite3_step(stmt);
+        if (result != SQLITE_DONE) {
+            std::cerr << "mpisee: Error during insert: " << sqlite3_errmsg(db) << std::endl;
             fflush(stderr);
-            return -2; // Stop on error
+            sqlite3_exec(db, "ROLLBACK", nullptr, nullptr, nullptr); // Rollback on error
+            sqlite3_finalize(stmt);
+            return;
         }
-        // else {
-        //     std::cout << "Inserted comm: " << comm.name << std::endl;
-        //     fflush(stdout);
-        // }
 
-        sqlite3_reset(insertStmt);
-
-        // sqlite3_bind_text(getIdStmt, 1, comm.name.c_str(), -1, SQLITE_STATIC);
-        // rc = sqlite3_step(getIdStmt);
-        // if (rc == SQLITE_ROW) {
-        //     id = sqlite3_column_int(getIdStmt, 0);
-        //     std::cout << "Got ID: " << id << std::endl;
-        //     // ids.push_back(id);
-        // } else {
-        //     std::cerr << "Failed to get ID: " << sqlite3_errmsg(db) << std::endl;
-        //     fflush(stderr)
-        // }
-
-        // sqlite3_reset(getIdStmt);
+        sqlite3_reset(stmt);
     }
 
-    sqlite3_finalize(insertStmt);
-    // sqlite3_finalize(getIdStmt);
-    // return ids;
-    return 0;
+    // Commit the transaction
+    executeSQL(db, "END TRANSACTION", "End Transaction");
+
+    sqlite3_finalize(stmt);
 }
 
 

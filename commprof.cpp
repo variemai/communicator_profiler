@@ -1324,6 +1324,7 @@ _Finalize(void) {
             }
         }
 
+        t = MPI_Wtime();
         rc = sqlite3_open(":memory:", &mem_db);
         if (rc != SQLITE_OK) {
             mcpt_abort("mpisee: Can't open in-memory database: %s\n", sqlite3_errmsg(mem_db));
@@ -1384,22 +1385,14 @@ _Finalize(void) {
                       recv_buffer[startIdx + j].size});
           }
         }
-        i = CommsInsert(mem_db, comms);
-        if ( i < 0 ) {
-            mcpt_abort("mpisee: CommsInsert returned < %d\n",i);
-        }
+        CommsInsert(mem_db, comms);
         comms.clear();
         comms.shrink_to_fit();
-        // if ( commIds.size() < 1 ) {
-        //     mcpt_abort("mpisee: commIds.size < 1 \n");
-        // }
-        // std::cout << "mpisee: Comminicator table:" << std::endl;
 
         std::vector<DataEntry> entries;
         std::cout << "mpisee: Writing the main data table"
                   << std::endl;
         i = 0;
-        t = MPI_Wtime();
         commId = 0;
         for (proc = 0; proc < size; ++proc) {
 
