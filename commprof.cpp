@@ -1336,7 +1336,7 @@ _Finalize(void) {
         insertMetadata(mem_db, version, size, av, ac, mpisee_major_version,
                        mpisee_minor_version, mpisee_build_date,
                        mpisee_build_time, env_var);
-        printMetadata(mem_db);
+
         std::cout << "mpisee: Writing the MPI operations table" << std::endl;
 
         insertIntoOperationsEmpty(mem_db, prim_names[0]);
