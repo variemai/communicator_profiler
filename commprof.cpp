@@ -1347,7 +1347,7 @@ _Finalize(void) {
             }
         }
 
-
+        t = MPI_Wtime();
         createTables(db);
         std::cout << "mpisee: Writing the metadata table" << std::endl;
 
@@ -1414,7 +1414,6 @@ _Finalize(void) {
         std::cout << "mpisee: Writing the main data table"
                   << std::endl;
         i = 0;
-        t = MPI_Wtime();
         commId = 0;
         for (proc = 0; proc < size; ++proc) {
 
