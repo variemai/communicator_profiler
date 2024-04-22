@@ -573,21 +573,21 @@ def query_all_data(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
     exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
 
 
-def default_query(dbpath,num_of_rows=10):
+def default_query(dbpath,num_of_rows=20):
     sql = """
     SELECT
     c.name AS comm_name,
     c.size AS comm_size,
     d.rank,
     o.operation,
-    MIN(d.buffer_size_min) AS buffer_size_min,
-    MAX(d.buffer_size_max) AS buffer_size_max,
+    d.buffer_size_min,
+    d.buffer_size_max,
     SUM(d.calls) AS calls,
     MAX(d.time) AS time_s
 FROM data d
 JOIN comms c ON d.comm_id = c.id
 JOIN operations o ON d.operation_id = o.id
-GROUP BY c.name, c.size, d.rank, o.operation;
+GROUP BY c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max;
         """
 
     conn = sqlite3.connect(dbpath)
@@ -595,10 +595,7 @@ GROUP BY c.name, c.size, d.rank, o.operation;
     i = 0
     try:
         # Execute the query
-        if MPI_prim == None:
-            cursor.execute(sql)
-        else:
-            cursor.execute(sql,(MPI_prim,))
+        cursor.execute(sql)
 
         # Print header
         print_decoration(BOLD)
@@ -630,7 +627,7 @@ GROUP BY c.name, c.size, d.rank, o.operation;
                 break
             buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
             print(f"{result['comm_name']:<15}{result['comm_size']:<15}{result['rank']:<10}{result['operation']:<20}"
-                  f"{buffer_size:<25}{result['calls']:<25}{result['time_s']:<15}")  # Adjust formatting as needed
+                  f"{buffer_size:<25}{result['calls']:<15}{result['time_s']:<15.3f}")  # Adjust formatting as needed
             i += 1
 
 
@@ -656,7 +653,7 @@ def default_query_summary(dbpath,MPI_prim):
         JOIN comms c ON d.comm_id = c.id
         JOIN operations o ON d.operation_id = o.id
         WHERE o.operation = ?
-        GROUP BY c.name, c.size, d.rank, o.operation;
+        GROUP BY c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max;
         """
 
     conn = sqlite3.connect(dbpath)
@@ -750,6 +747,21 @@ def create_and_populate_summary_table(db_path):
     conn.commit()
     conn.close()
 
+def print_comms_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM comms")
+
+    rows = cursor.fetchall()
+    print_decoration(BLUE)
+    print(f"{'ID':<5}{'Name':<15}{'Size':<15}")
+    print_decoration(RESET)
+    for row in rows:
+        id, name, size = row
+        print(f"{id:<5}{name:<15}{size:<15}")
+
+    conn.close()
 
 def print_metadata_table(db_path):
     conn = sqlite3.connect(db_path)
@@ -1332,6 +1344,7 @@ def main():
     parser.add_argument("-n", "--nresults", required=False, type=int, default=0, help="Show the first N results. By default all are printed.")
     parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
     parser.add_argument("--csv", required=False, type=str, help="Output to a csv file")
+    parser.add_argument("--debug", required=False, action='store_true', help="Print debug information.")
     args = parser.parse_args()
 
     #header_path = '../utils.h'
@@ -1435,11 +1448,16 @@ def main():
         print_execution_time(db_path,rank_list)
     elif args.all:
         query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
+    elif args.debug:
+        print_comms_table(db_path)
     else:
         if args.mpiprim:
             default_query_summary(db_path,MPI_prim=args.mpiprim)
-        if args.nresults:
-            default_query(db_path,MPI_prim=None,num_of_rows=args.nresults)
+        else:
+            if not args.nresults:
+                default_query(db_path)
+            else:
+                default_query(db_path,args.nresults)
             #print_data_by_prim(db_path,"Allreduce",args.nresults)
         #else:
             #default_query(db_path)
