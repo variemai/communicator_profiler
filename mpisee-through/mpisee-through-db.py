@@ -648,8 +648,8 @@ def default_query_summary(dbpath,MPI_prim):
         c.name AS comm_name,
         c.size AS comm_size,
         o.operation,
-        MIN(d.buffer_size_min) AS buffer_size_min,
-        MAX(d.buffer_size_max) AS buffer_size_max,
+        d.buffer_size_min,
+        d.buffer_size_max,
         SUM(d.calls) AS calls,
         MAX(d.time) AS time_s
         FROM data d
