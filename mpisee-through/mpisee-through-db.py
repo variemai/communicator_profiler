@@ -198,7 +198,7 @@ def exec_query_and_print(db_path,sql,order,num_of_rows,ranks,comms,*args):
         # Print header
         print_decoration(BOLD)
         print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'MPI Operation':<20}"
-              f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}{'% of MPI Time':<20}{'% of Total Time':<10}")
+              f"{'Buffer Size (Bytes)':<30}{'Calls':<15}{'Time (s)':<15}{'% of MPI Time':<20}{'% of Total Time':<10}")
         print_decoration(RESET)
         # Print rows
         r = 0
