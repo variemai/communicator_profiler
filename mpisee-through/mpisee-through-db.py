@@ -587,7 +587,7 @@ def default_query(dbpath,num_of_rows=20):
 FROM data d
 JOIN comms c ON d.comm_id = c.id
 JOIN operations o ON d.operation_id = o.id
-GROUP BY c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max;
+GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max;
         """
 
     conn = sqlite3.connect(dbpath)
@@ -599,7 +599,7 @@ GROUP BY c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_m
 
         # Print header
         print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'MPI Operation':<20}"
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'MPI Operation':<20}"
               f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}")
         print_decoration(RESET)
 
@@ -610,7 +610,7 @@ GROUP BY c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_m
         for row in data:
             comm_name, comm_size, rank, operation, buf_min, buf_max, calls, time = row
             key = (comm_name, comm_size, operation, buf_min, buf_max)
-            if key not in results or results[key]['time_s'] < time:
+            if key not in results:
                 results[key] = {
                 'comm_name': comm_name,
                 'comm_size': comm_size,
@@ -626,7 +626,7 @@ GROUP BY c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_m
             if (i >= num_of_rows):
                 break
             buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
-            print(f"{result['comm_name']:<15}{result['comm_size']:<15}{result['rank']:<10}{result['operation']:<20}"
+            print(f"{result['comm_name']:<15}{result['comm_size']:<15}{result['operation']:<20}"
                   f"{buffer_size:<25}{result['calls']:<15}{result['time_s']:<15.3f}")  # Adjust formatting as needed
             i += 1
 

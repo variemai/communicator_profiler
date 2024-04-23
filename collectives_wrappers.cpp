@@ -6,7 +6,7 @@ int
 MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
           MPI_Comm comm)
 {
-    int ret,rank,sum;
+    int ret,rank;
     double t_elapsed;
 
     if ( prof_enabled == 1 ){
@@ -14,13 +14,13 @@ MPI_Bcast(void *buffer, int count, MPI_Datatype datatype, int root,
         ret = PMPI_Bcast(buffer, count, datatype, root, comm);
         t_elapsed = MPI_Wtime() - t_elapsed;
         PMPI_Comm_rank(comm, &rank);
-        if ( rank == root ){
-            sum = count;
-        }
-        else {
-            sum = 0;
-        }
-        profile_this(comm,sum,datatype,Bcast,t_elapsed,root);
+        // if ( rank == root ){
+        //     sum = count;
+        // }
+        // else {
+        //     sum = 0;
+        // }
+        profile_this(comm,count,datatype,Bcast,t_elapsed,root);
     }
     else{
         ret = PMPI_Bcast(buffer, count, datatype, root, comm);
@@ -50,7 +50,7 @@ int
 MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
            MPI_Comm comm, MPI_Request *request)
 {
-    int ret,rank,sum;
+    int ret,rank;
     double t_elapsed;
     if ( prof_enabled == 1 ){
         t_elapsed =  MPI_Wtime();
@@ -58,13 +58,13 @@ MPI_Ibcast(void *buffer, int count, MPI_Datatype datatype, int root,
         t_elapsed = MPI_Wtime() - t_elapsed;
 
         PMPI_Comm_rank(comm, &rank);
-        if ( rank == root ){
-            sum = 0;
-        }
-        else {
-            sum = count;
-        }
-        profile_this(comm,sum,datatype,Ibcast,t_elapsed,root);
+        // if ( rank == root ){
+        //     sum = 0;
+        // }
+        // else {
+        //     sum = count;
+        // }
+        profile_this(comm,count,datatype,Ibcast,t_elapsed,root);
         requests_map[*request] = comm;
     }
     else{
