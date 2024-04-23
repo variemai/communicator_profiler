@@ -1438,14 +1438,23 @@ _Finalize(void) {
                                       item.buckets_time[k][0]);
               }
               for (l = 1; l < NUM_BUCKETS-1; l++) {
-                  minsize = buckets[l-1];
-                  maxsize = (l == NUM_BUCKETS - 2) ? INT_MAX : buckets[l];
+                  minsize = buckets[l-1]; //runs from 0 to NUM_BUCKETS-3
+                  maxsize = buckets[l]; //runs from 1 to NUM_BUCKETS-2
                   if (item.buckets_msgs[k][l] > 0) {
                     insertIntoDataEntry(entries, proc, commId, k, minsize,
                                         maxsize, item.buckets_msgs[k][l],
                                         item.buckets_time[k][l]);
                   }
               }
+              // Insert the data of the last bucket
+              minsize = buckets[NUM_BUCKETS-2];
+              maxsize = INT_MAX;
+              if (item.buckets_msgs[k][NUM_BUCKETS-1] > 0) {
+                  insertIntoDataEntry(entries, proc, commId, k, minsize,
+                                      maxsize, item.buckets_msgs[k][NUM_BUCKETS-1],
+                                      item.buckets_time[k][NUM_BUCKETS-1]);
+              }
+
             }
             i++;
           }
