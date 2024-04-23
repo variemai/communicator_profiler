@@ -1,14 +1,18 @@
 #!/usr/bin/env python3
-"""
-Module documentation.
-"""
-
-# Imports
-import sys
-import csv
-from operator import add
 import argparse
-#from art import *
+import sqlite3
+import re
+import os
+import sys
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+import matplotlib.colors as mcolors
+import matplotlib.cm as cm
+import numpy as np
+import colorsys
+import operator
+import csv
+
 
 from signal import signal, SIGPIPE, SIG_DFL
 
@@ -23,362 +27,1483 @@ RESET = "\033[0;0m"
 BOLD = "\033[;1m"
 REVERSE = "\033[;7m"
 
-# Class declarations
+def initialize_mpi_operation_colors(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    sql = "SELECT DISTINCT operation FROM operations"
+
+    try:
+        cursor.execute(sql)
+        operations = cursor.fetchall()
+        # Flatten the list of tuples to a list of operation names
+        operations = [op[0] for op in operations]
+
+        # Generate colors from a colormap
+        #color_map = plt.cm.get_cmap('tab20', len(operations))
+        #mpi_operation_colors = {op: color_map(i) for i, op in enumerate(operations)}
+        #mpi_operation_colors = {op: color for op, color in zip(operations, generate_distinct_colors(len(operations)))}
+        custom_cmap = discrete_cmap(len(operations), 'tab20')
+        mpi_operation_colors = {op: custom_cmap(i) for i, op in enumerate(operations)}
+
+
+        return mpi_operation_colors
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+        return {}
+    finally:
+        conn.close()
+
+def generate_distinct_colors(num_colors):
+    # Generate colors as equally spaced hues in the HSV space
+    hsv_tuples = [(x * 1.0 / num_colors, 0.5, 0.5) for x in range(num_colors)]
+    rgb_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples)
+    return list(rgb_tuples)
+
+def discrete_cmap(N, base_cmap=None):
+    """Create an N-bin discrete colormap from the specified input map"""
+
+    # Note that if base_cmap is a string or None, you can simply do
+    #    return plt.cm.get_cmap(base_cmap, N)
+    # The following works for string, None, or a colormap instance:
+
+    base = plt.cm.get_cmap(base_cmap)
+    color_list = base(np.linspace(0, 1, N))
+    cmap_name = base.name + str(N)
+    return ListedColormap(color_list, name=cmap_name)
+
+def assign_colors(plot_data):
+    operations = list(plot_data.keys())
+    colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
+    #mpi_operation_colors = {op: color for op, color in zip(operations, colors)}
+    return colors;
+
+def colors_assign(plot_data):
+    operations = list(plot_data.keys())
+    colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
+    mpi_operation_colors = {op: color for op, color in zip(operations, colors)}
+    return mpi_operation_colors;
 
 # Function declarations
-
 def print_decoration(decoration):
     if sys.stdout.isatty():
         # the output is not redirected, we can use a fancy style:
         sys.stdout.write(decoration)
 
+def parse_enum_from_header(header_path):
+    with open(header_path, 'r') as file:
+        content = file.read()
 
-def ratio_to_percentage(ratio):
-    return f"{ratio * 100:.2f}%"
+    # Regular expression to find enum definition
+    enum_pattern = re.compile(r'enum primitives\{([^}]+)\};', re.MULTILINE | re.DOTALL)
+    match = enum_pattern.search(content)
 
-def get_values(inlist):
-    ranks = []
-    values = []
+    if match:
+        enum_content = match.group(1)
+        # Extract individual enum items
+        enum_items = enum_content.split(',')
+        enum_dict = {}
+        value = 0  # Assuming enum starts at 0
+        for item in enum_items:
+            item = item.strip()
+            if item:  # Non-empty string
+                if '=' in item:
+                    name, val = item.split('=')
+                    value = int(val.strip())
+                    enum_dict[name.strip()] = value
+                else:
+                    enum_dict[item] = value
+                value += 1
+        return enum_dict
+    else:
+        print("Enum 'primitives' not found in the header file.")
+        return None
 
-    # Flatten the list if its first element is a list
-    if isinstance(inlist[0], list):
-        inlist = inlist[0] + inlist[1:]
+def get_exec_time_by_rank(db_path, rank):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    total_time = 0.0
 
-    for entry in inlist[1:]:  # skipping the first informational string
-        rank, value = entry.split()
-        ranks.append(int(rank))
-        values.append(float(value))
+    try:
+        sql = "SELECT time FROM exectimes WHERE id = ?"
 
-    max_value = max(values)
-    min_value = min(values)
+        cursor.execute(sql, (rank,))
+        result = cursor.fetchone()
 
-    max_rank = ranks[values.index(max_value)]
-    min_rank = ranks[values.index(min_value)]
-
-    return max_rank,max_value,min_rank,min_value
-
-
-def print_times(elapsed_time, mpi_times):
-    max_rank, max_value, min_rank, min_value = get_values(elapsed_time)
-    max_mpi_rank, max_mpi_time, min_mpi_rank, min_mpi_time = get_values(mpi_times)
-
-    ranks = []
-    ratios = []
-
-    mpi_times = mpi_times[0]+mpi_times[1:]
-    for i in range(1,len(elapsed_time)):  # skipping the first informational string
-        time = elapsed_time[i].split()[1]
-        mpi_time = mpi_times[i].split()[1]
-        ranks.append(int(i))
-        if time == 0:
-            return "Cannot compute ratio: Division by zero"
-        ratios.append(float(mpi_time)/float(time))
-    
-    max_ratio = max(ratios)
-    min_ratio = min(ratios)
-    max_ratio_rank = ranks[ratios.index(max_ratio)]
-    min_ratio_rank = ranks[ratios.index(min_ratio)]
-
-    print_decoration(GREEN)
-    print(f"Overall Timing Statistics for {len(ratios)} MPI Processes (Ranks in MPI_COMM_WORLD)")
-    print_decoration(RESET)
-    print(f"Maximum Total Time: {max_value}s (MPI Rank: {max_rank})")
-    print(f"Minimum Total Time: {min_value}s (MPI Rank: {min_rank})")
-    print(f"Maximum MPI Time: {max_mpi_time}s (MPI Rank: {max_mpi_rank})")
-    print(f"Minimum MPI Time: {min_mpi_time}s (MPI Rank: {min_mpi_rank})")
-    print(f"Maximum Percentage of MPI Time to Total Time: {ratio_to_percentage(max_ratio)} (MPI Rank: {max_ratio_rank})")
-    print(f"Minimum Percentage of MPI Time to Total Time: {ratio_to_percentage(min_ratio)} (MPI Rank: {min_ratio_rank})")
-    print("\n")
-
-
-
-def compact_proc_list(proc_list):
-    proc_list.sort()
-    proc_str = ""
-    start_proc = proc_list[0]
-    for i in range(1, len(proc_list)):
-        if proc_list[i - 1] + 1 != proc_list[i]:
-            proc_str += (
-                f"{start_proc}-{proc_list[i-1]}"
-                if start_proc != proc_list[i - 1]
-                else f"{start_proc}"
-            )
-            proc_str += ", "
-            start_proc = proc_list[i]
-
-    proc_str += (
-        f"{start_proc}-{proc_list[-1]}"
-        if start_proc != proc_list[-1]
-        else f"{start_proc}"
-    )
-
-    return proc_str
-
-
-def print_mapping(mapping):
-    mapping[0] = mapping[0].split(":")[1].strip()
-    node_to_procs = {}
-    for proc in mapping:
-        proc_rank, node = proc.split()
-        proc_rank = int(proc_rank)
-        if node in node_to_procs:
-            node_to_procs[node].append(proc_rank)
+        if result:
+            total_time = result[0]
+            return total_time
         else:
-            node_to_procs[node] = [proc_rank]
+            print(f"No data found for rank {rank}.")
+            return None
 
-    print_decoration(GREEN)
-    print("Mapping of MPI ranks to Compute Nodes")
-    print_decoration(RESET)
-    for node, proc_list in node_to_procs.items():
-
-        print(f"{node}: {compact_proc_list(proc_list)}")
-
-    print(end="\n")
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+        return None
+    finally:
+        conn.close()
 
 
-def prepare_data(file_path):
-    with open(file_path, "r") as file:
-        csv_file = csv.reader(file)
-        for i in range(7): #skip those lines for now
-            next(csv_file)
-        mapping = next(csv_file)
-        time_elapsed = next(csv_file)                    #skip also this line
-        index_to_colname = next(csv_file)
-        colname_to_index = {
-            index_to_colname[i]: i for i in range(0, len(index_to_colname))
-        }
-        raw_data = []
-        mpi_data = []
-        for row in csv_file:
-            row_parsed = []
-            if '#' in row[0]:
-                mpi_data.append(row)
-            else:
-                for j in range(0, len(row)):
-                    row_parsed.append(
-                        float(row[j]) if colname_to_index["Comm"] != j else row[j]
-                    )
-                raw_data.append(row_parsed)
+def get_mpi_time_by_rank(db_path, rank):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
-    data_groupBy_comm, comm_to_procs = groupBy_comm(raw_data, colname_to_index)
+    try:
+        sql = "SELECT total_time FROM mpi_time_sum WHERE rank = ?"
 
-    table = create_table(data_groupBy_comm, colname_to_index, index_to_colname)
+        cursor.execute(sql, (rank,))
+        result = cursor.fetchone()
 
-    return table, mapping, comm_to_procs, time_elapsed, mpi_data
-
-
-def groupBy_comm(data, colname_to_index):
-    data_groupBy_comm = {}
-    comm_to_procs = {}
-    for row in data:
-        comm = row[colname_to_index["Comm"]]
-        row[colname_to_index["Comm"]] = ""
-        if comm in data_groupBy_comm:
-            data_groupBy_comm[comm].append(row)
-            comm_to_procs[comm].append(int(row[colname_to_index["Rank"]]))
+        if result:
+            total_time = result[0]
+            return total_time
         else:
-            data_groupBy_comm[comm] = [row]
-            comm_to_procs[comm] = [int(row[colname_to_index["Rank"]])]
+            print(f"No data found for rank {rank}.")
+            return None
 
-    return data_groupBy_comm, comm_to_procs
-
-
-def create_table(data_groupBy_comm, colname_to_index, index_to_colname):
-    table = []
-
-    time_indexes = [kv[1] for kv in colname_to_index.items() if kv[0].endswith("Time")]
-
-    for comm in data_groupBy_comm:
-        maximum = list(data_groupBy_comm[comm][0])
-        minimum = list(data_groupBy_comm[comm][0])
-        cum_sum = list(data_groupBy_comm[comm][0])
-
-        for i in range(1, len(data_groupBy_comm[comm])):
-            row = data_groupBy_comm[comm][i]
-            maximum = list(map(max, maximum, row))
-            minimum = list(map(min, minimum, row))
-            cum_sum = list(map(add, cum_sum, row))
-
-        average = list(
-            map(
-                lambda x: x / len(data_groupBy_comm[comm])
-                if not isinstance(x, str)
-                else x,
-                cum_sum,
-            )
-        )
-
-        comm_size = int(data_groupBy_comm[comm][0][colname_to_index["Size"]])
-        for i in time_indexes:
-            call = "_".join(index_to_colname[i].split("_")[:-1])
-            call_mean, call_min, call_max = average[i], minimum[i], maximum[i]
-            call_tot_vol = int(cum_sum[colname_to_index[call + "_Volume"]])
-            nb_tot_call = int(cum_sum[colname_to_index[call + "_Calls"]])
-
-            if nb_tot_call > 0:
-                table.append(
-                    {
-                        "call": call,
-                        "call_mean": call_mean,
-                        "call_min": call_min,
-                        "call_max": call_max,
-                        "call_tot_vol": call_tot_vol,
-                        "nb_tot_call": nb_tot_call,
-                        "comm": comm,
-                    }
-                )
-
-    return table
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+        return None
+    finally:
+        conn.close()
 
 
-def print_cct(table, comm_to_procs, comm_limit):
-    comm_limit = (
-        comm_limit
-        if comm_limit != None and comm_limit < len(comm_to_procs)
-        else len(comm_to_procs)
-    )
-    nb_comm_printed = 0
-    print_decoration(GREEN)
-    print("Statistics Per Communicator")
-    print_decoration(RESET)
-    for comm in comm_to_procs.keys():
-        if nb_comm_printed >= comm_limit:
-            break
+def query_data_by_rank(db_path, rank):
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM data WHERE rank = ?", (rank,))
+        return cursor.fetchall()
 
-        comm_calls = list(filter(lambda x: x["comm"] == comm, table))
-        comm_calls.sort(key=lambda x: x["call_mean"], reverse=True)
+def exec_query_and_print(db_path,sql,order,num_of_rows,ranks,comms,*args):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
+    params = args
+    if len(ranks) > 0:
+        placeholders = ','.join('?' * len(ranks))
+        sql += f" AND d.rank IN ({placeholders})"
+        params += tuple(ranks)
+    if len(comms) > 0:
+        placeholders = ','.join('?' *len(comms))
+        sql += f" AND c.name IN ({placeholders})"
+        params += tuple(comms)
+
+    sql = select_order(sql,order)
+
+    try:
+        # Execute the query
+        cursor.execute(sql,params)
+
+        # Print header
         print_decoration(BOLD)
-        print("COMM".ljust(20) + "SIZE".ljust(10) + "PROCS")
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'MPI Operation':<20}"
+              f"{'Buffer Size (Bytes)':<30}{'Calls':<15}{'Time (s)':<15}{'% of MPI Time':<20}{'% of Total Time':<10}")
         print_decoration(RESET)
-        print(
-            f"{comm}".ljust(20)
-            + f"{len(comm_to_procs[comm])}".ljust(10)
-            + f"{compact_proc_list(comm_to_procs[comm])}",
-            end="\n\n",
-        )
+        # Print rows
+        r = 0
+        prev_rank = -1
+        percentage_mpi_time = 0.0
+        percentage_exec_time = 0.0
+        exec_time = -1.0
+        mpi_time = -1.0
+        for row in cursor.fetchall():
+            name, size, rank, operation, buf_min, buf_max, calls, time = row
+            buffer_size = f"{buf_min} - {buf_max}"
+            if rank != prev_rank:
+                exec_time = get_exec_time_by_rank(db_path,rank)
+                mpi_time = get_mpi_time_by_rank(db_path,rank)
+                prev_rank = rank
+
+            percentage_exec_time = (time/exec_time)*100
+            percentage_mpi_time = (time/mpi_time)*100
+            print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
+                  f"{buffer_size:<30}{calls:<15}{time:<15.3f}{percentage_mpi_time:<20.3f}{percentage_exec_time:<10.3f}")
+            r+=1
+            if num_of_rows > 0 and r >= num_of_rows:
+                break
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        if conn:
+            conn.close()
+
+def select_order(sql,order):
+    if order == 0:
+        sql += """
+        ORDER BY c.name"""
+    elif order == 1:
+        sql += """
+        ORDER BY d.time DESC"""
+    elif order == 2:
+        sql += """
+        ORDER BY d.time ASC"""
+    elif order == 3:
+        sql += """
+        ORDER BY d.operation_id DESC"""
+    elif order == 4:
+        sql += """
+        ORDER BY d.buffer_size_min DESC"""
+    elif order == 5:
+        sql += """
+        ORDER BY d.buffer_size_min ASC"""
+    elif order == 6:
+        sql += """
+        ORDER BY d.calls DESC"""
+    elif order == 7:
+        sql += """
+        ORDER BY d.calls ASC"""
+    return sql
+
+
+def print_all_data(db_path):
+    # Connect to the SQLite database
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # SQL query
+    sql = """
+    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
+           d.calls, d.time
+    FROM data d
+    JOIN comms c ON d.comm_id = c.id
+    JOIN operations o ON d.operation_id = o.id
+    ORDER BY c.name
+    """
+
+    try:
+        # Execute the query
+        cursor.execute(sql)
+
+        # Print header
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
+              f"{'Buffer Size Range (Bytes)':<25}{'Calls':<15}{'Time':<20}")
+
+        # Print rows
+        for row in cursor.fetchall():
+            name, size, rank, operation, buf_min, buf_max, calls, time = row
+            buffer_size = f"{buf_min} - {buf_max}"
+            print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
+                  f"{buffer_size:<25}{calls:<15}{time:<20}")
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        if conn:
+            conn.close()
+
+def print_data_by_rank(db_path, rank):
+    # Connect to the SQLite database
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # SQL query
+    sql = """
+    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
+           d.calls, d.time
+    FROM data d
+    JOIN comms c ON d.comm_id = c.id
+    JOIN operations o ON d.operation_id = o.id
+    WHERE d.rank = ?
+    ORDER BY c.name
+    """
+
+    try:
+        # Execute the query
+        cursor.execute(sql,(rank,))
+
+        # Print header
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
+              f"{'Buffer Size Range':<25}{'Calls':<15}{'Time':<20}")
+
+        # Print rows
+        for row in cursor.fetchall():
+            name, size, rank, operation, buf_min, buf_max, calls, time = row
+            buffer_size = f"{buf_min} - {buf_max}"
+            print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
+                  f"{buffer_size:<25}{calls:<15}{time:<20}")
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        if conn:
+            conn.close()
+
+def print_data_by_comm(db_path, comm):
+    # Connect to the SQLite database
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # SQL query
+    sql = """
+    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
+           d.calls, d.time
+    FROM data d
+    JOIN comms c ON d.comm_id = c.id
+    JOIN operations o ON d.operation_id = o.id
+    WHERE c.name = ?
+    ORDER BY d.time DESC
+    """
+    print(f"Data for communicator: {comm}")
+    try:
+        # Execute the query
+        cursor.execute(sql,(comm))
+
+        # Print header
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
+              f"{'Buffer Size Range':<25}{'Calls':<15}{'Time':<20}")
+
+        # Print rows
+        for row in cursor.fetchall():
+            name, size, rank, operation, buf_min, buf_max, calls, time = row
+            buffer_size = f"{buf_min} - {buf_max}"
+            print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
+                  f"{buffer_size:<25}{calls:<15}{time:<20}")
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        if conn:
+            conn.close()
+
+def print_data_by_prim(db_path, MPI_prim,nresults=10):
+    # Connect to the SQLite database
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # SQL query
+    sql = """
+    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
+           d.calls, d.time
+    FROM data d
+    JOIN comms c ON d.comm_id = c.id
+    JOIN operations o ON d.operation_id = o.id
+    WHERE o.operation = ?
+    ORDER BY d.time DESC
+    """
+    j = 0
+    try:
+        # Execute the query
+        cursor.execute(sql,(MPI_prim,))
+
+        # Print header
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
+              f"{'Buffer Size Range':<25}{'Calls':<15}{'Time':<20}")
+
+        # Print rows
+        for row in cursor.fetchall():
+            if (j >= nresults):
+                break
+            name, size, rank, operation, buf_min, buf_max, calls, time = row
+            buffer_size = f"{buf_min} - {buf_max}"
+            print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
+                  f"{buffer_size:<25}{calls:<15}{time:<20}")
+            j+=1
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        if conn:
+            conn.close()
+
+def print_execution_time(dpath,ranks=[]):
+    conn = sqlite3.connect(dpath)
+    cursor = conn.cursor()
+    sql_exectime = """
+    SELECT t.id, t.time
+    FROM exectimes t
+    """
+    params_exectime = ""
+    if len(ranks) > 0:
+        placeholders = ','.join('?' * len(ranks))
+        sql_exectime += f"WHERE t.id IN ({placeholders})"
+        params_exectime = tuple(ranks)
+
+    # elif order == 1:
+    #     sql_exectime += """
+    #     ORDER BY t.time DESC"""
+    # elif order == 2:
+    #     sql_exectime+= """
+    #     ORDER BY t.time ASC"""
+
+    sql_exectime += """
+    ORDER BY t.id ASC"""
+
+
+    sql_mpitime = """
+    SELECT rank, total_time as mpi_time
+    FROM mpi_time_sum
+    """
+    params_mpitime = ""
+    if len(ranks) > 0:
+        placeholders = ','.join('?' * len(ranks))
+        sql_mpitime += f" WHERE rank IN ({placeholders})"
+        params_mpitime = tuple(ranks)
+
+    sql_mpitime += f"GROUP BY rank "
+    sql_mpitime += """
+    ORDER BY rank ASC"""
+
+    # if order == 1:
+    #     sql_mpitime += f" ORDER BY mpi_time DESC"
+    # else:
+    #     sql_mpitime += f" ORDER BY mpi_time ASC"
+
+
+
+    try:
+        # Execute the query
+        cursor.execute(sql_exectime,(params_exectime))
+        exectimes = cursor.fetchall()
+        cursor.execute(sql_mpitime,(params_mpitime))
+        mpitimes = cursor.fetchall()
+
+        # Print header
+        print_decoration(BOLD)
+        string_ranks = ",".join(str(num) for num in ranks)
+        print(f"Time statistics for MPI ranks: {string_ranks}")
+        print(f"{'MPI Rank':<10}{'MPI Time (s)':<15}{'Execution Time (s)':<20}{'Ratio MPI to Execution Time (%)':<10}")
         print_decoration(RESET)
-        print(
-            "\t"
-            + "Call".ljust(20)
-            + "Mean[s]".rjust(10)
-            + "Min[s]".rjust(10)
-            + "Max[s]".rjust(10)
-            + "Volume".rjust(15)
-            + "#Calls".rjust(10)
+
+        # Print rows
+        for i in range(len(exectimes)):
+            id,time = exectimes[i]
+            id_mpi,total_time = mpitimes[i]
+            print(f"{id:<10}{total_time:<15.3f}{time:<20.3f}{(total_time/time)*100:.2f}")
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite exectime table:", e)
+    finally:
+        # Close the database connection
+        if conn:
+            conn.close()
+
+def mpi_time(dbpath,order=1,ranks=[]):
+    conn = sqlite3.connect(dbpath)
+    cursor = conn.cursor()
+
+    sql ="""
+    SELECT rank, total_time as mpi_time
+    FROM mpi_time_sum
+    """
+    params = ""
+    if len(ranks) > 0:
+        placeholders = ','.join('?' * len(ranks))
+        sql += f" WHERE rank IN ({placeholders})"
+        params = tuple(ranks)
+
+    sql += f"GROUP BY rank "
+
+    if order == 1:
+        sql += f" ORDER BY mpi_time DESC"
+    else:
+        sql += f" ORDER BY mpi_time ASC"
+
+    try:
+        cursor.execute(sql,params)
+        rows = cursor.fetchall()
+        print_decoration(BOLD)
+        print(f"{'Rank':<8}{'MPI Time':<15}")
+        print_decoration(RESET)
+        for row in rows:
+            rank, total_time = row
+            print(f"{rank:<10}{total_time:.3f}")
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite exectime table:", e)
+    finally:
+        conn.close()
+
+def print_data_by_time(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
+    # SQL query
+    sql = """
+    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
+           d.calls, d.time
+    FROM data d
+    JOIN comms c ON d.comm_id = c.id
+    JOIN operations o ON d.operation_id = o.id
+    WHERE d.time >= ? AND d.time <= ?
+    """
+    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
+
+def print_data_by_bufsize(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
+    # SQL query
+    sql = """
+    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
+           d.calls, d.time
+    FROM data d
+    JOIN comms c ON d.comm_id = c.id
+    JOIN operations o ON d.operation_id = o.id
+    WHERE d.buffer_size_min >= ? AND d.buffer_size_max <= ?
+    """
+    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
+
+def  print_data_collectives(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
+    sql = """
+        SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
+           d.calls, d.time
+        FROM data d
+        JOIN comms c ON d.comm_id = c.id
+        JOIN operations o ON d.operation_id = o.id
+        WHERE d.buffer_size_min >= ? AND d.buffer_size_max <= ? AND d.operation_id >= ? """
+    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
+
+
+def print_data_pt2pt(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
+    sql = """
+        SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
+           d.calls, d.time
+        FROM data d
+        JOIN comms c ON d.comm_id = c.id
+        JOIN operations o ON d.operation_id = o.id
+        WHERE d.buffer_size_min >= ? AND d.buffer_size_max <= ? AND d.operation_id <= ?  """
+    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
+
+def query_all_data(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
+    sql = """SELECT c.name, c.size, d.rank, o.operation,
+                      d.buffer_size_min, d.buffer_size_max, d.calls, d.time
+                      FROM data d
+                      JOIN comms c ON d.comm_id = c.id
+                      JOIN operations o ON d.operation_id = o.id """
+    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
+
+
+def default_query(dbpath,num_of_rows=20):
+    sql = """
+    SELECT
+    c.name AS comm_name,
+    c.size AS comm_size,
+    d.rank,
+    o.operation,
+    d.buffer_size_min,
+    d.buffer_size_max,
+    SUM(d.calls) AS calls,
+    SUM(d.time) AS time_s
+FROM data d
+JOIN comms c ON d.comm_id = c.id
+JOIN operations o ON d.operation_id = o.id
+GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max;
+        """
+
+    conn = sqlite3.connect(dbpath)
+    cursor = conn.cursor()
+    i = 0
+    try:
+        # Execute the query
+        cursor.execute(sql)
+
+        # Print header
+        print_decoration(BOLD)
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'MPI Operation':<20}"
+              f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}")
+        print_decoration(RESET)
+
+        data = cursor.fetchall()  # Retrieve all data
+
+        results = {}
+
+        for row in data:
+            comm_name, comm_size, rank, operation, buf_min, buf_max, calls, time = row
+            key = (comm_name, comm_size, operation, buf_min, buf_max)
+            if key not in results:
+                results[key] = {
+                'comm_name': comm_name,
+                'comm_size': comm_size,
+                'rank': rank,
+                'operation': operation,
+                'buffer_size_min': buf_min,
+                'buffer_size_max': buf_max,
+                'calls': calls,
+                'time_s': time
+            }
+        results = dict(sorted(results.items(), key=lambda item: item[1]['time_s'], reverse=True))
+        for result in results.values():
+            if (i >= num_of_rows):
+                break
+            buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
+            print(f"{result['comm_name']:<15}{result['comm_size']:<15}{result['operation']:<20}"
+                  f"{buffer_size:<25}{result['calls']:<15}{result['time_s']:<15.3f}")  # Adjust formatting as needed
+            i += 1
+
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        if conn:
+            conn.close()
+
+
+def default_query_summary(dbpath,MPI_prim):
+    sql = """
+        SELECT
+        c.name AS comm_name,
+        c.size AS comm_size,
+        o.operation,
+        d.buffer_size_min,
+        d.buffer_size_max,
+        SUM(d.calls) AS calls,
+        MAX(d.time) AS time_s
+        FROM data d
+        JOIN comms c ON d.comm_id = c.id
+        JOIN operations o ON d.operation_id = o.id
+        WHERE o.operation = ?
+        GROUP BY c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max;
+        """
+
+    conn = sqlite3.connect(dbpath)
+    cursor = conn.cursor()
+    time = 0.0
+    try:
+        cursor.execute(sql,(MPI_prim,))
+
+        # Print header
+        print_decoration(BOLD)
+        print(f"{'Comm Name':<15}{'Comm Size':<15}{'MPI Operation':<20}"
+              f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}")
+        print_decoration(RESET)
+
+        data = cursor.fetchall()  # Retrieve all data
+
+        results = {}
+
+        for row in data:
+            comm_name, comm_size, operation, buf_min, buf_max, calls, time = row
+            key = (comm_name, comm_size, operation, buf_min, buf_max)
+            if key not in results or results[key]['time_s'] < time:
+                results[key] = {
+                'comm_name': comm_name,
+                'comm_size': comm_size,
+                'operation': operation,
+                'buffer_size_min': buf_min,
+                'buffer_size_max': buf_max,
+                'calls': calls,
+                'time_s': time
+            }
+        results = dict(sorted(results.items(), key=lambda item: item[1]['time_s'], reverse=True))
+        for result in results.values():
+            time += result['time_s']
+            buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
+            print(f"{result['comm_name']:<15}{result['comm_size']:<15}{result['operation']:<20}"
+                  f"{buffer_size:<25}{result['calls']:<15}{result['time_s']:<15.3f}")
+
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        print_decoration(BOLD)
+        print(f"\nTotal time for {MPI_prim}: {time:.3f} s")
+        print_decoration(RESET)
+        if conn:
+            conn.close()
+
+def clear_table_if_exists(db_path, table_name):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    try:
+        # Check if the table exists
+        cursor.execute("SELECT count(name) FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+        if cursor.fetchone()[0] == 1:
+            # Table exists, so clear it
+            cursor.execute(f"DELETE FROM {table_name}")
+            conn.commit()
+            #print(f"Table '{table_name}' cleared.")
+        #else:
+        #    print(f"Table '{table_name}' does not exist.")
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+def create_and_populate_summary_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    clear_table_if_exists(db_path,"mpi_time_sum")
+
+    # Step 1: Create a new table
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS mpi_time_sum (
+            rank INTEGER PRIMARY KEY,
+            total_time REAL
         )
+    """)
 
-        print("\t" + "".join(["-"] * 75))
+    # Step 2: Aggregate and insert data
+    cursor.execute("""
+        INSERT INTO mpi_time_sum (rank, total_time)
+        SELECT d.rank, SUM(d.time) as total_time
+        FROM data d
+        GROUP BY d.rank
+    """)
 
-        for i in range(0, len(comm_calls)):
-            call = comm_calls[i]["call"]
-            call_mean = comm_calls[i]["call_mean"]
-            call_min = comm_calls[i]["call_min"]
-            call_max = comm_calls[i]["call_max"]
-            call_tot_vol = comm_calls[i]["call_tot_vol"]
-            nb_tot_call = comm_calls[i]["nb_tot_call"]
-            print(
-                "\t"
-                + f"{call}".ljust(20)
-                + f"{call_mean:.4f}".rjust(10)
-                + f"{call_min:.4f}".rjust(10)
-                + f"{call_max:.4f}".rjust(10)
-                + f"{call_tot_vol}".rjust(15)
-                + f"{nb_tot_call}".rjust(10)
-            )
+    conn.commit()
+    conn.close()
 
-        print("\n")
-        nb_comm_printed += 1
+def print_comms_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
-    return
+    cursor.execute("SELECT * FROM comms")
+
+    rows = cursor.fetchall()
+    print_decoration(BLUE)
+    print(f"{'ID':<5}{'Name':<15}{'Size':<15}")
+    print_decoration(RESET)
+    for row in rows:
+        id, name, size = row
+        print(f"{id:<5}{name:<15}{size:<15}")
+
+    conn.close()
+
+def print_metadata_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT key, value FROM metadata")
+
+    rows = cursor.fetchall()
+    print_decoration(BLUE)
+    for row in rows:
+        key, value = row
+        print(f"{key}: {value}")
+
+    print_decoration(RESET)
+    conn.close()
+
+def print_operations_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM operations")
+
+    rows = cursor.fetchall()
+    print_decoration(BLUE)
+    print(f"{'ID':<5}{'Operation':<15}")
+    print_decoration(RESET)
+    for row in rows:
+        id, operation = row
+        print(f"{id:<5}{operation:<15}")
+
+    conn.close()
+
+def print_data_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM data")
+
+    rows = cursor.fetchall()
+    print_decoration(BLUE)
+    print(f"{'ID':<5}{'Rank':<5}{'Comm ID':<10}{'Operation ID':<15}{'Buffer Size Min':<20}"
+          f"{'Buffer Size Max':<20}{'Calls':<10}{'Time':<10}")
+    print_decoration(RESET)
+    for row in rows:
+        id, rank, comm_id, operation_id, buf_min, buf_max, calls, time = row
+        print(f"{id:<5}{rank:<5}{comm_id:<10}{operation_id:<15}{buf_min:<20}{buf_max:<20}{calls:<10}{time:<10}")
+
+    conn.close()
 
 
-def print_tc(table, comm_to_procs, limit):
+def get_max_time_rank(db_path,sql):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
-    table.sort(key=lambda x: x["call_mean"], reverse=True)
+    max_time = -1.0
+    rank = -1
+    try:
+        cursor.execute(sql)
+        result = cursor.fetchone()
 
-    print("".join(["-"] * 100))
-    print(
-        "Call".ljust(20)
-        + "Mean[s]".rjust(10)
-        + "Min[s]".rjust(10)
-        + "Max[s]".rjust(10)
-        + "Volume".rjust(15)
-        + "#Calls".rjust(10)
-        + "Comm".rjust(15)
-        + "Size".rjust(10)
-    )
-
-    print("".join(["-"] * 100))
-
-    end_range = limit if limit != None and limit < len(table) else len(table)
-    for i in range(0, end_range):
-        call = table[i]["call"]
-        call_mean = table[i]["call_mean"]
-        call_min = table[i]["call_min"]
-        call_max = table[i]["call_max"]
-        call_tot_vol = table[i]["call_tot_vol"]
-        nb_tot_call = table[i]["nb_tot_call"]
-        comm = table[i]["comm"]
-        comm_size = len(comm_to_procs[comm])
-        print(
-            f"{call}".ljust(20)
-            + f"{call_mean:.4f}".rjust(10)
-            + f"{call_min:.4f}".rjust(10)
-            + f"{call_max:.4f}".rjust(10)
-            + f"{call_tot_vol}".rjust(15)
-            + f"{nb_tot_call}".rjust(10)
-            + f"{comm}".rjust(15)
-            + f"{comm_size}".rjust(10)
-        )
-
-    return
-
-
-def print_header():
-     print("\n" + "".join(["*"] * 70))
-     for i in range(0, 5):
-        if i == 2:
-            print("*" + "mpisee".center(68) + "*")
+        if result:
+            rank, max_time = result
         else:
-            print("*" + f"*".rjust(69))
+            print("No data found in table.")
 
-     print("".join(["*"] * 70), end="\n\n")
-    #tprint("mpisee")
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+    return rank,max_time
+
+def get_avg_time(db_path,sql):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    time = -1.0
+    try:
+        cursor.execute(sql)
+        result = cursor.fetchone()[0]
+
+        if result:
+            time = result
+        else:
+            print("No data found in table.")
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+    return time
+
+def get_all_times(db_path,sql):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    all_times_dict = {}
+    try:
+        cursor.execute(sql)
+        for row in cursor.fetchall():
+            all_times_dict[row[0]] = row[1]
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+    return all_times_dict
+
+def max_value_in_dict(d):
+    if not d:
+        return None,None
+
+    max_key = max(d, key=lambda k: d[k])
+
+    return max_key,d[max_key]
+
+def avg_value_in_dict(d):
+    average = -1.0
+    if not d:
+        return None
+
+    total = sum(d.values())
+    average = total/len(d)
+
+    return average
+
+def dict_ratios(dict_mpi,dict_exec):
+    #dict_mpi is dictionary with the MPI times
+    #dict_exec is the dictionary of Execution times
+    #ratios will contain the MPI to Execution time Ratio for every MPI rank
+
+    ratios = {}
+    # Keys of both dictionaries must be the same
+    for k in dict_mpi.keys():
+        ratios[k] = float((dict_mpi[k] / dict_exec[k]))*100
+
+    return ratios
+
+def print_general_stats(db_path):
+    size = -1
+    sql = """
+    SELECT value
+    FROM metadata
+    WHERE key = 'Processes'
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql)
+        result = cursor.fetchone()
+
+        if result:
+            size = int(result[0])
+        else:
+            print("No data found in tabe.")
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+    print_decoration(GREEN)
+    print("Overall Statistics")
+
+
+    sql = """
+    SELECT id, time
+    FROM exectimes
+    """
+    exec_times_dict = get_all_times(db_path,sql)
+    rank,max_exec_time = max_value_in_dict(exec_times_dict)
+    if max_exec_time == None or rank == None:
+         print("Error occured in max exec time")
+    else:
+         print(f"Maximum Execution time: {max_exec_time:.3f} s, Rank: {rank}")
+
+    avg_exec = avg_value_in_dict(exec_times_dict)
+    if avg_exec != None:
+        print(f"Average Execution time across {size} MPI Ranks: {avg_exec:.3f} s")
+
+    sql = """
+    SELECT rank, total_time
+    FROM mpi_time_sum
+    """
+    mpi_times_dict = get_all_times(db_path,sql)
+    rank,max_mpi_time = max_value_in_dict(mpi_times_dict)
+    if max_mpi_time == None or rank == None:
+         print("Error occured in max MPI time")
+    else:
+         print(f"Maximum MPI time: {max_mpi_time:.3f} s, Rank: {rank}")
+
+    avg_mpi = avg_value_in_dict(mpi_times_dict)
+    if avg_exec != None and avg_mpi != None:
+        print(f"Average MPI time across {size} MPI Ranks: {avg_mpi:.3f} s")
+        print(f"Average Ratio of MPI time to Execution time across {size} MPI Ranks: {(avg_mpi/avg_exec)*100:.2f}%")
+    ratios = dict_ratios(mpi_times_dict,exec_times_dict)
+    rank,max_ratio = max_value_in_dict(ratios)
+    print(f"Maximum Ratio of MPI time to Execution time: {max_ratio:.2f}%, Rank: {rank}\n")
+    print_decoration(RESET)
+
+def plot_comms_operations_bar_chart(plot_data, n):
+    # Determine the number of unique operations for color assignment
+    all_operations = list(plot_data.keys())[:n]  # Limit to top n operations
+
+    # Assign a unique color to each operation
+    colors = plt.cm.get_cmap('viridis', n)
+    operation_colors = {op: colors(i) for i, op in enumerate(all_operations)}
+
+    # Prepare data for plotting
+    communicators = set()
+    for op_data in plot_data.values():
+        communicators.update(op_data.keys())
+    communicators = sorted(communicators)
+
+    # Create bar positions for each communicator
+    ind = np.arange(len(communicators))  # the x locations for the groups
+    bar_width = 0.8 / n  # the width of the bars
+
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    # Plot bars for each operation within each communicator
+    for idx, operation in enumerate(all_operations):
+        avg_times = [plot_data[operation].get(comm, 0) for comm in communicators]
+        ax.bar(ind + idx * bar_width, avg_times, bar_width, label=operation, color=operation_colors[operation])
+
+    # Add some text for labels, title, and axes ticks
+    ax.set_xlabel('Communicators')
+    ax.set_ylabel('Average Time (s)')
+    ax.set_title('Average Time per MPI Operation by Communicator')
+    ax.set_xticks(ind + bar_width * n / 2)
+    ax.set_xticklabels(communicators, rotation=45, ha="right")
+    ax.legend(title='MPI Operations with Buffer Size', bbox_to_anchor=(1.04,1), loc="upper left")
+
+    plt.show()
+
+def plot_mpi_operations_bar_chart(plot_data):
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    # Assign colors for each communicator
+    communicators = list(set(comm for op_dict in plot_data.values() for comm in op_dict))
+    color_map = plt.cm.get_cmap('tab20', len(communicators))
+    comm_colors = {comm: color_map(i) for i, comm in enumerate(communicators)}
+
+    # Prepare the data for plotting
+    operation_labels = list(plot_data.keys())
+
+    # Plot data
+    bar_width = 0.8 / len(communicators)  # Width of bars to fit all communicators in one cluster
+    for idx, operation_label in enumerate(operation_labels):
+        for comm_idx, comm in enumerate(communicators):
+            avg_time = plot_data[operation_label].get(comm, 0)
+            ax.bar(idx + comm_idx * bar_width, avg_time, width=bar_width,
+                   color=comm_colors[comm], label=comm if idx == 0 else "")
+
+    # Set labels and legend
+    ax.set_ylabel('Average Time (s)')
+    ax.set_xticks([idx + (len(communicators) - 1) * bar_width / 2 for idx in range(len(operation_labels))])
+    ax.set_xticklabels(operation_labels, rotation=90, ha='center')
+    ax.legend(title='Communicators', bbox_to_anchor=(1.04, 1), loc="upper left")
+
+    plt.title('Bar Chart of Top MPI Operation Average Times with Buffer Sizes')
+
+    plt.tight_layout(rect=[0, 0, 0.85, 1])  # Adjust layout to make room for legend
+    plt.show()
+
+def plot_mpi_operations_pie_chart(operations_names,mpi_operation_colors,avg_times,comm_name):
+    # Generator to yield avg_times values one by one
+    def gen_avg_times():
+        for val in avg_times:
+            yield val
+
+    # Create a generator instance
+    avg_time_gen = gen_avg_times()
+
+    # Custom autopct function to use avg_times directly
+    def autopct(pct):
+        val = next(avg_time_gen)  # Get the next value from the generator
+        if pct >= 2:
+            return f'{pct:.1f}%\n{val:.2f}(s)'
+        else:
+            return ''
+
+    explode = [0.1 if pct < 2 else 0 for pct in (amt/sum(avg_times)*100 for amt in avg_times)]
+
+    # Extend the mpi_operation_colors with additional colors if needed
+    existing_operations = set(mpi_operation_colors.keys())
+    new_operations = set(operations_names) - existing_operations
+    if new_operations:
+        new_colors = plt.cm.tab20b(np.linspace(0, 1, len(new_operations)))
+        for op, color in zip(new_operations, new_colors):
+            mpi_operation_colors[op] = color
+
+    # Get colors for the current operations
+    pie_colors = [mpi_operation_colors[op] for op in operations_names]
+
+
+
+    # Create pie chart with custom labels
+    fig,ax = plt.subplots(figsize=(6,4))
+    ax.set_position([0.1, 0.1, 0.3, 0.5])
+    wedges, texts, autotexts = ax.pie(avg_times, labels=operations_names, autopct=autopct, colors=pie_colors, explode=explode, startangle=140)
+
+    # Set properties for pie chart text
+    for text in autotexts:
+        text.set_color('white')
+        text.set_fontsize(9)
+        text.set_weight('bold')
+
+    #ax.legend(wedges, operations_names, title="MPI Operations (Buffer sizes)", loc="upper left",bbox_to_anchor=(0.9, 1.15))
+
+    # Equal aspect ratio ensures that pie is drawn as a circle
+    ax.axis('equal')
+    #ax.set_title(f'MPI Operations Average Time Distribution in Communicator: {comm_name}')  # Corrected here
+    comm_name = comm_name.replace('(', '').replace(')', '').replace(' ', '_').replace('.', '_')
+    current_path = os.getcwd()
+    save_path = os.path.join(current_path, f"{comm_name}.pdf")
+    plt.savefig(save_path, format='pdf', bbox_inches='tight')
+    plt.show()
+    plt.close(fig)  # Close the figure to free memory
+
+def output_to_csv(plot_data,csv_file):
+    # Prepare the data for writing to a CSV file
+    rows = []
+    for operation, comm_data in plot_data.items():
+        for comm, avg_time in comm_data.items():
+            rows.append([operation, comm, avg_time])
+
+    # Write the data to a CSV file
+    with open(csv_file,'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        writer.writerow(['Call', 'Communicator', 'Time'])
+        writer.writerows(rows)
+
+def plot_comms_ops_stacked_bar_chart(plot_data):
+    # Define specific colors for each MPI operation
+    #mpi_operation_colors = (initialize_mpi_operation_colors(db_path))
+    # Prepare the plot data
+    #communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
+
+    # Setup the color map for each operation
+    operations = list(plot_data.keys())
+    colors = assign_colors(plot_data)
+
+     # Calculate total average time for each communicator
+    #print(operations)
+    communicator_totals = {}
+    for op in operations:
+        for comm_with_size, avg_time in plot_data[op].items():
+            communicator_totals[comm_with_size] = communicator_totals.get(comm_with_size, 0) + avg_time
+
+    # Sort communicators by total average time and select top 10
+    top_communicators = sorted(communicator_totals, key=communicator_totals.get, reverse=True)[:20]
+    #print(top_communicators)
+
+    # Prepare the plot data
+    #communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
+
+    # Set up the figure and axis
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    # Bar width and spacing
+    bar_width = 0.9  # You can adjust this value to change the bar width
+    ind = np.arange(len(top_communicators))  # X-axis positions
+
+    # Plot stacked bars for each communicator
+    bottoms = np.zeros(len(top_communicators))  # Starting point for each stack
+
+
+    for op, color in zip(operations, colors):
+        avg_times = [plot_data[op].get(comm_with_size, 0) for comm_with_size in top_communicators]
+        #print(avg_times, op)
+        ax.bar(ind, avg_times, bar_width, label=op, color=color, bottom=bottoms)
+        bottoms += np.array(avg_times)  # Increment the starting point for the next stack
+
+    # Add labels and legend
+    ax.set_xlabel('Communicators (Size)')
+    ax.set_ylabel('Average Time (s)')
+    #ax.set_title('Average Time per MPI Operation by Communicator')
+    ax.set_xticks(ind)
+    ax.set_xticklabels(top_communicators, rotation=45, ha='right')
+    ax.legend(title='MPI Operations (Buffer sizes)', bbox_to_anchor=(1.04,1), loc="upper left")
+
+    # Extend the Y-axis
+    ax.set_ylim(0, max(bottoms) + 1)  # Add one more unit to the upper limit
+
+    # Reduce the space between bars
+    ax.margins(x=0.025)  # You can adjust this value to change the spacing
+
+    # Show the plot
+    plt.tight_layout(rect=[0, 0, 1, 1])
+    plt.savefig('comms_ops.pdf', format='pdf', bbox_inches='tight')
+    plt.show()
+
+# Plotting function
+def plot_stacked_bar_chart(plot_data):
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    # The X locations for the groups
+    ind = range(len(plot_data))
+
+    # Aggregate data for plotting
+    bottoms = [0] * len(plot_data)
+    operations = set()
+    for comm in plot_data:
+        operations.update(plot_data[comm].keys())
+    operations = sorted(operations)
+
+    # Plot data
+    for op in operations:
+        avg_times = [plot_data[comm].get(op, 0) for comm in plot_data]
+        ax.bar(ind, avg_times, label=op, bottom=bottoms)
+        bottoms = [bottoms[i] + avg_times[i] for i in range(len(bottoms))]
+
+    # Set labels and legend
+    ax.set_ylabel('Average Time (s)')
+    ax.set_xticks(ind)
+    ax.set_xticklabels(plot_data.keys(), rotation=45, ha='right')
+    ax.legend(title='MPI Operations', bbox_to_anchor=(1.04,1), loc="upper left")
+
+    plt.title('Stacked Bar Chart of MPI Operation Average Times')
+    plt.tight_layout(rect=[0, 0, 0.85, 1])  # Adjust layout to make room for legend
+    plt.show()
+
+
+def get_average_time_per_operation_top(db_path, n):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # SQL query to group by MPI operation, buffer size range, and calculate average time
+    sql = """
+    SELECT o.operation, d.buffer_size_min, d.buffer_size_max, c.name, c.size, AVG(d.time) as avg_time
+    FROM data d
+    JOIN comms c ON d.comm_id = c.id
+    JOIN operations o ON d.operation_id = o.id
+    GROUP BY o.operation, d.buffer_size_min, d.buffer_size_max, c.name
+    HAVING AVG(d.time) > 0.001
+    ORDER BY avg_time DESC
+    """
+    plot_data = {}
+    try:
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        # Aggregate data into a structure suitable for plotting
+        for row in rows:
+            operation, buf_min, buf_max, comm_name, comm_size, avg_time = row
+            op_with_buf = f"{operation} ({buf_min}-{buf_max})"
+            name_with_size = f"{comm_name} ({comm_size})"
+            if op_with_buf not in plot_data:
+                plot_data[op_with_buf] = {}
+            plot_data[op_with_buf][name_with_size] = avg_time
+
+        # Get the top N MPI operations by the total average time
+        sorted_ops = sorted(plot_data.items(), key=lambda item: sum(item[1].values()), reverse=True)
+        if ( n > 0 ):
+            top_ops_data = dict(sorted_ops[:n])
+        else:
+           top_ops_data = dict(sorted_ops)
+        return top_ops_data
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+def get_average_time_per_communicator_top(db_path,n):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    # SQL query to group by communicator, MPI operation, and buffer size range
+    # and calculate average time
+    sql = """
+    SELECT c.name, AVG(d.time) as avg_time
+    FROM data d
+    JOIN comms c ON d.comm_id = c.id
+    JOIN operations o ON d.operation_id = o.id
+    GROUP BY c.name, o.operation, d.buffer_size_min, d.buffer_size_max
+    ORDER BY avg_time DESC
+    """
+
+    communicator_list = []
+    try:
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        communicator_totals = {}
+        for row in rows:
+            comm_name, avg_time = row
+
+            if comm_name in communicator_totals:
+                communicator_totals[comm_name] += avg_time
+            else:
+                communicator_totals[comm_name] = avg_time
+
+        communicator_list = sorted(communicator_totals.items(), key=lambda x: x[1], reverse=True)
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+        return []
+    finally:
+        conn.close()
+
+    return communicator_list[:n]
+        
+
+def fetch_data_and_plot(db_path,colors,comm=""):
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    try:
+        # Step 1: Identify the communicator with the maximum average time
+        if comm == "":
+            cursor.execute("""
+            SELECT c.name, c.size, AVG(d.time) as avg_time
+            FROM data d
+            JOIN comms c ON d.comm_id = c.id
+            GROUP BY c.name, d.rank
+            ORDER BY avg_time DESC
+            LIMIT 1
+            """)
+            result = cursor.fetchone()
+            if not result:
+                print("No data found.")
+                return
+            max_communicator = result[0]
+            comm_size = result[1]
+        else:
+            max_communicator = comm[0]
+            cursor.execute("""
+            SELECT c.size
+            FROM comms c
+            WHERE c.name = ?
+            """, (max_communicator,))
+
+            result = cursor.fetchone()
+            if not result:
+                print("No data found.")
+                return
+            comm_size = result[0]
+
+        # Step 2: Get MPI operations for the identified communicator
+        cursor.execute("""
+            SELECT o.operation, d.buffer_size_min, d.buffer_size_max, AVG(d.time) as avg_time
+            FROM data d
+            JOIN operations o ON d.operation_id = o.id
+            WHERE d.comm_id = (SELECT id FROM comms WHERE name = ?)
+            GROUP BY o.operation, d.buffer_size_min, d.buffer_size_max
+        """, (max_communicator,))
+
+        operations_data = cursor.fetchall()
+
+        # Group operations with less than 1% into "Other"
+        total_time = sum(avg_time for _, _, _, avg_time in operations_data)
+        aggregated_data = {}
+        for operation, buf_min, buf_max, avg_time in operations_data:
+            key = (operation, f"{buf_min}-{buf_max}")
+            if avg_time / total_time < 0.008:
+                key = ('Other', '')  # Group small operations into "Other"
+            if key in aggregated_data:
+                aggregated_data[key] += avg_time
+            else:
+                aggregated_data[key] = avg_time
+
+        # Prepare data for pie chart
+        operation_names = [f"{op} ({buf_range})" if buf_range else op for op, buf_range in aggregated_data.keys()]
+        avg_times = list(aggregated_data.values())
+
+        # Plot the pie chart
+        comm_name = str(max_communicator) + "(" + str(comm_size) + ")"
+        plot_mpi_operations_pie_chart(operation_names, colors, avg_times, comm_name)
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+
+
+def get_all_comms(db):
+    conn = sqlite3.connect(db)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+        SELECT c.name
+        FROM comms c
+        """)
+
+        result = cursor.fetchall()
+        if not result:
+            print("No data found.")
+            return
+        for item in result:
+            print(item)
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
 
 
 def main():
-    my_parser = argparse.ArgumentParser()
-    my_parser.add_argument("-f", "--full", action="store_true", help="print full info")
-    my_parser.add_argument("-cct", action="store_true", help="print cct")
-    my_parser.add_argument("-tc", action="store_true", help="print tc")
-    my_parser.add_argument("-tc_limit", action="store", type=int, help="print tc")
-    my_parser.add_argument(
-        "-cct_limit",
-        action="store",
-        type=int,
-        help="Limit number of communicators to ptint in cct view",
-    )
-    my_parser.add_argument(
-        "file_path", metavar="path", type=str, help="Path to the csv file"
-    )
-    args = my_parser.parse_args()
+    parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
+    parser.add_argument("-d", "--db_path", required=True, help="Path to the mpisee SQLite database file.")
+    parser.add_argument("-a", "--all",  action='store_true', required=False, help="Print all data.")
+    parser.add_argument("-l", "--comm_plot", required=False, action='store_true', help="Plot data for a specific communicator.")
+    parser.add_argument("-i", "--mpiop_plot", required=False, action='store_true', help="Plot time for n top MPI Operations and their communicators.")
+    parser.add_argument("-e", "--exectime", required=False, action='store_true', help="Print the net MPI time and the total Execution time for each process.")
+    parser.add_argument("-p", "--pt2pt",action='store_true', required=False, help="Show only point to point MPI operations,")
+    parser.add_argument("-c", "--collectives", action='store_true', required=False, help="Show only collective MPI operations.")
+    parser.add_argument("-r", "--ranks", type=str, required=False, help="Show the data of specific MPI ranks.")
+    parser.add_argument("-o", "--communicator", type=str, required=False, help="Show the data of a specific communicator.")
+    parser.add_argument("-b", "--buffsize", type=str, required=False, help="Show the data for a specific buffer size range defined as min:max.")
+    parser.add_argument("-t", "--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
+    #parser.add_argument("-m", "--mpitime", action='store_true', required=False, help="Show MPI time of specific ranks. Shows all ranks by default.")
+    parser.add_argument("-m", "--mpiprim", required=False, type=str, default=None, help="Show the time of specific MPI operations. Shows all ranks by default.")
+    parser.add_argument("-n", "--nresults", required=False, type=int, default=0, help="Show the first N results. By default all are printed.")
+    parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
+    parser.add_argument("--csv", required=False, type=str, help="Output to a csv file")
+    parser.add_argument("--debug", required=False, action='store_true', help="Print debug information.")
+    args = parser.parse_args()
 
-    table, mapping, comm_to_procs,elapsed_time,mpi_times = prepare_data(args.file_path)
+    #header_path = '../utils.h'
 
-    print_header()
-    print_mapping(mapping)
-    print_times(elapsed_time,mpi_times)
-    #print_elapsed_time(elapsed_time)
-    #print_mpi_times(mpi_times)
+    # Path to the script file (this script)
+    script_path = os.path.abspath(__file__)
 
-    if args.cct:
-        print_cct(table, comm_to_procs, args.cct_limit)
+    # Directory where the script is located
+    script_dir = os.path.dirname(script_path)
 
-    if args.tc:
-        print_tc(table, comm_to_procs, args.tc_limit)
+    # Path to the header file, relative to the script location
+    header_path = os.path.join(script_dir, '../utils.h')
+
+    # Normalize the path to resolve any ".." components
+    header_path = os.path.normpath(header_path)
+    enum_primitives = parse_enum_from_header(header_path)
+
+    db_path = args.db_path
+
+    if args.ranks:
+        rank_list = [int(rank) for rank in args.ranks.split(',')]
+    else:
+        rank_list = []
+
+    if args.buffsize:
+        tmp = args.buffsize.split(':')[0]
+        if ( len(tmp) > 0 ):
+            buffsizemin = int(args.buffsize.split(':')[0])
+        else:
+            buffsizemin = 0
+        tmp = args.buffsize.split(':')[1]
+        if ( len(tmp) > 0 ):
+            buffsizemax = int(args.buffsize.split(':')[1])
+        else:
+            buffsizemax = 2147483647
+    else:
+        buffsizemax = 2147483647
+        buffsizemin = 0
+
+    if args.time:
+        tmp = args.time.split(':')[0]
+        if ( len(tmp) > 0 ):
+            timemin = float(args.time.split(':')[0])
+        else:
+            timemin = 0
+        tmp = args.time.split(':')[1]
+        if ( len(tmp) > 0 ):
+            timemax = float(args.time.split(':')[1])
+        else:
+            timemax = sys.float_info.max
+    else:
+        timemax = -1
+        timemin = sys.float_info.max
+
+    if args.communicator:
+        comms = args.communicator.split(',')
+    else:
+        comms = []
 
 
-# Main body
+
+    create_and_populate_summary_table(db_path)
+
+    print_metadata_table(db_path)
+
+    print_general_stats(db_path)
+
+    print_decoration(RESET)
+
+    if args.comm_plot:
+        data = get_average_time_per_operation_top(db_path,10)
+        colors = colors_assign(data)
+        if comms == []:
+           comm_list=get_average_time_per_communicator_top(db_path,args.nresults)
+           for c in comm_list:
+               fetch_data_and_plot(db_path,colors,c)
+    elif args.mpiop_plot:
+        if not args.nresults:
+            n = 10
+        else:
+            n = args.nresults
+        data = get_average_time_per_operation_top(db_path,n)
+        plot_comms_ops_stacked_bar_chart(data)
+    elif args.csv:
+        if not args.nresults:
+            n = 0
+        else:
+            n = args.nresults
+        data = get_average_time_per_operation_top(db_path,n)
+        output_to_csv(data,args.csv)
+        #plot_mpi_operations_bar_chart(data)
+    elif args.pt2pt:
+        print_data_pt2pt(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax,enum_primitives['Ibsend'])
+    elif args.collectives:
+        print_data_collectives(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax,enum_primitives['Bcast'])
+    elif args.buffsize:
+        print_data_by_bufsize(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax)
+    elif args.time:
+        print_data_by_time(db_path,args.sort,args.nresults,rank_list,comms,timemin,timemax)
+    elif args.exectime:
+        print_execution_time(db_path,rank_list)
+    elif args.all:
+        query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
+    elif args.debug:
+        print_comms_table(db_path)
+        print_operations_table(db_path)
+        print_data_table(db_path)
+    else:
+        if args.mpiprim:
+            default_query_summary(db_path,MPI_prim=args.mpiprim)
+        else:
+            if not args.nresults:
+                default_query(db_path)
+            else:
+                default_query(db_path,args.nresults)
+            #print_data_by_prim(db_path,"Allreduce",args.nresults)
+        #else:
+            #default_query(db_path)
+        #    print_data_by_prim(db_path,"Allreduce")
+            #print_data_by_comm(db_path,comms)
+
+        #query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
+
+        #get_all_comms(db_path)
+
 if __name__ == "__main__":
     main()
+
