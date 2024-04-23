@@ -510,7 +510,7 @@ MPI_Comm_split(MPI_Comm comm, int color, int key, MPI_Comm *newcomm)
     ret = PMPI_Comm_split(comm, color, key, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
-    PMPI_Comm_size(comm, &comm_size);
+    PMPI_Comm_size(*newcomm, &comm_size);
     com_prof = alloc_init_commprof(comm_size,'s');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
@@ -542,7 +542,7 @@ MPI_Comm_dup(MPI_Comm comm, MPI_Comm *newcomm)
     ret = PMPI_Comm_dup(comm, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
-    PMPI_Comm_size(comm, &comm_size);
+    PMPI_Comm_size(*newcomm, &comm_size);
     com_prof = alloc_init_commprof(comm_size,'d');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
@@ -574,7 +574,7 @@ MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
     ret = PMPI_Comm_idup(comm, newcomm, request);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
-    PMPI_Comm_size(comm, &comm_size);
+    PMPI_Comm_size(*newcomm, &comm_size);
     requests_map[*request] = comm;
     com_prof = alloc_init_commprof(comm_size,'i');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
@@ -603,18 +603,18 @@ mpi_comm_idup_(MPI_Fint  * comm, MPI_Fint  *comm_out, MPI_Fint  *request,
 
 int
 MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
-                const int *periods, int reorder, MPI_Comm *comm_cart)
+                const int *periods, int reorder, MPI_Comm *newcomm)
 {
     int ret,comm_size;
     prof_attrs *com_prof;
-    ret = PMPI_Cart_create(old_comm, ndims, dims, periods, reorder, comm_cart);
-    if ( comm_cart == NULL || *comm_cart == MPI_COMM_NULL ){
+    ret = PMPI_Cart_create(old_comm, ndims, dims, periods, reorder, newcomm);
+    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
     }
-    PMPI_Comm_size(old_comm, &comm_size);
+    PMPI_Comm_size(*newcomm, &comm_size);
     com_prof = alloc_init_commprof(comm_size, 'a');
-    PMPI_Comm_set_attr(*comm_cart, namekey(), com_prof);
-    comms_table.push_back(*comm_cart);
+    PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
+    comms_table.push_back(*newcomm);
     return ret;
 }
 
@@ -638,19 +638,19 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, const int  *dims,
 
 
 int
-MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *new_comm)
+MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *newcomm)
 {
     int ret,comm_size;
     prof_attrs *com_prof;
 
-    ret = PMPI_Cart_sub(comm, remain_dims, new_comm);
-    if ( new_comm == NULL || *new_comm == MPI_COMM_NULL ){
+    ret = PMPI_Cart_sub(comm, remain_dims, newcomm);
+    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
     }
-    PMPI_Comm_size(comm, &comm_size);
+    PMPI_Comm_size(*newcomm, &comm_size);
     com_prof = alloc_init_commprof(comm_size, 'b');
-    PMPI_Comm_set_attr(*new_comm, namekey(), com_prof);
-    comms_table.push_back(*new_comm);
+    PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
+    comms_table.push_back(*newcomm);
     return ret;
 }
 
@@ -673,19 +673,19 @@ F77_MPI_CART_SUB(MPI_Fint  * comm, const int  *remain_dims,
 
 int
 MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
-                 const int *edges, int reorder, MPI_Comm *comm_graph)
+                 const int *edges, int reorder, MPI_Comm *newcomm)
 {
     int ret,comm_size;
     prof_attrs *com_prof;
 
-    ret = PMPI_Graph_create(comm_old, nnodes, index, edges, reorder, comm_graph);
-    if ( comm_graph == NULL || *comm_graph == MPI_COMM_NULL ){
+    ret = PMPI_Graph_create(comm_old, nnodes, index, edges, reorder, newcomm);
+    if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
     }
-    PMPI_Comm_size(comm_old, &comm_size);
+    PMPI_Comm_size(*newcomm, &comm_size);
     com_prof = alloc_init_commprof(comm_size, 'r');
-    PMPI_Comm_set_attr(*comm_graph, namekey(), com_prof);
-    comms_table.push_back(*comm_graph);
+    PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
+    comms_table.push_back(*newcomm);
     return ret;
 }
 
@@ -693,20 +693,20 @@ MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
 extern "C" {
 void
 F77_MPI_GRAPH_CREATE(MPI_Fint  * comm_old, int  * nnodes, const int  *index,
-                     const int  *edges, int  * reorder, MPI_Fint  *comm_graph,
+                     const int  *edges, int  * reorder, MPI_Fint  *newcomm,
                      MPI_Fint *ierr)
 {
     int ret;
     MPI_Comm c_comm_old;
-    MPI_Comm c_comm_graph;
+    MPI_Comm c_newcomm;
 
     c_comm_old = MPI_Comm_f2c(*comm_old);
 
-    ret = MPI_Graph_create(c_comm_old, *nnodes, index, edges, *reorder, &c_comm_graph);
+    ret = MPI_Graph_create(c_comm_old, *nnodes, index, edges, *reorder, &c_newcomm);
 
     *ierr = (MPI_Fint)ret;
     if ( ret == MPI_SUCCESS ) {
-        *comm_graph = MPI_Comm_c2f(c_comm_graph);
+        *newcomm = MPI_Comm_c2f(c_newcomm);
     }
     return;
 }
@@ -726,7 +726,7 @@ MPI_Dist_graph_create(MPI_Comm comm_old, int n, const int *nodes,
         if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
     }
-    PMPI_Comm_size(comm_old, &comm_size);
+    PMPI_Comm_size(*newcomm, &comm_size);
     com_prof = alloc_init_commprof(comm_size, 'g');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
@@ -766,7 +766,7 @@ MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info,
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
     }
-    PMPI_Comm_size(comm, &comm_size);
+    PMPI_Comm_size(*newcomm, &comm_size);
     com_prof = alloc_init_commprof(comm_size, 't');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
@@ -800,7 +800,7 @@ MPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *newcomm
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
     }
-    PMPI_Comm_size(comm, &comm_size);
+    PMPI_Comm_size(*newcomm, &comm_size);
     com_prof = alloc_init_commprof(comm_size, 'u');
     PMPI_Comm_set_attr(*newcomm, namekey(), com_prof);
     comms_table.push_back(*newcomm);
@@ -1127,11 +1127,6 @@ MPI_Comm_free(MPI_Comm *comm)
     buf[1] = com_info->comms;
     PMPI_Bcast(buf, 2, MPI_INT, 0, *comm);
     overwrite_name(&com_info, buf[0], buf[1]);
-    if (rank == 3){
-        // print numbers received
-        std::cout << "mpisee: rank = " << rank << " received " << buf[0] << " " << buf[1] << std::endl;
-    }
-
 
     PMPI_Comm_get_attr(*comm, namekey(), &tmp, &flag);
     if (flag) {
@@ -1202,25 +1197,13 @@ _Finalize(void) {
     // std::cout << "mpisee: comms_table size = " << comms_table.size() << std::endl;
     // Iterate over the communicator and call an MPI_Allreduce
     for(long unsigned i = 0; i < comms_table.size(); ++i) {
-        //PMPI_Comm_rank(comms_table[i], &temp_rank);
-        //PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, comms_table[i]);
         PMPI_Comm_get_attr(comms_table[i], namekey(), &com_info, &flag);
         buf[0] = rank;
         buf[1] = com_info->comms;
         PMPI_Bcast(buf, 2, MPI_INT, 0, comms_table[i]);
-        if (rank == 3){
-            // print numbers received
-            std::cout << "mpisee: rank = " << rank << " received " << buf[0] << " " << buf[1] << std::endl;
-        }
         overwrite_name(&com_info, buf[0], buf[1]);
     }
 
-    // if (rank == 3) {
-    //     // print my communicator names
-    //     for (i = 0; i < num_of_comms; i++) {
-    //         std::cout << "mpisee: rank = " << rank << " communicator name = " << local_communicators[i]->name << std::endl;
-    //     }
-    // }
 
     recvcounts = (int *)malloc(sizeof(int) * size);
     if (recvcounts == NULL) {
@@ -1242,9 +1225,6 @@ _Finalize(void) {
         for (i = 1; i < size; ++i) {
           displs[i] = displs[i - 1] + recvcounts[i - 1];
           total_num_of_comms += recvcounts[i];
-          // print how many communicator i received from rank 3
-          // if ( i == 3 )
-          //     std::cout << "mpisee: rank = " << i << " received " << recvcounts[i] << " communicators" << std::endl;
         }
         std::cout << "mpisee: total number of communicators = " << total_num_of_comms << std::endl;
         recv_buffer =
