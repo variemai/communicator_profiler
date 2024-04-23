@@ -1128,13 +1128,6 @@ MPI_Comm_free(MPI_Comm *comm)
     PMPI_Bcast(buf, 2, MPI_INT, 0, *comm);
     overwrite_name(&com_info, buf[0], buf[1]);
 
-    // Find the communicator in the comms_table and remove it
-    auto it = std::find(comms_table.begin(), comms_table.end(), *comm);
-    if (it != comms_table.end()) {
-        comms_table.erase(it);
-    } else {
-        mcpt_abort("Comm_free: Comm not found in comms_table\n");
-    }
     PMPI_Comm_get_attr(*comm, namekey(), &tmp, &flag);
     if (flag) {
         auto it = std::find(local_communicators.begin(), local_communicators.end(), tmp);
@@ -1152,6 +1145,13 @@ MPI_Comm_free(MPI_Comm *comm)
 
     }else {
         mcpt_abort("Comm free: Comm_get_attr did not find communicator\n");
+    }
+    // Find the communicator in the comms_table and remove it
+    auto it = std::find(comms_table.begin(), comms_table.end(), *comm);
+    if (it != comms_table.end()) {
+        comms_table.erase(it);
+    } else {
+        mcpt_abort("Comm_free: Comm not found in comms_table\n");
     }
     ret = PMPI_Comm_free(comm);
     return ret;
@@ -1206,6 +1206,13 @@ _Finalize(void) {
         overwrite_name(&com_info, buf[0], buf[1]);
     }
 
+    if (rank == 3) {
+        // print my communicator names
+        for (i = 0; i < num_of_comms; i++) {
+            std::cout << "mpisee: rank = " << rank << " communicator name = " << local_communicators[i]->name << std::endl;
+        }
+    }
+
     recvcounts = (int *)malloc(sizeof(int) * size);
     if (recvcounts == NULL) {
         mcpt_abort("malloc error for recvcounts Rank: %d\n", rank);
@@ -1226,6 +1233,9 @@ _Finalize(void) {
         for (i = 1; i < size; ++i) {
           displs[i] = displs[i - 1] + recvcounts[i - 1];
           total_num_of_comms += recvcounts[i];
+          // print how many communicator i received from rank 3
+          if ( i == 3 )
+              std::cout << "mpisee: rank = " << i << " received " << recvcounts[i] << " communicators" << std::endl;
         }
         std::cout << "mpisee: total number of communicators = " << total_num_of_comms << std::endl;
         recv_buffer =
