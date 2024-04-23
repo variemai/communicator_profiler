@@ -826,6 +826,29 @@ comm_create_group_(MPI_Fint *comm, MPI_Fint *group, int *tag,
 }
 
 int
+MPI_Dist_graph_create_adjacent(MPI_Comm comm_old, int indegree,
+                               const int *sources, const int *sourceweights,
+                               int outdegree, const int *destinations,
+                               const int *destweights, MPI_Info info,
+                               int reorder, MPI_Comm *comm_dist_graph)
+{
+    int ret, comm_size;
+    prof_attrs *com_prof;
+    ret = PMPI_Dist_graph_create_adjacent(comm_old, indegree, sources,
+                                          sourceweights, outdegree,
+                                          destinations, destweights, info,
+                                          reorder, comm_dist_graph);
+    if ( comm_dist_graph == NULL || *comm_dist_graph == MPI_COMM_NULL ){
+        return ret;
+    }
+    PMPI_Comm_size(*comm_dist_graph, &comm_size);
+    com_prof = alloc_init_commprof(comm_size, 'j');
+    PMPI_Comm_set_attr(*comm_dist_graph, namekey(), com_prof);
+    comms_table.push_back(*comm_dist_graph);
+    return ret;
+}
+
+int
 MPI_Wait(MPI_Request *request, MPI_Status *status)
 {
     int ret;
