@@ -583,7 +583,7 @@ def default_query(dbpath,num_of_rows=20):
     d.buffer_size_min,
     d.buffer_size_max,
     SUM(d.calls) AS calls,
-    MAX(d.time) AS time_s
+    SUM(d.time) AS time_s
 FROM data d
 JOIN comms c ON d.comm_id = c.id
 JOIN operations o ON d.operation_id = o.id
@@ -777,6 +777,40 @@ def print_metadata_table(db_path):
 
     print_decoration(RESET)
     conn.close()
+
+def print_operations_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM operations")
+
+    rows = cursor.fetchall()
+    print_decoration(BLUE)
+    print(f"{'ID':<5}{'Operation':<15}")
+    print_decoration(RESET)
+    for row in rows:
+        id, operation = row
+        print(f"{id:<5}{operation:<15}")
+
+    conn.close()
+
+def print_data_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM data")
+
+    rows = cursor.fetchall()
+    print_decoration(BLUE)
+    print(f"{'ID':<5}{'Rank':<5}{'Comm ID':<10}{'Operation ID':<15}{'Buffer Size Min':<20}"
+          f"{'Buffer Size Max':<20}{'Calls':<10}{'Time':<10}")
+    print_decoration(RESET)
+    for row in rows:
+        id, rank, comm_id, operation_id, buf_min, buf_max, calls, time = row
+        print(f"{id:<5}{rank:<5}{comm_id:<10}{operation_id:<15}{buf_min:<20}{buf_max:<20}{calls:<10}{time:<10}")
+
+    conn.close()
+
 
 def get_max_time_rank(db_path,sql):
     conn = sqlite3.connect(db_path)
@@ -1450,6 +1484,8 @@ def main():
         query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
     elif args.debug:
         print_comms_table(db_path)
+        print_operations_table(db_path)
+        print_data_table(db_path)
     else:
         if args.mpiprim:
             default_query_summary(db_path,MPI_prim=args.mpiprim)

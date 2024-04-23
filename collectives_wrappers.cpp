@@ -1029,6 +1029,8 @@ MPI_Scatterv(const void *sendbuf, const int sendcounts[], const int *displs,
             for (int i = 0; i < comm_size; i++){
                 sum += sendcounts[i];
             }
+            printf("mpisee: Profiling Scatterv with sum=%lld\n",sum);
+            fflush(stdout);
         }
         else{
             sum = 0;

@@ -181,14 +181,12 @@ init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm
 int
 choose_bucket(int64_t bytes) {
     int index;
-    int64_t tmp;
     for (index = 0; index < NUM_BUCKETS-1; index++) {
-        tmp = buckets[index];
-        if (tmp > bytes) {
-            break;
+        if ( buckets[index] > bytes) {
+            return index;
         }
     }
-    return index;
+    return NUM_BUCKETS-1;
 }
 
 // Profile the communication
@@ -1433,18 +1431,18 @@ _Finalize(void) {
 
             for (k = 0; k < NUM_OF_PRIMS; k++) {
               minsize = 0;
-              maxsize = buckets[0]; //powers_of_2[0];
+              maxsize = buckets[0];
               if (item.buckets_msgs[k][0] > 0) {
-                  insertIntoDataEntry(entries, proc, commId, k, maxsize, minsize,
+                  insertIntoDataEntry(entries, proc, commId, k, minsize, maxsize,
                                       item.buckets_msgs[k][0],
                                       item.buckets_time[k][0]);
               }
               for (l = 1; l < NUM_BUCKETS-1; l++) {
-                  minsize = buckets[l-1]; //powers_of_2[l - 1];
-                  maxsize = (l == NUM_BUCKETS - 2) ? INT_MAX : buckets[l]; //powers_of_2[l];
+                  minsize = buckets[l-1];
+                  maxsize = (l == NUM_BUCKETS - 2) ? INT_MAX : buckets[l];
                   if (item.buckets_msgs[k][l] > 0) {
-                    insertIntoDataEntry(entries, proc, commId, k, maxsize,
-                                        minsize, item.buckets_msgs[k][l],
+                    insertIntoDataEntry(entries, proc, commId, k, minsize,
+                                        maxsize, item.buckets_msgs[k][l],
                                         item.buckets_time[k][l]);
                   }
               }

@@ -262,8 +262,8 @@ void createTables(sqlite3* db) {
         "rank INTEGER, "
         "comm_id INTEGER, "
         "operation_id INTEGER, "
-        "buffer_size_max INTEGER, "
         "buffer_size_min INTEGER, "
+        "buffer_size_max INTEGER, "
         "calls INTEGER, "
         "time REAL, "
         "FOREIGN KEY (operation_id) REFERENCES operations (id), "
@@ -444,7 +444,7 @@ void insertIntoData(sqlite3* db, int rank, int commId, int operationId, int buff
 void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
                          int operationId, int bufferSizeMax, int bufferSizeMin,
                          int calls, double time) {
-    DataEntry entry = {rank, commId, operationId, bufferSizeMax, bufferSizeMin, calls, time};
+    DataEntry entry = {rank, commId, operationId, bufferSizeMin, bufferSizeMax, calls, time};
     entries.push_back(entry);
 }
 
@@ -467,7 +467,7 @@ void executeBatchInsert(sqlite3* db, const std::vector<DataEntry>& entries) {
     // // Commit transaction
     // executeSQL(db, "END TRANSACTION", "End Transaction");
 
-    const std::string insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    const std::string insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_min, buffer_size_max, calls, time) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
     sqlite3_stmt *stmt;
     int result = sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr);
@@ -483,8 +483,8 @@ void executeBatchInsert(sqlite3* db, const std::vector<DataEntry>& entries) {
         sqlite3_bind_int(stmt, 1, entry.rank);
         sqlite3_bind_int(stmt, 2, entry.commId);
         sqlite3_bind_int(stmt, 3, entry.operationId);
-        sqlite3_bind_int(stmt, 4, entry.bufferSizeMax);
-        sqlite3_bind_int(stmt, 5, entry.bufferSizeMin);
+        sqlite3_bind_int(stmt, 4, entry.bufferSizeMin);
+        sqlite3_bind_int(stmt, 5, entry.bufferSizeMax);
         sqlite3_bind_int(stmt, 6, entry.calls);
         sqlite3_bind_double(stmt, 7, entry.time);
 
