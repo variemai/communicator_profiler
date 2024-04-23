@@ -1127,6 +1127,11 @@ MPI_Comm_free(MPI_Comm *comm)
     buf[1] = com_info->comms;
     PMPI_Bcast(buf, 2, MPI_INT, 0, *comm);
     overwrite_name(&com_info, buf[0], buf[1]);
+    if (rank == 3){
+        // print numbers received
+        std::cout << "mpisee: rank = " << rank << " received " << buf[0] << " " << buf[1] << std::endl;
+    }
+
 
     PMPI_Comm_get_attr(*comm, namekey(), &tmp, &flag);
     if (flag) {
@@ -1176,7 +1181,7 @@ static int
 _Finalize(void) {
     prof_data *array = NULL;
     prof_attrs *com_info = NULL;
-    int rank, size, temp_rank, buf[2] = {-1, -1};
+    int rank, size, buf[2] = {-1, -1};
     int i, k, j, len,flag;
     prof_data *recv_buffer = NULL;
     int  num_of_comms, resultlen;
