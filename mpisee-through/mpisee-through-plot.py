@@ -4,6 +4,13 @@ import sqlite3
 import re
 import os
 import sys
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+import matplotlib.colors as mcolors
+import matplotlib.cm as cm
+import numpy as np
+import colorsys
+import operator
 import csv
 
 
@@ -20,6 +27,63 @@ RESET = "\033[0;0m"
 BOLD = "\033[;1m"
 REVERSE = "\033[;7m"
 
+def initialize_mpi_operation_colors(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    sql = "SELECT DISTINCT operation FROM operations"
+
+    try:
+        cursor.execute(sql)
+        operations = cursor.fetchall()
+        # Flatten the list of tuples to a list of operation names
+        operations = [op[0] for op in operations]
+
+        # Generate colors from a colormap
+        #color_map = plt.cm.get_cmap('tab20', len(operations))
+        #mpi_operation_colors = {op: color_map(i) for i, op in enumerate(operations)}
+        #mpi_operation_colors = {op: color for op, color in zip(operations, generate_distinct_colors(len(operations)))}
+        custom_cmap = discrete_cmap(len(operations), 'tab20')
+        mpi_operation_colors = {op: custom_cmap(i) for i, op in enumerate(operations)}
+
+
+        return mpi_operation_colors
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+        return {}
+    finally:
+        conn.close()
+
+def generate_distinct_colors(num_colors):
+    # Generate colors as equally spaced hues in the HSV space
+    hsv_tuples = [(x * 1.0 / num_colors, 0.5, 0.5) for x in range(num_colors)]
+    rgb_tuples = map(lambda x: colorsys.hsv_to_rgb(*x), hsv_tuples)
+    return list(rgb_tuples)
+
+def discrete_cmap(N, base_cmap=None):
+    """Create an N-bin discrete colormap from the specified input map"""
+
+    # Note that if base_cmap is a string or None, you can simply do
+    #    return plt.cm.get_cmap(base_cmap, N)
+    # The following works for string, None, or a colormap instance:
+
+    base = plt.cm.get_cmap(base_cmap)
+    color_list = base(np.linspace(0, 1, N))
+    cmap_name = base.name + str(N)
+    return ListedColormap(color_list, name=cmap_name)
+
+def assign_colors(plot_data):
+    operations = list(plot_data.keys())
+    colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
+    #mpi_operation_colors = {op: color for op, color in zip(operations, colors)}
+    return colors;
+
+def colors_assign(plot_data):
+    operations = list(plot_data.keys())
+    colors = plt.cm.tab20(np.linspace(0, 1, len(operations)))
+    mpi_operation_colors = {op: color for op, color in zip(operations, colors)}
+    return mpi_operation_colors;
 
 # Function declarations
 def print_decoration(decoration):
@@ -35,11 +99,11 @@ def parse_enum_from_header(header_path):
     enum_pattern = re.compile(r'enum primitives\{([^}]+)\};', re.MULTILINE | re.DOTALL)
     match = enum_pattern.search(content)
 
-    enum_dict = {}
     if match:
         enum_content = match.group(1)
         # Extract individual enum items
         enum_items = enum_content.split(',')
+        enum_dict = {}
         value = 0  # Assuming enum starts at 0
         for item in enum_items:
             item = item.strip()
@@ -51,9 +115,10 @@ def parse_enum_from_header(header_path):
                 else:
                     enum_dict[item] = value
                 value += 1
+        return enum_dict
     else:
         print("Enum 'primitives' not found in the header file.")
-    return enum_dict
+        return None
 
 def get_exec_time_by_rank(db_path, rank):
     conn = sqlite3.connect(db_path)
@@ -403,7 +468,7 @@ def print_execution_time(dpath,ranks=[]):
         print_decoration(BOLD)
         string_ranks = ",".join(str(num) for num in ranks)
         print(f"Time statistics for MPI ranks: {string_ranks}")
-        print(f"{'MPI Rank':<10}{'MPI Time (s)':<15}{'Execution Time (s)':<20}{'MPI time to Execution Time Ratio (%)':<10}")
+        print(f"{'MPI Rank':<10}{'MPI Time (s)':<15}{'Execution Time (s)':<20}{'Ratio MPI to Execution Time (%)':<10}")
         print_decoration(RESET)
 
         # Print rows
@@ -508,7 +573,6 @@ def query_all_data(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
     exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
 
 
-
 def default_query(dbpath,num_of_rows=20):
     sql = """
     SELECT
@@ -573,70 +637,6 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max;
         # Close the database connection
         if conn:
             conn.close()
-
-def query_summarize_time(dbpath,order=1,num_of_rows=20):
-    sql = """
-    SELECT
-    c.name AS comm_name,
-    c.size AS comm_size,
-    SUM(d.time) AS total_time_s
-FROM data d
-JOIN comms c ON d.comm_id = c.id
-JOIN operations o ON d.operation_id = o.id
-GROUP BY c.name, c.size
-    """
-
-    if order == 0:
-        sql += """
-        ORDER BY c.name"""
-    elif order == 1:
-        sql += """
-        ORDER BY total_time_s DESC"""
-    elif order == 2:
-        sql += """
-        ORDER BY total_time_s ASC"""
-    elif order == 3:
-        sql += """
-        ORDER BY d.operation_id DESC"""
-    elif order == 4:
-        sql += """
-        ORDER BY d.buffer_size_min DESC"""
-    elif order == 5:
-        sql += """
-        ORDER BY d.buffer_size_min ASC"""
-    elif order == 6:
-        sql += """
-        ORDER BY d.calls DESC"""
-    elif order == 7:
-        sql += """
-        ORDER BY d.calls ASC"""
-
-    conn = sqlite3.connect(dbpath)
-    cursor = conn.cursor()
-    try:
-        cursor.execute(sql)
-        i = 0
-        # Print header
-        print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Total Time (s)':<20}")
-        print_decoration(RESET)
-
-        data = cursor.fetchall()  # Retrieve all data
-
-        for row in data:
-            comm_name, comm_size, total_time = row
-            print(f"{comm_name:<15}{comm_size:<15}{total_time:<20.3f}")
-            if ( i == num_of_rows):
-                break
-            i += 1
-
-    except sqlite3.Error as e:
-        print("Failed to read data from SQLite table", e)
-    finally:
-        # Close the database connection
-        if conn:
-            conn.close()
-
 
 
 def default_query_summary(dbpath,MPI_prim):
@@ -960,6 +960,125 @@ def print_general_stats(db_path):
     print(f"Maximum Ratio of MPI time to Execution time: {max_ratio:.2f}%, Rank: {rank}\n")
     print_decoration(RESET)
 
+def plot_comms_operations_bar_chart(plot_data, n):
+    # Determine the number of unique operations for color assignment
+    all_operations = list(plot_data.keys())[:n]  # Limit to top n operations
+
+    # Assign a unique color to each operation
+    colors = plt.cm.get_cmap('viridis', n)
+    operation_colors = {op: colors(i) for i, op in enumerate(all_operations)}
+
+    # Prepare data for plotting
+    communicators = set()
+    for op_data in plot_data.values():
+        communicators.update(op_data.keys())
+    communicators = sorted(communicators)
+
+    # Create bar positions for each communicator
+    ind = np.arange(len(communicators))  # the x locations for the groups
+    bar_width = 0.8 / n  # the width of the bars
+
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    # Plot bars for each operation within each communicator
+    for idx, operation in enumerate(all_operations):
+        avg_times = [plot_data[operation].get(comm, 0) for comm in communicators]
+        ax.bar(ind + idx * bar_width, avg_times, bar_width, label=operation, color=operation_colors[operation])
+
+    # Add some text for labels, title, and axes ticks
+    ax.set_xlabel('Communicators')
+    ax.set_ylabel('Average Time (s)')
+    ax.set_title('Average Time per MPI Operation by Communicator')
+    ax.set_xticks(ind + bar_width * n / 2)
+    ax.set_xticklabels(communicators, rotation=45, ha="right")
+    ax.legend(title='MPI Operations with Buffer Size', bbox_to_anchor=(1.04,1), loc="upper left")
+
+    plt.show()
+
+def plot_mpi_operations_bar_chart(plot_data):
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    # Assign colors for each communicator
+    communicators = list(set(comm for op_dict in plot_data.values() for comm in op_dict))
+    color_map = plt.cm.get_cmap('tab20', len(communicators))
+    comm_colors = {comm: color_map(i) for i, comm in enumerate(communicators)}
+
+    # Prepare the data for plotting
+    operation_labels = list(plot_data.keys())
+
+    # Plot data
+    bar_width = 0.8 / len(communicators)  # Width of bars to fit all communicators in one cluster
+    for idx, operation_label in enumerate(operation_labels):
+        for comm_idx, comm in enumerate(communicators):
+            avg_time = plot_data[operation_label].get(comm, 0)
+            ax.bar(idx + comm_idx * bar_width, avg_time, width=bar_width,
+                   color=comm_colors[comm], label=comm if idx == 0 else "")
+
+    # Set labels and legend
+    ax.set_ylabel('Average Time (s)')
+    ax.set_xticks([idx + (len(communicators) - 1) * bar_width / 2 for idx in range(len(operation_labels))])
+    ax.set_xticklabels(operation_labels, rotation=90, ha='center')
+    ax.legend(title='Communicators', bbox_to_anchor=(1.04, 1), loc="upper left")
+
+    plt.title('Bar Chart of Top MPI Operation Average Times with Buffer Sizes')
+
+    plt.tight_layout(rect=[0, 0, 0.85, 1])  # Adjust layout to make room for legend
+    plt.show()
+
+def plot_mpi_operations_pie_chart(operations_names,mpi_operation_colors,avg_times,comm_name):
+    # Generator to yield avg_times values one by one
+    def gen_avg_times():
+        for val in avg_times:
+            yield val
+
+    # Create a generator instance
+    avg_time_gen = gen_avg_times()
+
+    # Custom autopct function to use avg_times directly
+    def autopct(pct):
+        val = next(avg_time_gen)  # Get the next value from the generator
+        if pct >= 2:
+            return f'{pct:.1f}%\n{val:.2f}(s)'
+        else:
+            return ''
+
+    explode = [0.1 if pct < 2 else 0 for pct in (amt/sum(avg_times)*100 for amt in avg_times)]
+
+    # Extend the mpi_operation_colors with additional colors if needed
+    existing_operations = set(mpi_operation_colors.keys())
+    new_operations = set(operations_names) - existing_operations
+    if new_operations:
+        new_colors = plt.cm.tab20b(np.linspace(0, 1, len(new_operations)))
+        for op, color in zip(new_operations, new_colors):
+            mpi_operation_colors[op] = color
+
+    # Get colors for the current operations
+    pie_colors = [mpi_operation_colors[op] for op in operations_names]
+
+
+
+    # Create pie chart with custom labels
+    fig,ax = plt.subplots(figsize=(6,4))
+    ax.set_position([0.1, 0.1, 0.3, 0.5])
+    wedges, texts, autotexts = ax.pie(avg_times, labels=operations_names, autopct=autopct, colors=pie_colors, explode=explode, startangle=140)
+
+    # Set properties for pie chart text
+    for text in autotexts:
+        text.set_color('white')
+        text.set_fontsize(9)
+        text.set_weight('bold')
+
+    #ax.legend(wedges, operations_names, title="MPI Operations (Buffer sizes)", loc="upper left",bbox_to_anchor=(0.9, 1.15))
+
+    # Equal aspect ratio ensures that pie is drawn as a circle
+    ax.axis('equal')
+    #ax.set_title(f'MPI Operations Average Time Distribution in Communicator: {comm_name}')  # Corrected here
+    comm_name = comm_name.replace('(', '').replace(')', '').replace(' ', '_').replace('.', '_')
+    current_path = os.getcwd()
+    save_path = os.path.join(current_path, f"{comm_name}.pdf")
+    plt.savefig(save_path, format='pdf', bbox_inches='tight')
+    plt.show()
+    plt.close(fig)  # Close the figure to free memory
 
 def output_to_csv(plot_data,csv_file):
     # Prepare the data for writing to a CSV file
@@ -974,6 +1093,95 @@ def output_to_csv(plot_data,csv_file):
         writer.writerow(['Call', 'Communicator', 'Time'])
         writer.writerows(rows)
 
+def plot_comms_ops_stacked_bar_chart(plot_data):
+    # Define specific colors for each MPI operation
+    #mpi_operation_colors = (initialize_mpi_operation_colors(db_path))
+    # Prepare the plot data
+    #communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
+
+    # Setup the color map for each operation
+    operations = list(plot_data.keys())
+    colors = assign_colors(plot_data)
+
+     # Calculate total average time for each communicator
+    #print(operations)
+    communicator_totals = {}
+    for op in operations:
+        for comm_with_size, avg_time in plot_data[op].items():
+            communicator_totals[comm_with_size] = communicator_totals.get(comm_with_size, 0) + avg_time
+
+    # Sort communicators by total average time and select top 10
+    top_communicators = sorted(communicator_totals, key=communicator_totals.get, reverse=True)[:20]
+    #print(top_communicators)
+
+    # Prepare the plot data
+    #communicators_with_size = sorted(set(name_with_size for op_data in plot_data.values() for name_with_size in op_data))
+
+    # Set up the figure and axis
+    fig, ax = plt.subplots(figsize=(8, 5))
+
+    # Bar width and spacing
+    bar_width = 0.9  # You can adjust this value to change the bar width
+    ind = np.arange(len(top_communicators))  # X-axis positions
+
+    # Plot stacked bars for each communicator
+    bottoms = np.zeros(len(top_communicators))  # Starting point for each stack
+
+
+    for op, color in zip(operations, colors):
+        avg_times = [plot_data[op].get(comm_with_size, 0) for comm_with_size in top_communicators]
+        #print(avg_times, op)
+        ax.bar(ind, avg_times, bar_width, label=op, color=color, bottom=bottoms)
+        bottoms += np.array(avg_times)  # Increment the starting point for the next stack
+
+    # Add labels and legend
+    ax.set_xlabel('Communicators (Size)')
+    ax.set_ylabel('Average Time (s)')
+    #ax.set_title('Average Time per MPI Operation by Communicator')
+    ax.set_xticks(ind)
+    ax.set_xticklabels(top_communicators, rotation=45, ha='right')
+    ax.legend(title='MPI Operations (Buffer sizes)', bbox_to_anchor=(1.04,1), loc="upper left")
+
+    # Extend the Y-axis
+    ax.set_ylim(0, max(bottoms) + 1)  # Add one more unit to the upper limit
+
+    # Reduce the space between bars
+    ax.margins(x=0.025)  # You can adjust this value to change the spacing
+
+    # Show the plot
+    plt.tight_layout(rect=[0, 0, 1, 1])
+    plt.savefig('comms_ops.pdf', format='pdf', bbox_inches='tight')
+    plt.show()
+
+# Plotting function
+def plot_stacked_bar_chart(plot_data):
+    fig, ax = plt.subplots(figsize=(14, 8))
+
+    # The X locations for the groups
+    ind = range(len(plot_data))
+
+    # Aggregate data for plotting
+    bottoms = [0] * len(plot_data)
+    operations = set()
+    for comm in plot_data:
+        operations.update(plot_data[comm].keys())
+    operations = sorted(operations)
+
+    # Plot data
+    for op in operations:
+        avg_times = [plot_data[comm].get(op, 0) for comm in plot_data]
+        ax.bar(ind, avg_times, label=op, bottom=bottoms)
+        bottoms = [bottoms[i] + avg_times[i] for i in range(len(bottoms))]
+
+    # Set labels and legend
+    ax.set_ylabel('Average Time (s)')
+    ax.set_xticks(ind)
+    ax.set_xticklabels(plot_data.keys(), rotation=45, ha='right')
+    ax.legend(title='MPI Operations', bbox_to_anchor=(1.04,1), loc="upper left")
+
+    plt.title('Stacked Bar Chart of MPI Operation Average Times')
+    plt.tight_layout(rect=[0, 0, 0.85, 1])  # Adjust layout to make room for legend
+    plt.show()
 
 
 def get_average_time_per_operation_top(db_path, n):
@@ -1055,6 +1263,77 @@ def get_average_time_per_communicator_top(db_path,n):
     return communicator_list[:n]
         
 
+def fetch_data_and_plot(db_path,colors,comm=""):
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    try:
+        # Step 1: Identify the communicator with the maximum average time
+        if comm == "":
+            cursor.execute("""
+            SELECT c.name, c.size, AVG(d.time) as avg_time
+            FROM data d
+            JOIN comms c ON d.comm_id = c.id
+            GROUP BY c.name, d.rank
+            ORDER BY avg_time DESC
+            LIMIT 1
+            """)
+            result = cursor.fetchone()
+            if not result:
+                print("No data found.")
+                return
+            max_communicator = result[0]
+            comm_size = result[1]
+        else:
+            max_communicator = comm[0]
+            cursor.execute("""
+            SELECT c.size
+            FROM comms c
+            WHERE c.name = ?
+            """, (max_communicator,))
+
+            result = cursor.fetchone()
+            if not result:
+                print("No data found.")
+                return
+            comm_size = result[0]
+
+        # Step 2: Get MPI operations for the identified communicator
+        cursor.execute("""
+            SELECT o.operation, d.buffer_size_min, d.buffer_size_max, AVG(d.time) as avg_time
+            FROM data d
+            JOIN operations o ON d.operation_id = o.id
+            WHERE d.comm_id = (SELECT id FROM comms WHERE name = ?)
+            GROUP BY o.operation, d.buffer_size_min, d.buffer_size_max
+        """, (max_communicator,))
+
+        operations_data = cursor.fetchall()
+
+        # Group operations with less than 1% into "Other"
+        total_time = sum(avg_time for _, _, _, avg_time in operations_data)
+        aggregated_data = {}
+        for operation, buf_min, buf_max, avg_time in operations_data:
+            key = (operation, f"{buf_min}-{buf_max}")
+            if avg_time / total_time < 0.008:
+                key = ('Other', '')  # Group small operations into "Other"
+            if key in aggregated_data:
+                aggregated_data[key] += avg_time
+            else:
+                aggregated_data[key] = avg_time
+
+        # Prepare data for pie chart
+        operation_names = [f"{op} ({buf_range})" if buf_range else op for op, buf_range in aggregated_data.keys()]
+        avg_times = list(aggregated_data.values())
+
+        # Plot the pie chart
+        comm_name = str(max_communicator) + "(" + str(comm_size) + ")"
+        plot_mpi_operations_pie_chart(operation_names, colors, avg_times, comm_name)
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
 
 
 
@@ -1085,20 +1364,19 @@ def main():
     parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
     parser.add_argument("-d", "--db_path", required=True, help="Path to the mpisee SQLite database file.")
     parser.add_argument("-a", "--all",  action='store_true', required=False, help="Print all data.")
-    # parser.add_argument("-l", "--comm_plot", required=False, action='store_true', help="Plot data for a specific communicator.")
-    # parser.add_argument("-i", "--mpiop_plot", required=False, action='store_true', help="Plot time for n top MPI Operations and their communicators.")
+    parser.add_argument("-l", "--comm_plot", required=False, action='store_true', help="Plot data for a specific communicator.")
+    parser.add_argument("-i", "--mpiop_plot", required=False, action='store_true', help="Plot time for n top MPI Operations and their communicators.")
     parser.add_argument("-e", "--exectime", required=False, action='store_true', help="Print the net MPI time and the total Execution time for each process.")
     parser.add_argument("-p", "--pt2pt",action='store_true', required=False, help="Show only point to point MPI operations,")
     parser.add_argument("-c", "--collectives", action='store_true', required=False, help="Show only collective MPI operations.")
     parser.add_argument("-r", "--ranks", type=str, required=False, help="Show the data of specific MPI ranks.")
+    parser.add_argument("-o", "--communicator", type=str, required=False, help="Show the data of a specific communicator.")
     parser.add_argument("-b", "--buffsize", type=str, required=False, help="Show the data for a specific buffer size range defined as min:max.")
     parser.add_argument("-t", "--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
     #parser.add_argument("-m", "--mpitime", action='store_true', required=False, help="Show MPI time of specific ranks. Shows all ranks by default.")
     parser.add_argument("-m", "--mpiprim", required=False, type=str, default=None, help="Show the time of specific MPI operations. Shows all ranks by default.")
     parser.add_argument("-n", "--nresults", required=False, type=int, default=0, help="Show the first N results. By default all are printed.")
     parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
-    parser.add_argument("--com", type=str, required=False, help="Show the data of a specific communicator.")
-    parser.add_argument("--ctime", action='store_true', required=False, help="Show the time summary for each communicator.")
     parser.add_argument("--csv", required=False, type=str, help="Output to a csv file")
     parser.add_argument("--debug", required=False, action='store_true', help="Print debug information.")
     args = parser.parse_args()
@@ -1155,8 +1433,8 @@ def main():
         timemax = -1
         timemin = sys.float_info.max
 
-    if args.com:
-        comms = args.com.split(',')
+    if args.communicator:
+        comms = args.communicator.split(',')
     else:
         comms = []
 
@@ -1170,13 +1448,28 @@ def main():
 
     print_decoration(RESET)
 
-    if args.csv:
+    if args.comm_plot:
+        data = get_average_time_per_operation_top(db_path,10)
+        colors = colors_assign(data)
+        if comms == []:
+           comm_list=get_average_time_per_communicator_top(db_path,args.nresults)
+           for c in comm_list:
+               fetch_data_and_plot(db_path,colors,c)
+    elif args.mpiop_plot:
+        if not args.nresults:
+            n = 10
+        else:
+            n = args.nresults
+        data = get_average_time_per_operation_top(db_path,n)
+        plot_comms_ops_stacked_bar_chart(data)
+    elif args.csv:
         if not args.nresults:
             n = 0
         else:
             n = args.nresults
         data = get_average_time_per_operation_top(db_path,n)
         output_to_csv(data,args.csv)
+        #plot_mpi_operations_bar_chart(data)
     elif args.pt2pt:
         print_data_pt2pt(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax,enum_primitives['Ibsend'])
     elif args.collectives:
@@ -1193,11 +1486,6 @@ def main():
         print_comms_table(db_path)
         print_operations_table(db_path)
         print_data_table(db_path)
-    elif args.ctime:
-        if args.nresults:
-            query_summarize_time(db_path,args.sort,args.nresults)
-        else:
-            query_summarize_time(db_path,args.sort)
     else:
         if args.mpiprim:
             default_query_summary(db_path,MPI_prim=args.mpiprim)
@@ -1206,6 +1494,15 @@ def main():
                 default_query(db_path)
             else:
                 default_query(db_path,args.nresults)
+            #print_data_by_prim(db_path,"Allreduce",args.nresults)
+        #else:
+            #default_query(db_path)
+        #    print_data_by_prim(db_path,"Allreduce")
+            #print_data_by_comm(db_path,comms)
+
+        #query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
+
+        #get_all_comms(db_path)
 
 if __name__ == "__main__":
     main()
