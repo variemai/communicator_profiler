@@ -510,13 +510,14 @@ def query_all_data(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
 
 
 
-def default_query(dbpath):
+def default_query(dbpath,enum_primitives,order=1):
     sql = """
     SELECT
     d.comm_id AS cid,
     c.name AS comm_name,
     c.size AS comm_size,
     d.rank,
+    d.operation_id AS opid,
     o.operation,
     d.buffer_size_min,
     d.buffer_size_max,
@@ -525,7 +526,7 @@ def default_query(dbpath):
 FROM data d
 JOIN comms c ON d.comm_id = c.id
 JOIN operations o ON d.operation_id = o.id
-GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max;
+GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         """
 
     conn = sqlite3.connect(dbpath)
@@ -536,7 +537,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max;
 
         # Print header
         print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'[Processes]':<20}{'Comm Size':<15}{'MPI Operation':<20}"
+        print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<15}{'MPI Operation':<20}"
               f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}")
         print_decoration(RESET)
 
@@ -545,26 +546,49 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max;
         results = {}
 
         for row in data:
-            cid,comm_name, comm_size, rank, operation, buf_min, buf_max, calls, time = row
-            key = (cid, comm_name, comm_size, operation, buf_min, buf_max)
+            cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time = row
+            key = (cid, comm_name, comm_size, opid, operation, buf_min, buf_max)
             if key not in results:
                 results[key] = {
                 'cid': cid,
                 'comm_name': comm_name,
                 'comm_size': comm_size,
                 'rank': rank,
+                'opid': opid,
                 'operation': operation,
                 'buffer_size_min': buf_min,
                 'buffer_size_max': buf_max,
                 'calls': calls,
                 'time_s': time
             }
-        results = dict(sorted(results.items(), key=lambda item: item[1]['time_s'], reverse=True))
+
+        if ( order == 0):
+            results = dict(sorted(results.items(), key=lambda item: item[1]['comm_name']))
+        elif ( order == 1):
+            results = dict(sorted(results.items(), key=lambda item: item[1]['time_s'], reverse=True))
+        elif ( order == 2):
+            results = dict(sorted(results.items(), key=lambda item: item[1]['time_s']))
+        elif ( order == 3):
+            results = dict(sorted(results.items(), key=lambda item: item[1]['operation']))
+        elif ( order == 4):
+            results = dict(sorted(results.items(), key=lambda item: item[1]['buffer_size_min'], reverse=True))
+        elif ( order == 5):
+            results = dict(sorted(results.items(), key=lambda item: item[1]['buffer_size_min']))
+        elif ( order == 6):
+            results = dict(sorted(results.items(), key=lambda item: item[1]['calls'], reverse=True))
+        elif ( order == 7):
+            results = dict(sorted(results.items(), key=lambda item: item[1]['calls']))
+
+
         for result in results.values():
             buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
+            calls = result['calls']
+            if result['opid'] >= enum_primitives['Bcast']:
+                calls = calls // result['comm_size']
+
             procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
-            print(f"{result['comm_name']:<15}{procs:<20}{result['comm_size']:<15}{result['operation']:<20}"
-                  f"{buffer_size:<25}{result['calls']:<15}{result['time_s']:<15.3f}")  # Adjust formatting as needed
+            print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<15}{result['operation']:<20}"
+                  f"{buffer_size:<25}{calls:<15}{result['time_s']:<15.3f}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
@@ -1258,7 +1282,7 @@ def main():
             default_query_summary(db_path,MPI_prim=args.mpiprim)
         else:
             if not args.nresults:
-                default_query(db_path)
+                default_query(db_path,enum_primitives,order=args.sort)
             #else:
             #    default_query(db_path,args.nresults)
 
