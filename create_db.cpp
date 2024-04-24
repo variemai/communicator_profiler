@@ -449,23 +449,6 @@ void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
 }
 
 void executeBatchInsert(sqlite3* db, const std::vector<DataEntry>& entries) {
-    // Start transaction
-    // executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
-
-    // for (const auto& entry : entries) {
-    //     std::string insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES ("
-    //                             + std::to_string(entry.rank) + ", "
-    //                             + std::to_string(entry.commId) + ", "
-    //                             + std::to_string(entry.operationId) + ", "
-    //                             + std::to_string(entry.bufferSizeMax) + ", "
-    //                             + std::to_string(entry.bufferSizeMin) + ", "
-    //                             + std::to_string(entry.calls) + ", "
-    //                             + std::to_string(entry.time) + ")";
-    //     executeSQL(db, insertSql, "INSERT INTO data");
-    // }
-
-    // // Commit transaction
-    // executeSQL(db, "END TRANSACTION", "End Transaction");
 
     const std::string insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_min, buffer_size_max, calls, time) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
@@ -527,79 +510,3 @@ void printCommsTable(sqlite3* db) {
 }
 
 
-/*
-int main(int argc, char* argv[]) {
-  sqlite3 *db;
-  int rc,i;
-
-  // Open database
-  rc = sqlite3_open("test_mpi_data.db", &db);
-  if (rc) {
-      std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
-      return 1;
-  } else {
-      std::cout << "Opened database successfully" << std::endl;
-  }
-
-  createTables(db);
-
-  setMetadata(db, "MPI Library", "OpenMPI 4.1.4");
-  setMetadata(db, "Run command", "./miniAMR 4 4 2 10 2 5");
-  // Get current time as a time_point
-  auto now = std::chrono::system_clock::now();
-
-  // Convert time_point to time_t for easier manipulation
-  std::time_t now_time_t = std::chrono::system_clock::to_time_t(now);
-
-  // Convert time_t to string representation
-  std::string now_str = std::ctime(&now_time_t);
-
-  // Print the date and time
-  std::cout << now_str; // This will print the date and time in a standard format
-  setMetadata(db, "Profile Date", now_str);
-
-  insertIntoMappings(db, "machine1");
-  insertIntoMappings(db, "machine2");
-
-  // Insert test data into comms
-  std::string world = "W";
-  std::string comm1 = "W1";
-  std::string comm2 = "W2";
-  insertIntoComms(db, world, "2");
-  insertIntoComms(db, comm1, "1");
-  insertIntoComms(db, comm2, "1");
-  insertIntoComms(db, world, "2");
-
-  // Insert test data into operations
-  for (i = 0; i<NUM_OF_PRIMS ; i++ ) {
-    insertIntoOperations(db, prim_names[i]);
-  }
-  // insertIntoOperations(db, "MPI_Send");
-  // insertIntoOperations(db, "MPI_Recv");
-  // insertIntoOperations(db, "MPI_Allreduce");
-  // insertIntoOperations(db, "MPI_Bcast");
-
-  // Insert test data into data for rank 0
-  insertIntoData(db, 0, 0, Send, 128, 64, 10, 0.001); // MPI_Send
-  insertIntoData(db, 0, 0, Recv, 256, 128, 5, 0.002); // MPI_Recv
-  insertIntoData(db, 0, 1, Allreduce, 512, 256, 8, 0.003); // MPI_Allreduce
-  insertIntoData(db, 0, 1, Bcast, 1024, 512, 3, 0.004); // MPI_Bcast
-
-  // Insert test data into data for rank 1
-  insertIntoData(db, 1, 0, Send, 128, 64, 15, 0.005); // MPI_Send
-  insertIntoData(db, 1, 0, Recv, 256, 128, 7, 0.006); // MPI_Recv
-  insertIntoData(db, 1, 2, Allreduce, 512, 256, 10, 0.007); // MPI_Allreduce
-  insertIntoData(db, 1, 2, Bcast, 1024, 512, 5, 0.008); // MPI_Bcast
-
-  // printDataDetails(db);
-  printMetadata(db);
-  printData(db);
-
-  // std::cout << getCommId(db, world) << '\n';
-  // char *machname = "machine2";
-  // std::cout << getMappingId(db, machname) << '\n';
-
-  sqlite3_close(db);
-  return 0;
-}
-*/

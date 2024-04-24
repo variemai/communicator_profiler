@@ -21,6 +21,7 @@ BOLD = "\033[;1m"
 REVERSE = "\033[;7m"
 
 
+
 # Function declarations
 def print_decoration(decoration):
     if sys.stdout.isatty():
@@ -509,9 +510,10 @@ def query_all_data(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
 
 
 
-def default_query(dbpath,num_of_rows=20):
+def default_query(dbpath):
     sql = """
     SELECT
+    d.comm_id AS cid,
     c.name AS comm_name,
     c.size AS comm_size,
     d.rank,
@@ -519,7 +521,7 @@ def default_query(dbpath,num_of_rows=20):
     d.buffer_size_min,
     d.buffer_size_max,
     SUM(d.calls) AS calls,
-    SUM(d.time) AS time_s
+    MAX(d.time) AS time_s
 FROM data d
 JOIN comms c ON d.comm_id = c.id
 JOIN operations o ON d.operation_id = o.id
@@ -528,14 +530,13 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max;
 
     conn = sqlite3.connect(dbpath)
     cursor = conn.cursor()
-    i = 0
     try:
         # Execute the query
         cursor.execute(sql)
 
         # Print header
         print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'MPI Operation':<20}"
+        print(f"{'Comm Name':<15}{'[Processes]':<20}{'Comm Size':<15}{'MPI Operation':<20}"
               f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}")
         print_decoration(RESET)
 
@@ -544,10 +545,11 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max;
         results = {}
 
         for row in data:
-            comm_name, comm_size, rank, operation, buf_min, buf_max, calls, time = row
-            key = (comm_name, comm_size, operation, buf_min, buf_max)
+            cid,comm_name, comm_size, rank, operation, buf_min, buf_max, calls, time = row
+            key = (cid, comm_name, comm_size, operation, buf_min, buf_max)
             if key not in results:
                 results[key] = {
+                'cid': cid,
                 'comm_name': comm_name,
                 'comm_size': comm_size,
                 'rank': rank,
@@ -559,13 +561,10 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max;
             }
         results = dict(sorted(results.items(), key=lambda item: item[1]['time_s'], reverse=True))
         for result in results.values():
-            if (i >= num_of_rows):
-                break
             buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
-            print(f"{result['comm_name']:<15}{result['comm_size']:<15}{result['operation']:<20}"
+            procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
+            print(f"{result['comm_name']:<15}{procs:<20}{result['comm_size']:<15}{result['operation']:<20}"
                   f"{buffer_size:<25}{result['calls']:<15}{result['time_s']:<15.3f}")  # Adjust formatting as needed
-            i += 1
-
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
@@ -1080,6 +1079,62 @@ def get_all_comms(db):
         conn.close()
 
 
+def print_comms_ranks(db):
+    conn = sqlite3.connect(db)
+    cursor = conn.cursor()
+    try:
+        cursor.execute("""
+        SELECT c.name, d.rank
+        FROM data d
+        JOIN comms c ON d.comm_id = c.id
+        GROUP BY c.name, d.rank
+        """)
+
+        result = cursor.fetchall()
+        if not result:
+            print("No data found.")
+            return
+        for item in result:
+            print(item)
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+def get_ranks_by_comm(db,comm):
+    conn = sqlite3.connect(db)
+    cursor = conn.cursor()
+    ranks = []
+    try:
+        cursor.execute("""
+        SELECT DISTINCT d.rank
+        FROM data d
+        JOIN comms c ON d.comm_id = c.id
+        WHERE c.id = ?;
+        """, (comm,))
+        ranks = [item[0] for item in cursor.fetchall()]
+        #result = cursor.fetchall()
+        #if not result:
+        #    print("No data found.")
+        #    return
+        #for item in result:
+        #    print(item)
+        #    ranks.append(item[0])
+
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+        return ranks
+
+# Return a new truncated list of 4 elements: [1,2,3,4,5] -> [1,2,...,5]
+def list_truncate_tostr(l):
+    if len(l) <= 4:
+        return str(l).replace(" ", "")
+    return f"[{l[0]},{l[1]},...,{l[-1]}]"
+
 
 def main():
     parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
@@ -1204,8 +1259,9 @@ def main():
         else:
             if not args.nresults:
                 default_query(db_path)
-            else:
-                default_query(db_path,args.nresults)
+            #else:
+            #    default_query(db_path,args.nresults)
+
 
 if __name__ == "__main__":
     main()
