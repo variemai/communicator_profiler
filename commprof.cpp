@@ -197,7 +197,6 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
     int size,flag,bucket_index;
     prof_attrs *communicator = NULL;
     int64_t sum = 0;
-    /* int rank; */
     if ( comm == MPI_COMM_NULL  ){
         mcpt_abort("mpisee: NULL communicator in profile_this\n");
         return communicator;
@@ -215,6 +214,7 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
         bucket_index = choose_bucket(sum);
         communicator->buckets_msgs[prim][bucket_index] += 1;
         communicator->buckets_time[prim][bucket_index] += t_elapsed;
+        communicator->volume[prim] += sum;
     }
     else{
         mcpt_abort("empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
@@ -228,25 +228,17 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
 void
 overwrite_name(prof_attrs **com_prof, int id0, int id1) {
     int requiredSize,r;
-    //prof_attrs *communicator = NULL;
-
-    //PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
-    //if (flag) {
-        requiredSize = snprintf(NULL,0, "%c%d.%d",(*com_prof)->id, id0, id1);
-        if (requiredSize < 0 || requiredSize + 1 >= NAMELEN) {
-            mcpt_abort("Error during initial size calculation (snprintf)\n");
-        }
-        // +1 for the null terminator
-        r = snprintf((*com_prof)->name, requiredSize + 1, "%c%d.%d",(*com_prof)->id, id0, id1);
-        if (r < 0) {
-            mcpt_abort("Error during final formatting (snprintf)\n");
-        } else if (r >= NAMELEN) {
+    requiredSize = snprintf(NULL,0, "%c%d.%d",(*com_prof)->id, id0, id1);
+    if (requiredSize < 0 || requiredSize + 1 >= NAMELEN) {
+        mcpt_abort("Error during initial size calculation (snprintf)\n");
+    }
+    // +1 for the null terminator
+    r = snprintf((*com_prof)->name, requiredSize + 1, "%c%d.%d",(*com_prof)->id, id0, id1);
+    if (r < 0) {
+        mcpt_abort("Error during final formatting (snprintf)\n");
+    } else if (r >= NAMELEN) {
             mcpt_abort("Name truncated during formatting\n");
-        }
-    // }
-    // else {
-    //     mcpt_abort("empty flag when overwriting name - this might be a bug\n");
-    // }
+    }
 }
 
 int
@@ -1265,9 +1257,9 @@ _Finalize(void) {
     }
 
     MPI_Datatype profiler_data;
-    MPI_Aint base, displacements[4];
-    int blocklengths[4] = {NAMELEN, 1, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS};
-    MPI_Datatype types[4] = {MPI_CHAR, MPI_INT, MPI_DOUBLE, MPI_UINT64_T};
+    MPI_Aint base, displacements[5];
+    int blocklengths[5] = {NAMELEN, 1, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS};
+    MPI_Datatype types[5] = {MPI_CHAR, MPI_INT, MPI_DOUBLE, MPI_UINT64_T, MPI_UINT64_T};
     prof_data dummy;
 
     // Create a dummy instance to calculate displacements
@@ -1278,13 +1270,14 @@ _Finalize(void) {
     // MPI_Get_address(&dummy.id, &displacements[3]);
     MPI_Get_address(&dummy.buckets_time, &displacements[2]);
     MPI_Get_address(&dummy.buckets_msgs, &displacements[3]);
+    MPI_Get_address(&dummy.volume, &displacements[4]);
 
     // Convert addresses to displacements
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 5; i++) {
         displacements[i] = MPI_Aint_diff(displacements[i], base);
     }
 
-    MPI_Type_create_struct(4, blocklengths, displacements, types, &profiler_data);
+    MPI_Type_create_struct(5, blocklengths, displacements, types, &profiler_data);
     PMPI_Type_commit(&profiler_data);
     k = 0;
 
@@ -1297,6 +1290,8 @@ _Finalize(void) {
                 sizeof(array[i].buckets_time));
          memcpy(array[i].buckets_msgs, local_communicators[i]->buckets_msgs,
                 sizeof(array[i].buckets_msgs));
+         memcpy(array[i].volume, local_communicators[i]->volume,
+                sizeof(array[i].volume));
     }
 
     MPI_Get_processor_name(proc_name, &len);
@@ -1431,57 +1426,59 @@ _Finalize(void) {
         comms.shrink_to_fit();
 
         std::vector<DataEntry> entries;
+        std::vector<VolEntry> vol_entries;
         std::cout << "mpisee: Writing the main data table"
                   << std::endl;
         i = 0;
         commId = 0;
         for (proc = 0; proc < size; ++proc) {
+            startIdx = displs[proc];
+            numElements = recvcounts[proc];
+            for (j = 0; j < numElements; ++j) {
+                if (i < (int)commIds.size()) {
+                    commId = commIds[i];
+                } else {
+                    std::cout << "mpisee: index in commids (" << i
+                            << ") out of bounds" << std::endl;
+                    mcpt_abort("commId out of bounds\n");
+                }
+                prof_data &item = recv_buffer[startIdx + j];
 
-          startIdx = displs[proc];
-          numElements = recvcounts[proc];
+                for (k = 0; k < NUM_OF_PRIMS; k++) {
+                    // Insert the data to the ops_volume table
+                    insertIntoVolEntry(vol_entries, k, proc, commId, item.volume[k]);
+                    // Insert the data of the first bucket
+                    minsize = 0;
+                    maxsize = buckets[0];
+                    if (item.buckets_msgs[k][0] > 0) {
+                        insertIntoDataEntry(entries, proc, commId, k, minsize, maxsize,
+                                            item.buckets_msgs[k][0],
+                                            item.buckets_time[k][0]);
+                    }
+                    // Insert the data of the middle buckets
+                    for (l = 1; l < NUM_BUCKETS-1; l++) {
+                        minsize = buckets[l-1]; //runs from 0 to NUM_BUCKETS-3
+                        maxsize = buckets[l]; //runs from 1 to NUM_BUCKETS-2
+                        if (item.buckets_msgs[k][l] > 0) {
+                            insertIntoDataEntry(entries, proc, commId, k, minsize,
+                                                maxsize, item.buckets_msgs[k][l],
+                                                item.buckets_time[k][l]);
+                        }
+                    }
+                    // Insert the data of the last bucket
+                    minsize = buckets[NUM_BUCKETS-2];
+                    maxsize = INT_MAX;
+                    if (item.buckets_msgs[k][NUM_BUCKETS-1] > 0) {
+                        insertIntoDataEntry(entries, proc, commId, k, minsize,
+                                            maxsize, item.buckets_msgs[k][NUM_BUCKETS-1],
+                                            item.buckets_time[k][NUM_BUCKETS-1]);
+                    }
 
-          for (j = 0; j < numElements; ++j) {
-            if (i < (int)commIds.size()) {
-                commId = commIds[i];
-            } else {
-              std::cout << "mpisee: index in commids (" << i
-                        << ") out of bounds" << std::endl;
-              mcpt_abort("commId out of bounds\n");
-
+                }
+                i++;
             }
-            prof_data &item = recv_buffer[startIdx + j];
-
-            for (k = 0; k < NUM_OF_PRIMS; k++) {
-              minsize = 0;
-              maxsize = buckets[0];
-              if (item.buckets_msgs[k][0] > 0) {
-                  insertIntoDataEntry(entries, proc, commId, k, minsize, maxsize,
-                                      item.buckets_msgs[k][0],
-                                      item.buckets_time[k][0]);
-              }
-              for (l = 1; l < NUM_BUCKETS-1; l++) {
-                  minsize = buckets[l-1]; //runs from 0 to NUM_BUCKETS-3
-                  maxsize = buckets[l]; //runs from 1 to NUM_BUCKETS-2
-                  if (item.buckets_msgs[k][l] > 0) {
-                    insertIntoDataEntry(entries, proc, commId, k, minsize,
-                                        maxsize, item.buckets_msgs[k][l],
-                                        item.buckets_time[k][l]);
-                  }
-              }
-              // Insert the data of the last bucket
-              minsize = buckets[NUM_BUCKETS-2];
-              maxsize = INT_MAX;
-              if (item.buckets_msgs[k][NUM_BUCKETS-1] > 0) {
-                  insertIntoDataEntry(entries, proc, commId, k, minsize,
-                                      maxsize, item.buckets_msgs[k][NUM_BUCKETS-1],
-                                      item.buckets_time[k][NUM_BUCKETS-1]);
-              }
-
-            }
-            i++;
-          }
         }
-
+        batchInsertToVolume(db, vol_entries);
         executeBatchInsert(db, entries);
         t = MPI_Wtime() - t;
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;

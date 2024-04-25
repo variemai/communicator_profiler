@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <iostream>
 #include <sqlite3.h>
 #include <string>
@@ -255,6 +256,19 @@ void createTables(sqlite3* db) {
         "size INTEGER);";
     executeSQL(db, CommsTable, "Communicator Table created");
 
+    // Create MPI Operations Volume Table
+    const char* MPIOpsVolumeTable =
+        "CREATE TABLE IF NOT EXISTS ops_volume ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+        "operation_id INTEGER, "
+        "rank INTEGER,"
+        "comm_id INTEGER, "
+        "volume INTEGER,"
+        "FOREIGN KEY (operation_id) REFERENCES operations (id), "
+        "FOREIGN KEY (comm_id) REFERENCES comms (id),"
+        "FOREIGN KEY (rank) REFERENCES mappings (id));";
+    executeSQL(db, MPIOpsVolumeTable, "MPI Operations Volume Table created");
+
     // Create Data Table
     const char* DataTable =
         "CREATE TABLE IF NOT EXISTS data ("
@@ -432,7 +446,8 @@ void BatchInsertIntoOperations(sqlite3 *db,
 }
 
 // Functions to insert into data
-void insertIntoData(sqlite3* db, int rank, int commId, int operationId, int bufferSizeMax, int bufferSizeMin, int calls, double time) {
+void insertIntoData(sqlite3* db, int rank, int commId, int operationId,
+                    int bufferSizeMax, int bufferSizeMin, int calls, double time) {
   std::string insertSql;
   insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_max, buffer_size_min, calls, time) VALUES ("
                       + std::to_string(rank) + ", " + std::to_string(commId) + ", "
@@ -443,8 +458,14 @@ void insertIntoData(sqlite3* db, int rank, int commId, int operationId, int buff
 
 void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
                          int operationId, int bufferSizeMax, int bufferSizeMin,
-                         int calls, double time) {
+                         uint64_t calls, double time) {
     DataEntry entry = {rank, commId, operationId, bufferSizeMin, bufferSizeMax, calls, time};
+    entries.push_back(entry);
+}
+
+void insertIntoVolEntry(std::vector<VolEntry> &entries, int operationId,
+                        int rank, int commId, uint64_t volume) {
+    VolEntry entry = {operationId, rank, commId, volume};
     entries.push_back(entry);
 }
 
@@ -509,4 +530,43 @@ void printCommsTable(sqlite3* db) {
     }
 }
 
+void insertToVolume(sqlite3 *db, int operationId, int rank, int commId, uint64_t volume) {
+    std::string insertSql;
+    insertSql = "INSERT INTO ops_volume (operation_id, rank, comm_id, volume) VALUES ("
+                + std::to_string(operationId) + ", " + std::to_string(rank) + ", "
+                + std::to_string(commId) + ", " + std::to_string(volume) + ")";
+    executeSQL(db, insertSql, "INSERT INTO ops_volume");
+}
 
+void batchInsertToVolume(sqlite3 *db, const std::vector<VolEntry> &entries) {
+    const std::string insertSql = "INSERT INTO ops_volume (operation_id, rank, comm_id, volume) VALUES (?, ?, ?, ?)";
+
+    sqlite3_stmt *stmt;
+    int result = sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        std::cerr << "Error preparing statement: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+
+    // Start a single transaction
+    executeSQL(db, "BEGIN TRANSACTION", "Start Transaction");
+
+    for (const auto& entry : entries) {
+        sqlite3_bind_int(stmt, 1, entry.operationId);
+        sqlite3_bind_int(stmt, 2, entry.rank);
+        sqlite3_bind_int(stmt, 3, entry.commId);
+        sqlite3_bind_int(stmt, 4, entry.volume);
+
+        result = sqlite3_step(stmt);
+        if (result != SQLITE_DONE) {
+            std::cerr << "Error during insert: " << sqlite3_errmsg(db) << std::endl;
+        }
+
+        sqlite3_reset(stmt); // Reset bindings for the next insertion
+    }
+
+    // Commit the transaction
+    executeSQL(db, "END TRANSACTION", "End Transaction");
+
+    sqlite3_finalize(stmt);
+}
