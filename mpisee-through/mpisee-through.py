@@ -1159,6 +1159,24 @@ def list_truncate_tostr(l):
         return str(l).replace(" ", "")
     return f"[{l[0]},{l[1]},...,{l[-1]}]"
 
+def print_volume_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM ops_volume")
+
+
+    rows = cursor.fetchall()
+    print_decoration(BOLD)
+    print(f"{'ID':<5}{'Operation ID':<15}{'Rank':<5}{'Comm ID':<10}{'Volume':<20}")
+    print_decoration(RESET)
+    for row in rows:
+        id, operation_id, rank, comm_id, volume = row
+        print(f"{id:<5}{operation_id:<15}{rank:<5}{comm_id:<10}{volume:<20}")
+
+    conn.close()
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
@@ -1269,9 +1287,10 @@ def main():
     elif args.all:
         query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
     elif args.debug:
-        print_comms_table(db_path)
-        print_operations_table(db_path)
+        #print_comms_table(db_path)
+        #print_operations_table(db_path)
         print_data_table(db_path)
+        print_volume_table(db_path)
     elif args.ctime:
         if args.nresults:
             query_summarize_time(db_path,args.sort,args.nresults)

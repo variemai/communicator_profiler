@@ -111,6 +111,7 @@ alloc_init_commprof(int comm_size, char c)
         for (j = 0; j < NUM_BUCKETS; j++) {
             comm_prof->buckets_time[i][j] = 0.0;
             comm_prof->buckets_msgs[i][j] = 0;
+            comm_prof->volume[i] = 0;
         }
     }
     comm_prof->id = c;
@@ -157,17 +158,13 @@ get_comm_name(MPI_Comm comm)
 void
 init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm){
     int comm_size,i,j;
-    // if ( buf == NULL || communicator == NULL ||
-    //      comm == MPI_COMM_NULL || newcomm == NULL){
-    //     mcpt_abort("Newcomm called with NULL\n");
-    // }
     PMPI_Comm_size(*newcomm, &comm_size);
-    // strcpy(&(*communicator)->name[length], buf);
     (*communicator)->size = comm_size;
     for (i = 0; i < NUM_OF_PRIMS; i++) {
         for (j = 0; j < NUM_BUCKETS; j++) {
             (*communicator)->buckets_time[i][j] = 0.0;
             (*communicator)->buckets_msgs[i][j] = 0;
+            (*communicator)->volume[i] = 0;
         }
 
     }
