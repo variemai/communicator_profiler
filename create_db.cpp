@@ -459,7 +459,7 @@ void insertIntoData(sqlite3* db, int rank, int commId, int operationId,
 
 void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
                          int operationId, int bufferSizeMin, int bufferSizeMax,
-                         uint64_t calls, double time, uint64_t volume) {
+                         int calls, double time, uint64_t volume) {
   // Create a new DataEntry object and add it to the vector
   // Use fields to initialize the object
     DataEntry entry = {
@@ -507,7 +507,7 @@ void executeBatchInsert(sqlite3* db, const std::vector<DataEntry>& entries) {
         sqlite3_bind_int(stmt, 3, entry.operationId);
         sqlite3_bind_int(stmt, 4, entry.bufferSizeMin);
         sqlite3_bind_int(stmt, 5, entry.bufferSizeMax);
-        sqlite3_bind_int64(stmt, 6, entry.calls);
+        sqlite3_bind_int(stmt, 6, entry.calls);
         sqlite3_bind_double(stmt, 7, entry.time);
         sqlite3_bind_int64(stmt, 8, entry.volume);
 

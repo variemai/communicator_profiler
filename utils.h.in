@@ -104,7 +104,7 @@ struct DataEntry {
     int operationId;
     int bufferSizeMin;
     int bufferSizeMax;
-    uint64_t calls;
+    int calls;
     double time;
     uint64_t volume;
 };
@@ -122,7 +122,7 @@ typedef struct profiler_attributes{
     int comms;
     char id;
     double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS];
-    uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
+    int buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
     uint64_t volume[NUM_OF_PRIMS][NUM_BUCKETS];
 }prof_attrs;
 
@@ -130,7 +130,7 @@ typedef struct profiler_data{
     char name[NAMELEN];
     int size;
     double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS];
-    uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
+    int buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
     uint64_t volume[NUM_OF_PRIMS][NUM_BUCKETS];
 }prof_data;
 

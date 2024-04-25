@@ -1258,7 +1258,7 @@ _Finalize(void) {
     MPI_Datatype profiler_data;
     MPI_Aint base, displacements[5];
     int blocklengths[5] = {NAMELEN, 1, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS };
-    MPI_Datatype types[5] = {MPI_CHAR, MPI_INT, MPI_DOUBLE, MPI_UINT64_T, MPI_UINT64_T};
+    MPI_Datatype types[5] = {MPI_CHAR, MPI_INT, MPI_DOUBLE, MPI_INT, MPI_UINT64_T,};
     prof_data dummy;
 
     // Create a dummy instance to calculate displacements
