@@ -458,7 +458,7 @@ void insertIntoData(sqlite3* db, int rank, int commId, int operationId,
 }
 
 void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
-                         int operationId, int bufferSizeMax, int bufferSizeMin,
+                         int operationId, int bufferSizeMin, int bufferSizeMax,
                          uint64_t calls, double time, uint64_t volume) {
   // Create a new DataEntry object and add it to the vector
   // Use fields to initialize the object
