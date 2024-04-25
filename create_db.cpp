@@ -257,17 +257,17 @@ void createTables(sqlite3* db) {
     executeSQL(db, CommsTable, "Communicator Table created");
 
     // Create MPI Operations Volume Table
-    const char* MPIOpsVolumeTable =
-        "CREATE TABLE IF NOT EXISTS ops_volume ("
-        "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-        "operation_id INTEGER, "
-        "rank INTEGER,"
-        "comm_id INTEGER, "
-        "volume INTEGER,"
-        "FOREIGN KEY (operation_id) REFERENCES operations (id), "
-        "FOREIGN KEY (comm_id) REFERENCES comms (id),"
-        "FOREIGN KEY (rank) REFERENCES mappings (id));";
-    executeSQL(db, MPIOpsVolumeTable, "MPI Operations Volume Table created");
+    // const char* MPIOpsVolumeTable =
+    //     "CREATE TABLE IF NOT EXISTS ops_volume ("
+    //     "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+    //     "operation_id INTEGER, "
+    //     "rank INTEGER,"
+    //     "comm_id INTEGER, "
+    //     "volume INTEGER,"
+    //     "FOREIGN KEY (operation_id) REFERENCES operations (id), "
+    //     "FOREIGN KEY (comm_id) REFERENCES comms (id),"
+    //     "FOREIGN KEY (rank) REFERENCES mappings (id));";
+    // executeSQL(db, MPIOpsVolumeTable, "MPI Operations Volume Table created");
 
     // Create Data Table
     const char* DataTable =
@@ -280,6 +280,7 @@ void createTables(sqlite3* db) {
         "buffer_size_max INTEGER, "
         "calls INTEGER, "
         "time REAL, "
+        "volume INTEGER, "
         "FOREIGN KEY (operation_id) REFERENCES operations (id), "
         "FOREIGN KEY (comm_id) REFERENCES comms (id), "
         "FOREIGN KEY (rank) REFERENCES mappings (id));";
@@ -508,6 +509,7 @@ void executeBatchInsert(sqlite3* db, const std::vector<DataEntry>& entries) {
         sqlite3_bind_int(stmt, 5, entry.bufferSizeMax);
         sqlite3_bind_int(stmt, 6, entry.calls);
         sqlite3_bind_double(stmt, 7, entry.time);
+        sqlite3_bind_int(stmt, 8, entry.volume);
 
         result = sqlite3_step(stmt);
         if (result != SQLITE_DONE) {
