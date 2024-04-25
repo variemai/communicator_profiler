@@ -314,6 +314,7 @@ _MPI_Init(int *argc, char ***argv){
         for (j = 0; j < NUM_BUCKETS; j++) {
             communicator->buckets_time[i][j] = 0.0;
             communicator->buckets_msgs[i][j] = 0;
+            communicator->volume[i] = 0;
         }
     }
     communicator->comms = my_coms;
@@ -367,6 +368,7 @@ application %s\n",appname);
         for (j = 0; j < NUM_BUCKETS; j++) {
             communicator->buckets_time[i][j] = 0.0;
             communicator->buckets_msgs[i][j] = 0;
+            communicator->volume[i] = 0;
         }
     }
     communicator->comms = my_coms;
@@ -1443,10 +1445,14 @@ _Finalize(void) {
 
                 for (k = 0; k < NUM_OF_PRIMS; k++) {
                     // Insert the data to the ops_volume table
-                    insertIntoVolEntry(vol_entries, k, proc, commId, item.volume[k]);
+                    // Insert only if the volume is greater than 0
+                    if (item.volume[k] > 0) {
+                        insertIntoVolEntry(vol_entries, k, proc, commId, item.volume[k]);
+                    }
                     // Insert the data of the first bucket
                     minsize = 0;
                     maxsize = buckets[0];
+                    // Insert only if the number of messages is greater than 0
                     if (item.buckets_msgs[k][0] > 0) {
                         insertIntoDataEntry(entries, proc, commId, k, minsize, maxsize,
                                             item.buckets_msgs[k][0],
