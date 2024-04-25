@@ -558,7 +558,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         # Print header
         print_decoration(BOLD)
         print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<15}{'MPI Operation':<20}"
-              f"{'Min Buffer (Bytes)':<15}{'Max Buffer (Bytes)':<15}{'Calls':<15}{'Time (s)':<15}{'Total Volume (Bytes)':<15}")
+              f"{'Min Buffer':<15}{'Max Buffer':<15}{'Calls':<15}{'Time(s)':<15}{'Total Volume(Bytes)':<15}")
         print_decoration(RESET)
 
         data = cursor.fetchall()  # Retrieve all data
