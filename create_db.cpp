@@ -465,7 +465,12 @@ void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
 
 void insertIntoVolEntry(std::vector<VolEntry> &entries, int operationId,
                         int rank, int commId, uint64_t volume) {
-    VolEntry entry = {operationId, rank, commId, volume};
+    VolEntry entry = {
+    .operationId = operationId,
+    .rank = rank,
+    .commId = commId,
+    .volume = volume
+  };
     entries.push_back(entry);
 }
 

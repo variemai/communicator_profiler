@@ -1159,7 +1159,38 @@ def list_truncate_tostr(l):
         return str(l).replace(" ", "")
     return f"[{l[0]},{l[1]},...,{l[-1]}]"
 
+# Print the volume table
 def print_volume_table(db_path):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    SELECT
+    v.comm_id AS cid,
+    c.name AS comm_name,
+    v.rank,
+    v.operation_id,
+    o.operation,
+    v.volume
+FROM ops_volume v
+JOIN comms c ON v.comm_id = c.id
+JOIN operations o ON v.operation_id = o.id
+    """)
+
+
+    rows = cursor.fetchall()
+    print_decoration(BOLD)
+    print(f"{'Comm Name':<15}{'Operation':<25}{'Rank':<10}{'Volume':<20}")
+    print_decoration(RESET)
+    for row in rows:
+        comm_id, comm_name, rank, operation_id, operation, volume = row
+        print(f"{comm_name:<15}{operation:<25}{rank:<10}{volume:<20}")
+
+    conn.close()
+
+
+# Dump the volume table
+def dump_volume_table(db_path):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
@@ -1288,9 +1319,10 @@ def main():
         query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
     elif args.debug:
         #print_comms_table(db_path)
-        #print_operations_table(db_path)
-        print_data_table(db_path)
-        print_volume_table(db_path)
+        print_operations_table(db_path)
+        dump_volume_table(db_path)
+        #print_data_table(db_path)
+        #print_volume_table(db_path)
     elif args.ctime:
         if args.nresults:
             query_summarize_time(db_path,args.sort,args.nresults)
