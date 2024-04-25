@@ -489,7 +489,7 @@ void insertIntoVolEntry(std::vector<VolEntry> &entries, int operationId,
 
 void executeBatchInsert(sqlite3* db, const std::vector<DataEntry>& entries) {
 
-    const std::string insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_min, buffer_size_max, calls, time) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    const std::string insertSql = "INSERT INTO data (rank, comm_id, operation_id, buffer_size_min, buffer_size_max, calls, time, volume) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
     sqlite3_stmt *stmt;
     int result = sqlite3_prepare_v2(db, insertSql.c_str(), -1, &stmt, nullptr);
@@ -507,9 +507,9 @@ void executeBatchInsert(sqlite3* db, const std::vector<DataEntry>& entries) {
         sqlite3_bind_int(stmt, 3, entry.operationId);
         sqlite3_bind_int(stmt, 4, entry.bufferSizeMin);
         sqlite3_bind_int(stmt, 5, entry.bufferSizeMax);
-        sqlite3_bind_int(stmt, 6, entry.calls);
+        sqlite3_bind_int64(stmt, 6, entry.calls);
         sqlite3_bind_double(stmt, 7, entry.time);
-        sqlite3_bind_int(stmt, 8, entry.volume);
+        sqlite3_bind_int64(stmt, 8, entry.volume);
 
         result = sqlite3_step(stmt);
         if (result != SQLITE_DONE) {
