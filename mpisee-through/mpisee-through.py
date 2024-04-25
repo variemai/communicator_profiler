@@ -509,6 +509,25 @@ def query_all_data(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
     exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
 
 
+def sort_by(results,order):
+    if ( order == 0):
+        results = dict(sorted(results.items(), key=lambda item: item[1]['comm_name']))
+    elif ( order == 1):
+        results = dict(sorted(results.items(), key=lambda item: item[1]['time_s'], reverse=True))
+    elif ( order == 2):
+        results = dict(sorted(results.items(), key=lambda item: item[1]['time_s']))
+    elif ( order == 3):
+        results = dict(sorted(results.items(), key=lambda item: item[1]['operation']))
+    elif ( order == 4):
+        results = dict(sorted(results.items(), key=lambda item: item[1]['buffer_size_min'], reverse=True))
+    elif ( order == 5):
+        results = dict(sorted(results.items(), key=lambda item: item[1]['buffer_size_min']))
+    elif ( order == 6):
+        results = dict(sorted(results.items(), key=lambda item: item[1]['calls'], reverse=True))
+    elif ( order == 7):
+        results = dict(sorted(results.items(), key=lambda item: item[1]['calls']))
+    return results
+
 
 def default_query(dbpath,enum_primitives,order=1):
     sql = """
@@ -528,6 +547,7 @@ JOIN comms c ON d.comm_id = c.id
 JOIN operations o ON d.operation_id = o.id
 GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         """
+    volume_table = summarize_volume_by_comm_operation(dbpath);
 
     conn = sqlite3.connect(dbpath)
     cursor = conn.cursor()
@@ -538,7 +558,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         # Print header
         print_decoration(BOLD)
         print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<15}{'MPI Operation':<20}"
-              f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}")
+              f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}{'Volume (Bytes)':<15}")
         print_decoration(RESET)
 
         data = cursor.fetchall()  # Retrieve all data
@@ -562,23 +582,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
                 'time_s': time
             }
 
-        if ( order == 0):
-            results = dict(sorted(results.items(), key=lambda item: item[1]['comm_name']))
-        elif ( order == 1):
-            results = dict(sorted(results.items(), key=lambda item: item[1]['time_s'], reverse=True))
-        elif ( order == 2):
-            results = dict(sorted(results.items(), key=lambda item: item[1]['time_s']))
-        elif ( order == 3):
-            results = dict(sorted(results.items(), key=lambda item: item[1]['operation']))
-        elif ( order == 4):
-            results = dict(sorted(results.items(), key=lambda item: item[1]['buffer_size_min'], reverse=True))
-        elif ( order == 5):
-            results = dict(sorted(results.items(), key=lambda item: item[1]['buffer_size_min']))
-        elif ( order == 6):
-            results = dict(sorted(results.items(), key=lambda item: item[1]['calls'], reverse=True))
-        elif ( order == 7):
-            results = dict(sorted(results.items(), key=lambda item: item[1]['calls']))
-
+        results = sort_by(results,order)
 
         for result in results.values():
             buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
@@ -586,9 +590,10 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
             if result['opid'] >= enum_primitives['Bcast']:
                 calls = calls // result['comm_size']
 
+            volume =volume_table.get((result['opid'], result['cid']), 0)
             procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
             print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<15}{result['operation']:<20}"
-                  f"{buffer_size:<25}{calls:<15}{result['time_s']:<15.3f}")  # Adjust formatting as needed
+                  f"{buffer_size:<25}{calls:<15}{result['time_s']:<15.3f}{volume}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
@@ -1207,6 +1212,35 @@ def dump_volume_table(db_path):
 
     conn.close()
 
+def summarize_volume_by_comm_operation(db_path):
+    sql = """
+    SELECT
+    v.comm_id AS cid,
+    v.operation_id AS oid,
+    c.name AS comm_name,
+    o.operation,
+    SUM(v.volume) AS total_volume
+    FROM ops_volume v
+    JOIN comms c ON v.comm_id = c.id
+    JOIN operations o ON v.operation_id = o.id
+    GROUP BY c.name, o.operation
+          """
+
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+
+    volume_summary = {}
+    for row in rows:
+        cid,oid,comm_name, operation, total_volume = row
+        volume_summary[(oid,cid)] = total_volume
+
+    conn.close()
+    return volume_summary
+
+
 
 
 def main():
@@ -1320,9 +1354,9 @@ def main():
     elif args.debug:
         #print_comms_table(db_path)
         print_operations_table(db_path)
-        dump_volume_table(db_path)
         #print_data_table(db_path)
-        #print_volume_table(db_path)
+        print_volume_table(db_path)
+        summarize_volume_by_comm_operation(db_path)
     elif args.ctime:
         if args.nresults:
             query_summarize_time(db_path,args.sort,args.nresults)
