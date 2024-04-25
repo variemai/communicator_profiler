@@ -106,6 +106,7 @@ struct DataEntry {
     int bufferSizeMin;
     uint64_t calls;
     double time;
+    uint64_t volume;
 };
 
 struct VolEntry {
@@ -122,7 +123,7 @@ typedef struct profiler_attributes{
     char id;
     double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS];
     uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
-    uint64_t volume[NUM_OF_PRIMS];
+    uint64_t volume[NUM_OF_PRIMS][NUM_BUCKETS];
 }prof_attrs;
 
 typedef struct profiler_data{
@@ -130,7 +131,7 @@ typedef struct profiler_data{
     int size;
     double buckets_time[NUM_OF_PRIMS][NUM_BUCKETS];
     uint64_t buckets_msgs[NUM_OF_PRIMS][NUM_BUCKETS];
-    uint64_t volume[NUM_OF_PRIMS];
+    uint64_t volume[NUM_OF_PRIMS][NUM_BUCKETS];
 }prof_data;
 
 typedef struct request_data{

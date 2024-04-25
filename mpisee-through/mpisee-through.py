@@ -541,13 +541,13 @@ def default_query(dbpath,enum_primitives,order=1):
     d.buffer_size_min,
     d.buffer_size_max,
     SUM(d.calls) AS calls,
-    MAX(d.time) AS time_s
+    MAX(d.time) AS time_s,
+    SUM(volume) As total_volume
 FROM data d
 JOIN comms c ON d.comm_id = c.id
 JOIN operations o ON d.operation_id = o.id
 GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         """
-    volume_table = summarize_volume_by_comm_operation(dbpath);
 
     conn = sqlite3.connect(dbpath)
     cursor = conn.cursor()
@@ -558,7 +558,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         # Print header
         print_decoration(BOLD)
         print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<15}{'MPI Operation':<20}"
-              f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}{'Volume (Bytes)':<15}")
+              f"{'Min Buffer (Bytes)':<15}{'Max Buffer (Bytes)':<15}{'Calls':<15}{'Time (s)':<15}{'Total Volume (Bytes)':<15}")
         print_decoration(RESET)
 
         data = cursor.fetchall()  # Retrieve all data
@@ -566,7 +566,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         results = {}
 
         for row in data:
-            cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time = row
+            cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, volume = row
             key = (cid, comm_name, comm_size, opid, operation, buf_min, buf_max)
             if key not in results:
                 results[key] = {
@@ -579,21 +579,21 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
                 'buffer_size_min': buf_min,
                 'buffer_size_max': buf_max,
                 'calls': calls,
-                'time_s': time
+                'time_s': time,
+                'total_volume': volume
+
             }
 
         results = sort_by(results,order)
 
         for result in results.values():
-            buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
             calls = result['calls']
             if result['opid'] >= enum_primitives['Bcast']:
                 calls = calls // result['comm_size']
 
-            volume =volume_table.get((result['opid'], result['cid']), 0)
             procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
             print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<15}{result['operation']:<20}"
-                  f"{buffer_size:<25}{calls:<15}{result['time_s']:<15.3f}{volume}")  # Adjust formatting as needed
+                  f"{result['buffer_size_min']:<15}{result['buffer_size_max']:<15}{calls:<15}{result['time_s']:<15.3f}{result['total_volume']}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)

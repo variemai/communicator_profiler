@@ -458,8 +458,20 @@ void insertIntoData(sqlite3* db, int rank, int commId, int operationId,
 
 void insertIntoDataEntry(std::vector<DataEntry> &entries, int rank, int commId,
                          int operationId, int bufferSizeMax, int bufferSizeMin,
-                         uint64_t calls, double time) {
-    DataEntry entry = {rank, commId, operationId, bufferSizeMin, bufferSizeMax, calls, time};
+                         uint64_t calls, double time, uint64_t volume) {
+  // Create a new DataEntry object and add it to the vector
+  // Use fields to initialize the object
+    DataEntry entry = {
+    .rank = rank,
+    .commId = commId,
+    .operationId = operationId,
+    .bufferSizeMax = bufferSizeMax,
+    .bufferSizeMin = bufferSizeMin,
+    .calls = calls,
+    .time = time,
+    .volume = volume
+  };
+  // DataEntry entry = {rank, commId, operationId, bufferSizeMin, bufferSizeMax, calls, time};
     entries.push_back(entry);
 }
 
