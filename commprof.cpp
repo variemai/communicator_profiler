@@ -190,7 +190,7 @@ choose_bucket(int64_t bytes) {
 extern "C" {
 prof_attrs*
 profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
-             double t_elapsed,int root){
+             double t_elapsed,int v){
     int size,flag,bucket_index;
     prof_attrs *communicator = NULL;
     int64_t sum = 0;
@@ -208,10 +208,18 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
         sum = count;
     }
     if (flag) {
+        if ( v == 0 ){
         bucket_index = choose_bucket(sum);
         communicator->buckets_msgs[prim][bucket_index] += 1;
         communicator->buckets_time[prim][bucket_index] += t_elapsed;
         communicator->volume[prim][bucket_index] += sum;
+        }
+        // Don't record the buffer range for [v,w] collectives
+        else{
+            communicator->buckets_msgs[prim][0] += 1;
+            communicator->buckets_time[prim][0] += t_elapsed;
+            communicator->volume[prim][0] += sum;
+        }
     }
     else{
         mcpt_abort("empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
@@ -858,7 +866,7 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
         ret = PMPI_Wait(request, status);
         t_elapsed = MPI_Wtime() - t_elapsed;
         if ( comm != MPI_COMM_NULL  ){
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 0);
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Wait, t_elapsed, 1);
             requests_map.erase(*request);
         }
         else {
@@ -907,7 +915,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
         t_elapsed = MPI_Wtime() - t_elapsed;
         if ( comm != MPI_COMM_NULL){
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 0);
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Waitall, t_elapsed, 1);
             for (i = 0; i < count; i++) {
                 requests_map.erase(array_of_requests[i]);
             }
@@ -970,7 +978,7 @@ MPI_Waitany(int count, MPI_Request *array_of_requests, int *index, MPI_Status *s
         ret = PMPI_Waitany(count, array_of_requests,index,status);
         t_elapsed = MPI_Wtime() - t_elapsed;
         if ( comm_array[*index] != MPI_COMM_NULL){
-            profile_this(comm_array[*index], 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 0);
+            profile_this(comm_array[*index], 0, MPI_DATATYPE_NULL, Waitany, t_elapsed, 1);
             requests_map.erase(array_of_requests[*index]);
 
         }
@@ -1029,7 +1037,7 @@ MPI_Test(MPI_Request *request, int *flag, MPI_Status *status)
         ret = PMPI_Test(request,flag,status);
         t_elapsed = MPI_Wtime() - t_elapsed;
         if ( comm != MPI_COMM_NULL ){
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Test, t_elapsed, 0);
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Test, t_elapsed, 1);
             if ( *flag == 1 ){
                 requests_map.erase(*request);
             }
@@ -1086,7 +1094,7 @@ MPI_Testany(int count, MPI_Request *array_of_requests, int *index, int *flag, MP
         ret = PMPI_Waitany(count, array_of_requests,index,status);
         t_elapsed = MPI_Wtime() - t_elapsed;
         if ( comm_array[*index] != MPI_COMM_NULL){
-            profile_this(comm_array[*index], 0, MPI_DATATYPE_NULL, Testany, t_elapsed, 0);
+            profile_this(comm_array[*index], 0, MPI_DATATYPE_NULL, Testany, t_elapsed, 1);
             if ( *flag == 1 ){
                 requests_map.erase(array_of_requests[*index]);
             }

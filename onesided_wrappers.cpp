@@ -327,7 +327,7 @@ MPI_Win_fence(int assert, MPI_Win win)
             mcpt_abort("Window communicator not found\n");
         }
         #endif
-        profile_this(comm, 0, MPI_DATATYPE_NULL, Fence ,t_elapsed, 0);
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Fence ,t_elapsed, 1);
     }
     else{
         ret = PMPI_Win_fence(assert, win);
@@ -369,7 +369,7 @@ MPI_Win_start(MPI_Group group, int assert, MPI_Win win)
             mcpt_abort("Window communicator not found\n");
         }
         #endif
-        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_start ,t_elapsed, 0);
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_start ,t_elapsed, 1);
     }
     else{
         ret = PMPI_Win_start(group, assert, win);
@@ -412,7 +412,7 @@ MPI_Win_complete(MPI_Win win)
             mcpt_abort("Window communicator not found\n");
         }
         #endif
-        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_complete ,t_elapsed, 0);
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_complete ,t_elapsed, 1);
     }
     else{
         ret = PMPI_Win_complete(win);
@@ -454,7 +454,7 @@ MPI_Win_post(MPI_Group group, int assert, MPI_Win win)
             mcpt_abort("Window communicator not found\n");
         }
         #endif
-        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_post ,t_elapsed, 0);
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_post ,t_elapsed, 1);
     }
     else{
         ret = PMPI_Win_post(group, assert, win);
@@ -497,7 +497,7 @@ MPI_Win_wait(MPI_Win win)
             mcpt_abort("Window communicator not found\n");
         }
         #endif
-        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_wait ,t_elapsed, 0);
+        profile_this(comm, 0, MPI_DATATYPE_NULL, Win_wait ,t_elapsed, 1);
     }
     else{
         ret = PMPI_Win_wait(win);
@@ -531,7 +531,7 @@ MPI_Win_test(MPI_Win win, int *flag)
             mcpt_abort("Window communicator not found\n");
         }
         else{
-            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_test ,t_elapsed, 0);
+            profile_this(comm, 0, MPI_DATATYPE_NULL, Win_test ,t_elapsed, 1);
         }
     }
     else{

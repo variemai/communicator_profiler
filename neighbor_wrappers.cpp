@@ -55,7 +55,7 @@ MPI_Neighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendtyp
         t_elapsed = MPI_Wtime();
         ret = PMPI_Neighbor_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        profile_this(comm,sendcount,sendtype,Neighbor_allgatherv,t_elapsed,0);
+        profile_this(comm,sendcount,sendtype,Neighbor_allgatherv,t_elapsed,1);
     }
     else{
         ret = PMPI_Neighbor_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm);
@@ -180,7 +180,7 @@ MPI_Neighbor_alltoallv(const void *sendbuf, const int sendcounts[], const int sd
                 break;
             }
         }
-        profile_this(comm,sum,sendtype,Neighbor_alltoallv,t_elapsed,0);
+        profile_this(comm,sum,sendtype,Neighbor_alltoallv,t_elapsed,1);
     }
     else{
         ret = PMPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, sendtype, recvbuf, recvcounts, rdispls, recvtype, comm);
@@ -210,7 +210,7 @@ mpi_neighbor_alltoallv_(const void  *sendbuf, const int *sendcounts, const int *
         t_elapsed = MPI_Wtime();
         ret = PMPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, c_sendtype, recvbuf, recvcounts, rdispls, c_recvtype, c_comm);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        profile_this(c_comm,sum,c_sendtype,Neighbor_alltoallv,t_elapsed,0);
+        profile_this(c_comm,sum,c_sendtype,Neighbor_alltoallv,t_elapsed,1);
     }
     else
         ret = MPI_Neighbor_alltoallv(sendbuf, sendcounts, sdispls, c_sendtype, recvbuf, recvcounts, rdispls, c_recvtype, c_comm);
@@ -285,7 +285,7 @@ MPI_Neighbor_alltoallw(const void *sendbuf, const int *sendcounts,
                 break;
             }
         }
-        profile_this(comm,sum,MPI_DATATYPE_NULL,Neighbor_alltoallw,t_elapsed,0);
+        profile_this(comm,sum,MPI_DATATYPE_NULL,Neighbor_alltoallw,t_elapsed,1);
     }
     else{
         ret = PMPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, recvcounts, rdispls, recvtypes, comm);
@@ -380,7 +380,7 @@ void mpi_neighbor_alltoallw_(const void *sendbuf, const int *sendcounts,
         t_elapsed = MPI_Wtime();
         ret = MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        profile_this(c_comm,sum,MPI_DATATYPE_NULL,Neighbor_alltoallw,t_elapsed,0);
+        profile_this(c_comm,sum,MPI_DATATYPE_NULL,Neighbor_alltoallw,t_elapsed,1);
     }
     else{
         ret = MPI_Neighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes, recvbuf, recvcounts, rdispls, c_recvtypes, c_comm);
@@ -452,7 +452,7 @@ MPI_Ineighbor_allgatherv(const void *sendbuf, int sendcount, MPI_Datatype sendty
         t_elapsed = MPI_Wtime();
         ret = PMPI_Ineighbor_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, request);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        profile_this(comm,sendcount,sendtype,Ineighbor_allgatherv,t_elapsed,0);
+        profile_this(comm,sendcount,sendtype,Ineighbor_allgatherv,t_elapsed,1);
     }
     else{
         ret = PMPI_Ineighbor_allgatherv(sendbuf, sendcount, sendtype, recvbuf, recvcounts, displs, recvtype, comm, request);
@@ -593,7 +593,7 @@ int MPI_Ineighbor_alltoallv(const void *sendbuf, const int sendcounts[],
                 break;
             }
         }
-        profile_this(comm,sum,sendtype,Ineighbor_alltoallv,t_elapsed,0);
+        profile_this(comm,sum,sendtype,Ineighbor_alltoallv,t_elapsed,1);
 
     }
     else{
@@ -698,7 +698,7 @@ MPI_Ineighbor_alltoallw(const void *sendbuf, const int *sendcounts,
                 break;
             }
         }
-        profile_this(comm,sum,MPI_DATATYPE_NULL,Ineighbor_alltoallw,t_elapsed,0);
+        profile_this(comm,sum,MPI_DATATYPE_NULL,Ineighbor_alltoallw,t_elapsed,1);
     }
     else{
         ret = PMPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, sendtypes,
@@ -797,7 +797,7 @@ void mpi_ineighbor_alltoallw_(const void *sendbuf, const int *sendcounts,
                                       recvbuf, recvcounts, rdispls, c_recvtypes,
                                       c_comm, &c_request);
         t_elapsed = MPI_Wtime() - t_elapsed;
-        profile_this(c_comm,sum,MPI_DATATYPE_NULL,Ineighbor_alltoallw,t_elapsed,0);
+        profile_this(c_comm,sum,MPI_DATATYPE_NULL,Ineighbor_alltoallw,t_elapsed,1);
     }
     else{
         ret = PMPI_Ineighbor_alltoallw(sendbuf, sendcounts, sdispls, c_sendtypes,

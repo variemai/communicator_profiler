@@ -28,7 +28,7 @@ namedel(MPI_Comm comm, int keyval, void *attr, void *s);
 extern "C" {
 prof_attrs*
 profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
-             double t_elapsed,int root);
+             double t_elapsed,int v);
 }
 
 extern "C" {

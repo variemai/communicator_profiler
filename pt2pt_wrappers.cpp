@@ -175,7 +175,7 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         sum = sendcount;
         sum = sum | 0x1;
         sum = sum>>1;
-        profile_this(comm,sum,sendtype,Sendrecv,t_elapsed,source);
+        profile_this(comm,sum,sendtype,Sendrecv,t_elapsed,0);
     }
     else{
         ret = PMPI_Sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
