@@ -1469,10 +1469,6 @@ def main():
         query_colls_pt2pt(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,args.sort)
     elif args.collectives:
         query_colls_pt2pt(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,args.sort)
-    elif args.buffsize:
-        print_data_by_bufsize(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax)
-    elif args.time:
-        print_data_by_time(db_path,args.sort,args.nresults,rank_list,comms,timemin,timemax)
     elif args.exectime:
         print_execution_time(db_path,rank_list)
     elif args.all:
