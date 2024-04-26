@@ -28,6 +28,9 @@ def print_decoration(decoration):
         # the output is not redirected, we can use a fancy style:
         sys.stdout.write(decoration)
 
+def is_almost_equal(a, b, epsilon=1e-6):
+    return abs(a - b) <= epsilon
+
 def parse_enum_from_header(header_path):
     with open(header_path, 'r') as file:
         content = file.read()
@@ -609,7 +612,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
 
 
 
-def query_colls_pt2pt(dbpath,enum_primitives,mpi_op,bufmin,bufmax,order=1):
+def query_colls_pt2pt(dbpath,enum_primitives,mpi_op,bufmin,bufmax,tmin,tmax,order=1):
 
     if ( mpi_op == 'Bcast'):
         sql = """
@@ -723,6 +726,8 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
                 calls = calls // result['comm_size']
 
             if (result['buffer_size_min'] < bufmin or result['buffer_size_max'] > bufmax):
+                continue
+            if (result['time_s'] < tmin or result['time_s'] > tmax): # Fix this comparison
                 continue
             procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
             print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<12}{result['operation']:<15}"
@@ -1383,7 +1388,6 @@ def main():
     parser.add_argument("-t", "--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
     #parser.add_argument("-m", "--mpitime", action='store_true', required=False, help="Show MPI time of specific ranks. Shows all ranks by default.")
     parser.add_argument("-m", "--mpiprim", required=False, type=str, default=None, help="Show the time of specific MPI operations. Shows all ranks by default.")
-    parser.add_argument("-n", "--nresults", required=False, type=int, default=0, help="Show the first N results. By default all are printed.")
     parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
     parser.add_argument("--com", type=str, required=False, help="Show the data of a specific communicator.")
     parser.add_argument("--ctime", action='store_true', required=False, help="Show the time summary for each communicator.")
@@ -1433,16 +1437,15 @@ def main():
         if ( len(tmp) > 0 ):
             timemin = float(args.time.split(':')[0])
         else:
-            timemin = 0
+            timemin = -1.0
         tmp = args.time.split(':')[1]
         if ( len(tmp) > 0 ):
             timemax = float(args.time.split(':')[1])
         else:
             timemax = sys.float_info.max
     else:
-        timemax = -1
-        timemin = sys.float_info.max
-
+        timemax = sys.float_info.max
+        timemin = -1.0
     if args.com:
         comms = args.com.split(',')
     else:
@@ -1459,33 +1462,27 @@ def main():
     print_decoration(RESET)
 
     if args.csv:
-        if not args.nresults:
-            n = 0
-        else:
-            n = args.nresults
-        data = get_average_time_per_operation_top(db_path,n)
+        # Fix the data to output to csv
+        data = get_average_time_per_operation_top(db_path,10)
         output_to_csv(data,args.csv)
     elif args.pt2pt:
-        query_colls_pt2pt(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,args.sort)
+        query_colls_pt2pt(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,args.sort)
     elif args.collectives:
-        query_colls_pt2pt(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,args.sort)
+        query_colls_pt2pt(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,timemin,timemax,args.sort)
     elif args.exectime:
         print_execution_time(db_path,rank_list)
     elif args.all:
         query_all_data(db_path,args.sort,args.nresults,rank_list,comms)
     elif args.debug:
-        #print_comms_table(db_path)
+        print_comms_table(db_path)
         print_operations_table(db_path)
-        #print_data_table(db_path)
+        print_data_table(db_path)
         print_volume_table(db_path)
         summarize_volume_by_comm_operation(db_path)
     elif args.ctime:
-        if args.nresults:
-            query_summarize_time(db_path,args.sort,args.nresults)
-        else:
-            query_summarize_time(db_path,args.sort)
+        query_summarize_time(db_path,args.sort)
     else:
-        query_colls_pt2pt(db_path,enum_primitives,None,buffsizemin,buffsizemax,args.sort)
+        query_colls_pt2pt(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,args.sort)
 
 
 if __name__ == "__main__":
