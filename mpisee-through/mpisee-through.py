@@ -607,6 +607,134 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         if conn:
             conn.close()
 
+
+
+def query_colls_pt2pt(dbpath,enum_primitives,mpi_op,bufmin,bufmax,order=1):
+
+    if ( mpi_op == 'Bcast'):
+        sql = """
+    SELECT
+    d.comm_id AS cid,
+    c.name AS comm_name,
+    c.size AS comm_size,
+    d.rank,
+    d.operation_id AS opid,
+    o.operation,
+    d.buffer_size_min,
+    d.buffer_size_max,
+    SUM(d.calls) AS calls,
+    MAX(d.time) AS time_s,
+    AVG(d.time) AS avg_time,
+    SUM(volume) As total_volume
+FROM data d
+JOIN comms c ON d.comm_id = c.id
+JOIN operations o ON d.operation_id = o.id
+WHERE d.operation_id >= ?
+GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
+        """
+    elif ( mpi_op == 'Ibsend'):
+        sql = """
+    SELECT
+    d.comm_id AS cid,
+    c.name AS comm_name,
+    c.size AS comm_size,
+    d.rank,
+    d.operation_id AS opid,
+    o.operation,
+    d.buffer_size_min,
+    d.buffer_size_max,
+    SUM(d.calls) AS calls,
+    MAX(d.time) AS time_s,
+    AVG(d.time) AS avg_time,
+    SUM(volume) As total_volume
+FROM data d
+JOIN comms c ON d.comm_id = c.id
+JOIN operations o ON d.operation_id = o.id
+WHERE d.operation_id <=  ?
+GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
+        """
+    else:
+        sql = """
+    SELECT
+    d.comm_id AS cid,
+    c.name AS comm_name,
+    c.size AS comm_size,
+    d.rank,
+    d.operation_id AS opid,
+    o.operation,
+    d.buffer_size_min,
+    d.buffer_size_max,
+    SUM(d.calls) AS calls,
+    MAX(d.time) AS time_s,
+    AVG(d.time) AS avg_time,
+    SUM(volume) As total_volume
+FROM data d
+JOIN comms c ON d.comm_id = c.id
+JOIN operations o ON d.operation_id = o.id
+GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
+        """
+
+
+    conn = sqlite3.connect(dbpath)
+    cursor = conn.cursor()
+    try:
+        # Execute the query
+        if ( mpi_op != None):
+            cursor.execute(sql,(enum_primitives[mpi_op],))
+        else:
+            cursor.execute(sql)
+        # Print header
+        print_decoration(BOLD)
+        print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<12}{'MPI Operation':<15}"
+              f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Max Time(s)':<13}{'Avg Time(s)':<13}{'Total Volume(Bytes)':<15}")
+        print_decoration(RESET)
+
+        data = cursor.fetchall()  # Retrieve all data
+
+        results = {}
+
+        for row in data:
+            cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, avg_time, volume = row
+            key = (cid, comm_name, comm_size, opid, operation, buf_min, buf_max)
+            if key not in results:
+                results[key] = {
+                'cid': cid,
+                'comm_name': comm_name,
+                'comm_size': comm_size,
+                'rank': rank,
+                'opid': opid,
+                'operation': operation,
+                'buffer_size_min': buf_min,
+                'buffer_size_max': buf_max,
+                'calls': calls,
+                'time_s': time,
+                'avg_time': avg_time,
+                'total_volume': volume
+
+            }
+
+        results = sort_by(results,order)
+
+        for result in results.values():
+            calls = result['calls']
+            if result['opid'] == enum_primitives['Sendrecv']:
+                calls = calls // 2
+            elif result['opid'] >= enum_primitives['Bcast']:
+                calls = calls // result['comm_size']
+
+            if (result['buffer_size_min'] < bufmin or result['buffer_size_max'] > bufmax):
+                continue
+            procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
+            print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<12}{result['operation']:<15}"
+                  f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['avg_time']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
+
+    except sqlite3.Error as e:
+        print("Failed to read data from SQLite table", e)
+    finally:
+        # Close the database connection
+        if conn:
+            conn.close()
+
 def query_summarize_time(dbpath,order=1,num_of_rows=20):
     sql = """
     SELECT
@@ -1148,13 +1276,6 @@ def get_ranks_by_comm(db,comm):
         WHERE c.id = ?;
         """, (comm,))
         ranks = [item[0] for item in cursor.fetchall()]
-        #result = cursor.fetchall()
-        #if not result:
-        #    print("No data found.")
-        #    return
-        #for item in result:
-        #    print(item)
-        #    ranks.append(item[0])
 
 
     except sqlite3.Error as e:
@@ -1345,9 +1466,9 @@ def main():
         data = get_average_time_per_operation_top(db_path,n)
         output_to_csv(data,args.csv)
     elif args.pt2pt:
-        print_data_pt2pt(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax,enum_primitives['Ibsend'])
+        query_colls_pt2pt(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,args.sort)
     elif args.collectives:
-        print_data_collectives(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax,enum_primitives['Bcast'])
+        query_colls_pt2pt(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,args.sort)
     elif args.buffsize:
         print_data_by_bufsize(db_path,args.sort,args.nresults,rank_list,comms,buffsizemin,buffsizemax)
     elif args.time:
@@ -1368,13 +1489,7 @@ def main():
         else:
             query_summarize_time(db_path,args.sort)
     else:
-        if args.mpiprim:
-            default_query_summary(db_path,MPI_prim=args.mpiprim)
-        else:
-            if not args.nresults:
-                default_query(db_path,enum_primitives,order=args.sort)
-            #else:
-            #    default_query(db_path,args.nresults)
+        query_colls_pt2pt(db_path,enum_primitives,None,buffsizemin,buffsizemax,args.sort)
 
 
 if __name__ == "__main__":
