@@ -542,6 +542,7 @@ def default_query(dbpath,enum_primitives,order=1):
     d.buffer_size_max,
     SUM(d.calls) AS calls,
     MAX(d.time) AS time_s,
+    AVG(d.time) AS avg_time,
     SUM(volume) As total_volume
 FROM data d
 JOIN comms c ON d.comm_id = c.id
@@ -557,8 +558,8 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
 
         # Print header
         print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<15}{'MPI Operation':<20}"
-              f"{'Min Buffer':<15}{'Max Buffer':<15}{'Calls':<15}{'Time(s)':<15}{'Total Volume(Bytes)':<15}")
+        print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<12}{'MPI Operation':<15}"
+              f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Max Time(s)':<13}{'Avg Time(s)':<13}{'Total Volume(Bytes)':<15}")
         print_decoration(RESET)
 
         data = cursor.fetchall()  # Retrieve all data
@@ -566,7 +567,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         results = {}
 
         for row in data:
-            cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, volume = row
+            cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, avg_time, volume = row
             key = (cid, comm_name, comm_size, opid, operation, buf_min, buf_max)
             if key not in results:
                 results[key] = {
@@ -580,6 +581,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
                 'buffer_size_max': buf_max,
                 'calls': calls,
                 'time_s': time,
+                'avg_time': avg_time,
                 'total_volume': volume
 
             }
@@ -588,12 +590,15 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
 
         for result in results.values():
             calls = result['calls']
-            if result['opid'] >= enum_primitives['Bcast']:
+            if result['opid'] == enum_primitives['Sendrecv']:
+                calls = calls // 2
+            elif result['opid'] >= enum_primitives['Bcast']:
                 calls = calls // result['comm_size']
 
+
             procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
-            print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<15}{result['operation']:<20}"
-                  f"{result['buffer_size_min']:<15}{result['buffer_size_max']:<15}{calls:<15}{result['time_s']:<15.3f}{result['total_volume']}")  # Adjust formatting as needed
+            print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<12}{result['operation']:<15}"
+                  f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['avg_time']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
