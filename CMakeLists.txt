@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(mpisee VERSION 3.0 DESCRIPTION "mpisee: A communicator-centric profiler")
+project(mpisee VERSION 3.1 DESCRIPTION "mpisee: A communicator-centric profiler")
 
 find_package(MPI REQUIRED CXX)
 find_package(SQLite3 REQUIRED)
@@ -10,6 +10,30 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -Wall")
 set(NUM_BUCKETS 8 CACHE STRING "Number of buckets")
 set(BUCKETS "128,1024,8192,65536,262144,1048576,33554432" CACHE STRING "Message size buckets in bytes")
 
+# Validation Checks
+
+# 1. Check if NUM_BUCKETS is a positive integer
+if(NOT NUM_BUCKETS MATCHES "^[1-9][0-9]*$")
+  message(FATAL_ERROR "NUM_BUCKETS must be a positive integer")
+endif()
+# 2. Check if NUM_BUCKETS is at least 2
+if(NUM_BUCKETS LESS 2)
+    message(FATAL_ERROR "NUM_BUCKETS must be at least 2 for meaningful bucketing")
+endif()
+# 2. Check if the specified BUCKETS values are integers:
+string(REGEX MATCHALL "[0-9]+" bucket_values "${BUCKETS}")
+list(LENGTH bucket_values num_values)
+math(EXPR NB "${NUM_BUCKETS} - 1")  # Corrected calculation
+# 3. Check if the number of entries in BUCKETS matches NUM_BUCKETS-1
+if(NOT num_values EQUAL NB )
+    message(STATUS "Lengh of bucket_values: ${num_values}, NUM_BUCKETS: ${NUM_BUCKETS}")
+    message(FATAL_ERROR "The number of entries in BUCKETS must be one less than NUM_BUCKETS")
+endif()
+
+# Extract major and minor version numbers
+string(REGEX MATCH "^([0-9]+)\\.([0-9]+)" _ ${PROJECT_VERSION})
+set(MPI_SEE_MAJOR_VERSION ${CMAKE_MATCH_1})
+set(MPI_SEE_MINOR_VERSION ${CMAKE_MATCH_2})
 # Generate the header file (the configure_file part remains the same)
 configure_file(utils.h.in ${CMAKE_SOURCE_DIR}/utils.h)
 

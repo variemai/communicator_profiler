@@ -1,3 +1,4 @@
+#include "commprofConfig.h"
 #include "utils.h"
 #include <climits>
 #include <cstddef>
@@ -34,8 +35,6 @@ std::vector<MPI_Comm> comms_table;
 // int global_rank; // For debugging purposes
 
 /* Tool date */
-int mpisee_major_version = 2;
-int mpisee_minor_version = 0;
 char mpisee_build_date[sizeof(__DATE__)] = __DATE__;
 char mpisee_build_time[sizeof(__TIME__)] = __TIME__;
 double total_time = 0.0;
@@ -1373,8 +1372,8 @@ _Finalize(void) {
         createTables(db);
         std::cout << "mpisee: Writing the metadata table" << std::endl;
 
-        insertMetadata(db, version, size, av, ac, mpisee_major_version,
-                       mpisee_minor_version, mpisee_build_date,
+        insertMetadata(db, version, size, av, ac, mpisee_VERSION_MAJOR,
+                       mpisee_VERSION_MINOR, mpisee_build_date,
                        mpisee_build_time, env_var);
 
         std::cout << "mpisee: Writing the MPI operations table" << std::endl;
