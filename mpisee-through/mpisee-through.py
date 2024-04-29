@@ -612,7 +612,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
 
 
 
-def query_colls_pt2pt(dbpath,enum_primitives,mpi_op,bufmin,bufmax,tmin,tmax,order=1):
+def query_colls_pt2pt(dbpath,enum_primitives,mpi_op,bufmin,bufmax,tmin,tmax,order=1,outfile=None):
 
     main_query = """
 SELECT
@@ -631,7 +631,6 @@ SELECT
 FROM data d
 JOIN comms c ON d.comm_id = c.id
 JOIN operations o ON d.operation_id = o.id
-GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
 """
 
     if mpi_op == 'Bcast':
@@ -641,7 +640,10 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
     else:
         where_clause = ""  # No WHERE clause needed
 
-    sql = main_query + " " + where_clause
+    group_query = " GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max"
+
+
+    sql = main_query + " " + where_clause + group_query
 
 
     conn = sqlite3.connect(dbpath)
@@ -653,10 +655,17 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         else:
             cursor.execute(sql)
         # Print header
-        print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<12}{'MPI Operation':<15}"
-              f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Max Time(s)':<13}{'Avg Time(s)':<13}{'Total Volume(Bytes)':<15}")
-        print_decoration(RESET)
+
+        if outfile:
+              csvfile=open(outfile, 'w', newline='')
+              csv_writer = csv.writer(csvfile)
+              # Write header row
+              csv_writer.writerow(['Comm Name', 'Processes', 'Comm Size', 'MPI Operation','Min Buffer', 'Max Buffer', 'Calls', 'Max Time(s)', 'Avg Time(s)','Volume(Bytes)'])
+        else:
+            print_decoration(BOLD)
+            print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<12}{'MPI Operation':<15}"
+                  f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Max Time(s)':<13}{'Avg Time(s)':<13}{'Total Volume(Bytes)':<15}")
+            print_decoration(RESET)
 
         data = cursor.fetchall()  # Retrieve all data
 
@@ -696,8 +705,18 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
             if (result['time_s'] < tmin or result['time_s'] > tmax): # Fix this comparison
                 continue
             procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
-            print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<12}{result['operation']:<15}"
-                  f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['avg_time']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
+            if outfile:
+                # Write output to csv file instead
+                csv_writer.writerow([result['comm_name'], procs,
+                                     result['comm_size'], result['operation'],
+                                     result['buffer_size_min'],
+                                     result['buffer_size_max'], calls,
+                                     "{:.3f}".format(result['time_s']),
+                                     "{:.3f}".format(result['avg_time']),
+                                     result['total_volume']])
+            else:
+                print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<12}{result['operation']:<15}"
+                      f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['avg_time']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
@@ -705,8 +724,11 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         # Close the database connection
         if conn:
             conn.close()
+        if outfile:
+            csvfile.close()
 
-def query_ranks(dbpath,enum_primitives,mpi_op,bufmin,bufmax,tmin,tmax,ranks,order=1):
+
+def query_ranks(dbpath,enum_primitives,mpi_op,bufmin,bufmax,tmin,tmax,ranks,order=1,outfile=None):
 
     main_query = """
 SELECT
@@ -724,7 +746,6 @@ SELECT
 FROM data d
 JOIN comms c ON d.comm_id = c.id
 JOIN operations o ON d.operation_id = o.id
-GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
 """
 
     if mpi_op == 'Bcast':
@@ -746,10 +767,17 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         else:
             cursor.execute(sql)
         # Print header
-        print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<12}{'Rank':<10}{'MPI Operation':<15}"
+        if outfile:
+              csvfile=open(outfile, 'w', newline='')
+              csv_writer = csv.writer(csvfile)
+              # Write header row
+              csv_writer.writerow(['Comm Name', 'Processes', 'Comm Size', 'Rank', 'MPI Operation',
+                                   'Min Buffer', 'Max Buffer', 'Calls', 'Time(s)', 'Volume(Bytes)'])
+        else:
+            print_decoration(BOLD)
+            print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<12}{'Rank':<10}{'MPI Operation':<15}"
               f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Time(s)':<13}{'Volume(Bytes)':<15}")
-        print_decoration(RESET)
+            print_decoration(RESET)
 
         data = cursor.fetchall()  # Retrieve all data
 
@@ -782,15 +810,17 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
             calls = result['calls']
             if result['opid'] == enum_primitives['Sendrecv']:
                 calls = calls // 2
-            elif result['opid'] >= enum_primitives['Bcast']:
-                calls = calls // result['comm_size']
 
             if (result['buffer_size_min'] < bufmin or result['buffer_size_max'] > bufmax):
                 continue
             if (result['time_s'] < tmin or result['time_s'] > tmax): # Fix this comparison
-                continue
+                 continue
             procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
-            print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<12}{result['rank']:<10}{result['operation']:<15}"
+            if outfile:
+                 csv_writer.writerow([result['comm_name'], procs, result['comm_size'], result['rank'], result['operation'],
+                                      result['buffer_size_min'], result['buffer_size_max'], result['calls'], "{:.3f}".format(result['time_s']), result['total_volume']])
+            else:
+                print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<12}{result['rank']:<10}{result['operation']:<15}"
                   f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
@@ -799,8 +829,10 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
         # Close the database connection
         if conn:
             conn.close()
+        if outfile:
+            csvfile.close()
 
-def query_summarize_time(dbpath,order=1,num_of_rows=20):
+def query_summarize_time(dbpath,order=1,outfile=None):
     sql = """
     SELECT
     c.name AS comm_name,
@@ -841,20 +873,25 @@ GROUP BY c.name, c.size
     cursor = conn.cursor()
     try:
         cursor.execute(sql)
-        i = 0
         # Print header
-        print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Total Time (s)':<20}")
-        print_decoration(RESET)
+        if outfile:
+            # Write data to csv file
+            csvfile = open(outfile, 'w', newline='')
+            csv_writer = csv.writer(csvfile)
+            csv_writer.writerow(['Comm Name', 'Comm Size', 'Total Time(s)'])
+        else:
+            print_decoration(BOLD)
+            print(f"{'Comm Name':<15}{'Comm Size':<15}{'Total Time (s)':<20}")
+            print_decoration(RESET)
 
         data = cursor.fetchall()  # Retrieve all data
 
         for row in data:
             comm_name, comm_size, total_time = row
-            print(f"{comm_name:<15}{comm_size:<15}{total_time:<20.3f}")
-            if ( i == num_of_rows):
-                break
-            i += 1
+            if outfile:
+                csv_writer.writerow([comm_name, comm_size, "{:.4f}".format(total_time)])
+            else:
+                print(f"{comm_name:<15}{comm_size:<15}{total_time:<20.4f}")
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
@@ -862,6 +899,8 @@ GROUP BY c.name, c.size
         # Close the database connection
         if conn:
             conn.close()
+        if outfile:
+            csvfile.close()
 
 
 
@@ -1436,22 +1475,17 @@ def summarize_volume_by_comm_operation(db_path):
 
 def main():
     parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
-    parser.add_argument("-d", "--db_path", required=True, help="Path to the mpisee SQLite database file.")
-    parser.add_argument("-a", "--all",  action='store_true', required=False, help="Print all data.")
-    # parser.add_argument("-l", "--comm_plot", required=False, action='store_true', help="Plot data for a specific communicator.")
-    # parser.add_argument("-i", "--mpiop_plot", required=False, action='store_true', help="Plot time for n top MPI Operations and their communicators.")
+    parser.add_argument("-i", "--in_db", required=True, help="Path to the input SQLite database file of mpisee.")
     parser.add_argument("-e", "--exectime", required=False, action='store_true', help="Print the net MPI time and the total Execution time for each process.")
+    parser.add_argument("-a", "--all",  action='store_true', required=False, help="Print all data.")
     parser.add_argument("-p", "--pt2pt",action='store_true', required=False, help="Show only point to point MPI operations,")
     parser.add_argument("-c", "--collectives", action='store_true', required=False, help="Show only collective MPI operations.")
     parser.add_argument("-r", "--ranks", type=str, required=False, help="Show the data of specific MPI ranks.")
     parser.add_argument("-b", "--buffsize", type=str, required=False, help="Show the data for a specific buffer size range defined as min:max.")
-    parser.add_argument("-t", "--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
-    #parser.add_argument("-m", "--mpitime", action='store_true', required=False, help="Show MPI time of specific ranks. Shows all ranks by default.")
-    parser.add_argument("-m", "--mpiprim", required=False, type=str, default=None, help="Show the time of specific MPI operations. Shows all ranks by default.")
     parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
-    parser.add_argument("--com", type=str, required=False, help="Show the data of a specific communicator.")
+    parser.add_argument("-t", "--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
     parser.add_argument("--ctime", action='store_true', required=False, help="Show the time summary for each communicator.")
-    parser.add_argument("--csv", required=False, type=str, help="Output to a csv file")
+    parser.add_argument("-o","--output_csv", required=False, type=str, help="Output to a csv file")
     parser.add_argument("--debug", required=False, action='store_true', help="Print debug information.")
     args = parser.parse_args()
 
@@ -1470,7 +1504,7 @@ def main():
     header_path = os.path.normpath(header_path)
     enum_primitives = parse_enum_from_header(header_path)
 
-    db_path = args.db_path
+    db_path = args.in_db
 
     if args.ranks:
         rank_list = [int(rank) for rank in args.ranks.split(',')]
@@ -1506,10 +1540,6 @@ def main():
     else:
         timemax = sys.float_info.max
         timemin = -1.0
-    if args.com:
-        comms = args.com.split(',')
-    else:
-        comms = []
 
 
 
@@ -1521,19 +1551,20 @@ def main():
 
     print_decoration(RESET)
 
-    if args.csv:
-        # Fix the data to output to csv
-        data = get_average_time_per_operation_top(db_path,10)
-        output_to_csv(data,args.csv)
-    elif args.pt2pt:
-        query_colls_pt2pt(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,args.sort)
+    if args.pt2pt:
+        if ( args.ranks ):
+            query_ranks(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.output_csv)
+        else:
+            query_colls_pt2pt(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,args.sort,args.output_csv)
     elif args.collectives:
-        query_colls_pt2pt(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,timemin,timemax,args.sort)
+        if ( args.ranks ):
+            query_ranks(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.output_csv)
+        else:
+            query_colls_pt2pt(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,timemin,timemax,args.sort,args.output_csv)
     elif args.exectime:
         print_execution_time(db_path,rank_list)
     elif args.all:
-        print_all_data(db_path)
-        #query_ranks(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort)
+        query_ranks(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.output_csv)
     elif args.debug:
         print_comms_table(db_path)
         print_operations_table(db_path)
@@ -1541,9 +1572,9 @@ def main():
         print_volume_table(db_path)
         summarize_volume_by_comm_operation(db_path)
     elif args.ctime:
-        query_summarize_time(db_path,args.sort)
+        query_summarize_time(db_path,args.sort,args.output_csv)
     else:
-        query_colls_pt2pt(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,args.sort)
+        query_colls_pt2pt(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,args.sort,args.output_csv)
 
 
 if __name__ == "__main__":
