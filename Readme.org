@@ -2,7 +2,6 @@
 
 * Introduction
 =mpisee=, your friendly neighborhood MPI profiler: Reveals communication bottlenecks and uncovers hidden patterns within MPI communicators.
-[[./images/PROFIT.jpg]]
 
 * Build
 ** Dependencies
