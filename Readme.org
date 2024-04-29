@@ -2,7 +2,6 @@
 
 * Introduction
 =mpisee=, your friendly neighborhood MPI profiler: Reveals communication bottlenecks and uncovers hidden patterns within MPI communicators.
-
 * Build
 ** Dependencies
 1. C/C++ compiler that supports C++11 standard
@@ -59,7 +58,8 @@ cmake -DNUM_BUCKETS=9 -DBUCKETS="64,512,4096,8192,65536,262144,1048576,33554432"
 #+end_src
 *** Important on mpisee-through script
 =mpisee-through.py= depends on the ~utils.h~ header file of =mpisee=. If you run =mpisee-through.py= on a different machine from where you configured =mpisee=, make sure that both installations are configured in the same way. Even if =mpisee= does not compile, it will configure the necessary files for the =mpisee-through=.
-
+* Sample Output
+[[./images/PROFIT.jpg]]
 
 * Cite
 If you found this useful please cite:
