@@ -1,4 +1,3 @@
-#include "commprofConfig.h"
 #include "utils.h"
 #include <climits>
 #include <cstddef>
@@ -21,6 +20,7 @@
 #include <algorithm>
 #include "symbols.h"
 #include "create_db.h"
+#include "utils.h.in"
 #include <iostream>
 
 int prof_enabled = 1;
@@ -1372,8 +1372,8 @@ _Finalize(void) {
         createTables(db);
         std::cout << "mpisee: Writing the metadata table" << std::endl;
 
-        insertMetadata(db, version, size, av, ac, mpisee_VERSION_MAJOR,
-                       mpisee_VERSION_MINOR, mpisee_build_date,
+        insertMetadata(db, version, size, av, ac, MPISEE_MAJOR_VERSION,
+                       MPISEE_MINOR_VERSION, mpisee_build_date,
                        mpisee_build_time, env_var);
 
         std::cout << "mpisee: Writing the MPI operations table" << std::endl;

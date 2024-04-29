@@ -1474,19 +1474,23 @@ def summarize_volume_by_comm_operation(db_path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Query the mpisee SQLite database.")
-    parser.add_argument("-i", "--in_db", required=True, help="Path to the input SQLite database file of mpisee.")
-    parser.add_argument("-e", "--exectime", required=False, action='store_true', help="Print the net MPI time and the total Execution time for each process.")
-    parser.add_argument("-a", "--all",  action='store_true', required=False, help="Print all data.")
-    parser.add_argument("-p", "--pt2pt",action='store_true', required=False, help="Show only point to point MPI operations,")
-    parser.add_argument("-c", "--collectives", action='store_true', required=False, help="Show only collective MPI operations.")
-    parser.add_argument("-r", "--ranks", type=str, required=False, help="Show the data of specific MPI ranks.")
-    parser.add_argument("-b", "--buffsize", type=str, required=False, help="Show the data for a specific buffer size range defined as min:max.")
-    parser.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
-    parser.add_argument("-t", "--time", type=str, required=False, help="Show the data for a specific time range in seconds defined as min:max.")
-    parser.add_argument("--ctime", action='store_true', required=False, help="Show the time summary for each communicator.")
-    parser.add_argument("-o","--output_csv", required=False, type=str, help="Output to a csv file")
-    parser.add_argument("--debug", required=False, action='store_true', help="Print debug information.")
+    parser = argparse.ArgumentParser(description="mpisee SQLite database basic query tool. **Requires input database file.**  Summarizes MPI data across ranks by default. Use filters to refine the output.")
+    parser.add_argument("-i", "--inputdb", required=True, help="REQUIRED: path to the input SQLite database file of mpisee.")
+    display_group = parser.add_argument_group("Main Output Options: Summarizes MPI data across ranks by default if none of the below options are selected")
+    display_group.add_argument("-a", "--all",  action='store_true', required=False, help="Displays data among all ranks.")
+    display_group.add_argument("-p", "--pt2pt",action='store_true', required=False, help="Displays only point to point MPI operations,")
+    display_group.add_argument("-c", "--collectives", action='store_true', required=False, help="Displays only collective MPI operations.")
+    filter_group = parser.add_argument_group("Filtering Options: Combined with the main output options to refine the output")
+    filter_group.add_argument("-r", "--ranks", type=str, required=False, help="Select the data of specific MPI ranks.  Use a comma-separated list of ranks. Cannot be combined with the default query.")
+    filter_group.add_argument("-b", "--buffsize", type=str, required=False, help="Select the data for a specific buffer size range defined as min:max.")
+    filter_group.add_argument("-t", "--time", type=str, required=False, help="Select the data for a specific time range in seconds defined as min:max.")
+    filter_group.add_argument("-s", "--sort", required=False,  type=int, default=1, help="Sort the results using one of the following integers: 0 by communicator, 1 descending by time(default), 2 ascending by time, 3 by MPI operation, 4 ascending by buffer size, 5 descending by buffer size, 6 ascending by number of calls, 7 descending by number of calls.")
+    output_group = parser.add_argument_group("Output Options")
+    output_group.add_argument("-o","--outputcsv", required=False, type=str, help="Output to a csv file")
+    second_display_group = parser.add_argument_group("Secondary Output Options")
+    second_display_group.add_argument("-e", "--exectime", required=False, action='store_true', help="Display the net MPI time and the total Execution time for each process.")
+    second_display_group.add_argument("-u", "--ctime", action='store_true', required=False, help="Display the time summary for each communicator.")
+    parser.add_argument("--debug", required=False, action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     #header_path = '../utils.h'
@@ -1504,7 +1508,7 @@ def main():
     header_path = os.path.normpath(header_path)
     enum_primitives = parse_enum_from_header(header_path)
 
-    db_path = args.in_db
+    db_path = args.inputdb
 
     if args.ranks:
         rank_list = [int(rank) for rank in args.ranks.split(',')]
@@ -1553,18 +1557,18 @@ def main():
 
     if args.pt2pt:
         if ( args.ranks ):
-            query_ranks(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.output_csv)
+            query_ranks(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.outputcsv)
         else:
-            query_colls_pt2pt(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,args.sort,args.output_csv)
+            query_colls_pt2pt(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,args.sort,args.outputcsv)
     elif args.collectives:
         if ( args.ranks ):
-            query_ranks(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.output_csv)
+            query_ranks(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.outputcsv)
         else:
-            query_colls_pt2pt(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,timemin,timemax,args.sort,args.output_csv)
+            query_colls_pt2pt(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,timemin,timemax,args.sort,args.outputcsv)
     elif args.exectime:
         print_execution_time(db_path,rank_list)
     elif args.all:
-        query_ranks(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.output_csv)
+        query_ranks(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.outputcsv)
     elif args.debug:
         print_comms_table(db_path)
         print_operations_table(db_path)
@@ -1572,9 +1576,9 @@ def main():
         print_volume_table(db_path)
         summarize_volume_by_comm_operation(db_path)
     elif args.ctime:
-        query_summarize_time(db_path,args.sort,args.output_csv)
+        query_summarize_time(db_path,args.sort,args.outputcsv)
     else:
-        query_colls_pt2pt(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,args.sort,args.output_csv)
+        query_colls_pt2pt(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,args.sort,args.outputcsv)
 
 
 if __name__ == "__main__":
