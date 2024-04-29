@@ -1,7 +1,7 @@
 #+title: Readme
 
 * Introduction
-You friendly neighborhood MPI Communicator-centric profiler.
+=mpisee=, your friendly neighborhood MPI profiler: Reveals communication bottlenecks and uncovers hidden patterns within MPI communicators.
 
 * Build
 ** Dependencies
@@ -10,31 +10,36 @@ You friendly neighborhood MPI Communicator-centric profiler.
 3. MPI Library (Open MPI, MPICH, CrayMPICH, MVAPICH, IntelMPI)
 4. SQLite library
 ** Basic build
-1. ~git clone https://github.com/variemai/communicator_profiler.git && cd communicator_profiler~
-2. ~mkdir build && cd build~
-3. ~cmake .. && make -j~
-4. On successful build, ~libmpisee.so~ should be located in the build folder.
-5. You might need to define the compiler if it is not detected e.g.: ~-DMPI_CXX_COMPILER=mpicxx~
+#+begin_src bash
+git clone https://github.com/variemai/communicator_profiler.git && cd communicator_profiler
+mkdir build && cd build
+cmake .. && make -j
+#+end_src
+You might need to define the compiler if it is not detected e.g.: ~-DMPI_CXX_COMPILER=mpicxx~
 * Usage
 - To profile your MPI application make sure it is compiled with the same MPI library as mpisee
-- Set ~LD_PRELOAD~ and ~MPISEE_OUTFILE~ variables before running your application:
-  - ~LD_PRELOAD=/path/to/libmpisee.so MPISEE_OUTFILE=/path/to/output.db <mpi launcher> <args> /path/to/exec <args>~
-  - ~MPISEE_OUTFILE~ defines output file name.
-  - The default output file is named ~mpisee_profile.db~
+- Set ~LD_PRELOAD~ and ~MPISEE_OUTFILE~ variables before running your application
+- ~LD_PRELOAD~ to point to the ~libmpisee.so~ created in the build folder
+- ~MPISEE_OUTFILE~ defines output file name.
 - To get a summary of the results parse the output file with the ~mpisee-through.py~ script located in ~mpisee-through~ folder
-  - For a complete list of options run ~/path/to/mpisee-through.py --help~
-*** Important Note on Output Files
-*Always use a new file name for each profile, overwriting an existing file will distort the output.*
+    - For a complete list of options run ~/path/to/mpisee-through.py --help~
+** Important Note on Output Files
+*Always use a new file name for each profile, overwriting an existing file will distort the output*
+** Example Usage
+#+begin_src bash
+LD_PRELOAD=/path/to/libmpisee.so MPISEE_OUTFILE=/path/to/output.db <mpi launcher> <args> /path/to/exec <args>
+python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
+#+end_src
 
 ** Results analysis with mpisee-through
-- The default query displays all data in each communicator by summarizing across ranks: ~/path/to/mpisee-through-db.py -i /path/to/mpisee_profile.db~
-- Display all data by separating ranks: ~/path/to/mpisee-through-db.py -i /path/to/mpisee_profile.db -a~
-- Display data for collective MPI operations only: ~/path/to/mpisee-through-db.py -i /path/to/mpisee_profile.db -c~
-- Display data for point-to-point MPI operations only: ~/path/to/mpisee-through-db.py -i /path/to/mpisee_profile.db -p~
+- The default query displays all data in each communicator by summarizing across ranks: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db~
+- Display all data by separating ranks: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -a~
+- Display data for collective MPI operations only: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -c~
+- Display data for point-to-point MPI operations only: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -p~
 - The following switches can be combined with the above options:
-  - Display data for a specific MPI ranks (e.g. Ranks 0 and 12): ~-r 0,12~
-  - Display data for a specific buffer range (e.g. 0-1024): ~-b 0:1024~
-  - Display data for MPI operations within a specific time range (e.g from 0.02 to 0.8 seconds): ~-t 0.02:0.8~
+  - Display data for a specific MPI ranks, e.g., Ranks 0 and 12 (cannot be combined with the default query): ~-r 0,12~
+  - Display data for a specific buffer range, e.g., 0-1024: ~-b 0:1024~
+  - Display data for MPI operations within a specific time range, e.g, from 0.02 to 0.8 seconds: ~-t 0.02:0.8~
 
 
 
