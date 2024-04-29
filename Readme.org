@@ -21,7 +21,7 @@ You might need to define the compiler if it is not detected e.g.: ~-DMPI_CXX_COM
 - Set ~LD_PRELOAD~ and ~MPISEE_OUTFILE~ variables before running your application
 - ~LD_PRELOAD~ to point to the ~libmpisee.so~ created in the build folder
 - ~MPISEE_OUTFILE~ defines output file name.
-- To get a summary of the results parse the output file with the ~mpisee-through.py~ script located in ~mpisee-through~ folder
+- To get a summary of the results parse the output file with the ~mpisee-through.py~ script located in the ~mpisee-through~ folder
     - For a complete list of options run ~/path/to/mpisee-through.py --help~
 ** Important Note on Output Files
 *Always use a new file name for each profile, overwriting an existing file will distort the output*
@@ -38,13 +38,13 @@ python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
 - Display data for collective MPI operations only: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -c~
 - Display data for point-to-point MPI operations only: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -p~
 - The following switches can be combined with the above options:
-  - Display data for a specific MPI ranks, e.g., Ranks 0 and 12 (cannot be combined with the default query): ~-r 0,12~
+  - Display data for specific MPI ranks, e.g., Ranks 0 and 12 (cannot be combined with the default query): ~-r 0,12~
   - Display data for a specific buffer range, e.g., 0-1024: ~-b 0:1024~
   - Display data for MPI operations within a specific time range, e.g, from 0.02 to 0.8 seconds: ~-t 0.02:0.8~
 * Advanced Build
 =mpisee= uses buffer size ranges to categorize the MPI communication calls.
 These buffer size categories can be configured by the user for finer grain analysis. The default values are:
-~-NUM_BUCKETS=8~ and ~BUCKETS="128,1024,8192,65536,262144,1048576,33554432"~.
+~-NUM_BUCKETS=8~ and ~-BUCKETS=128,1024,8192,65536,262144,1048576,33554432~.
 | Buffer Range | Bucket |
 |--------------+--------|
 | 0-128        | 128    |
