@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import configparser
 import sqlite3
 import re
 import os
@@ -1493,8 +1494,6 @@ def main():
     parser.add_argument("--debug", required=False, action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
 
-    #header_path = '../utils.h'
-
     # Path to the script file (this script)
     script_path = os.path.abspath(__file__)
 
@@ -1502,12 +1501,24 @@ def main():
     script_dir = os.path.dirname(script_path)
 
     # Path to the header file, relative to the script location
-    header_path = os.path.join(script_dir, '../utils.h')
+    confpath = os.path.join(script_dir, 'config.ini')
 
-    # Normalize the path to resolve any ".." components
-    header_path = os.path.normpath(header_path)
+    #Normalize the path to resolve any ".." components
+    config_path = os.path.normpath(confpath)
+
+    config = configparser.ConfigParser()
+    filenames_read = config.read(config_path)
+
+    if not filenames_read:
+        print("Error: Failed to read configuration file 'config.ini'")
+        exit(1)
+
+    header_path = config.get('paths', 'utils_header') # Get the path to utils.h file
+    if not os.path.isfile(header_path):  # Always a good idea to validate
+        print("Error: utils.h not found at specified path in config.ini")
+        exit(1)
+
     enum_primitives = parse_enum_from_header(header_path)
-
     db_path = args.inputdb
 
     if args.ranks:

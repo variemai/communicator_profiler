@@ -1,8 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
 project(mpisee VERSION 3.1 DESCRIPTION "mpisee: A communicator-centric profiler")
 
-find_package(MPI REQUIRED CXX)
-find_package(SQLite3 REQUIRED)
+find_package(MPI)
+if(NOT MPI_FOUND)
+   message(WARNING "MPI not found. mpisee will not compile.")
+endif()
+find_package(SQLite3)
+if(NOT SQLite3_FOUND)
+   message(WARNING "SQLite3 not found. mpisee will not compile.")
+endif()
+
 
 set(CMAKE_CXX_COMPILER mpicxx)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -g -Wall")
@@ -36,6 +43,13 @@ set(MPI_SEE_MAJOR_VERSION ${CMAKE_MATCH_1})
 set(MPI_SEE_MINOR_VERSION ${CMAKE_MATCH_2})
 # Generate the header file (the configure_file part remains the same)
 configure_file(utils.h.in ${CMAKE_SOURCE_DIR}/utils.h)
+message(STATUS "Generated utils.h in ${CMAKE_SOURCE_DIR}")
+set(UTILS_HEADER_PATH ${CMAKE_SOURCE_DIR}/utils.h)
+configure_file(
+  "${CMAKE_SOURCE_DIR}/mpisee-through/config.ini.in"  # Template file
+  "${CMAKE_SOURCE_DIR}/mpisee-through/config.ini"     # Output file
+)
+message(STATUS "Generated config.ini in ${CMAKE_SOURCE_DIR}/mpisee-through")
 
 
 add_library(mpisee SHARED commprof.cpp pt2pt_wrappers.cpp collectives_wrappers.cpp neighbor_wrappers.cpp onesided_wrappers.cpp utils.cpp create_db.cpp)

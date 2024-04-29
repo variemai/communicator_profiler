@@ -31,6 +31,7 @@ LD_PRELOAD=/path/to/libmpisee.so MPISEE_OUTFILE=/path/to/output.db <mpi launcher
 python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
 #+end_src
 
+
 ** Results analysis with mpisee-through
 - The default query displays all data in each communicator by summarizing across ranks: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db~
 - Display all data by separating ranks: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -a~
@@ -40,7 +41,24 @@ python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
   - Display data for a specific MPI ranks, e.g., Ranks 0 and 12 (cannot be combined with the default query): ~-r 0,12~
   - Display data for a specific buffer range, e.g., 0-1024: ~-b 0:1024~
   - Display data for MPI operations within a specific time range, e.g, from 0.02 to 0.8 seconds: ~-t 0.02:0.8~
+* Advanced Build
+=mpisee= uses buffer size ranges to categorize the MPI communication calls.
+These buffer size categories can be configured by the user for finer grain analysis. The default values are:
+~-NUM_BUCKETS=8~ and ~BUCKETS="128,1024,8192,65536,262144,1048576,33554432"~.
+| Buffer Range | Bucket |
+|--------------+--------|
+| 0-128        | 128    |
+| 128-1024     | 1024   |
+| ...          | ...    |
 
+** Configure Buffer Range Sizes (Buckets)
+- Set the ~NUM_BUCKETS~ and ~BUCKETS~ correctly: length of ~BUCKETS~ must be equal to ~NUM_BUCKETS-1~
+- Sample build with 9 Buckets:
+#+begin_src bash
+cmake -DNUM_BUCKETS=9 -DBUCKETS="64,512,4096,8192,65536,262144,1048576,33554432"
+#+end_src
+*** Important on mpisee-through script
+=mpisee-through.py= depends on the ~utils.h~ header file of =mpisee=. If you run =mpisee-through.py= on a different machine from where you configured =mpisee=, make sure that both installations are configured in the same way. Even if =mpisee= does not compile, it will configure the necessary files for the =mpisee-through=.
 
 
 * Cite
