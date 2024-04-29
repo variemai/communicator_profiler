@@ -17,9 +17,10 @@ You friendly neighborhood MPI Communicator-centric profiler.
 5. You might need to define the compiler if it is not detected e.g.: ~-DMPI_CXX_COMPILER=mpicxx~
 * Usage
 - To profile your MPI application make sure it is compiled with the same MPI library as mpisee
-- ~LD_PRELOAD=/path/to/libmpisee.so MPISEE_OUTFILE=/path/to/outputfile.db <mpi launcher> <args> /path/to/exec <args>~
-  - ~MPISEE_OUTFILE~ defines the output file.
-    - *Always use a new file for each profile, overwriting an existing file will distort the output.*
+- Set ~LD_PRELOAD~ and ~MPISEE_OUTFILE~ variables before running your application:
+  - ~LD_PRELOAD=/path/to/libmpisee.so MPISEE_OUTFILE=/path/to/output.db <mpi launcher> <args> /path/to/exec <args>~
+  - ~MPISEE_OUTFILE~ defines output file name.
+  - *Always use a new file name for each profile, overwriting an existing file will distort the output.*
   - The default output file is named ~mpisee_profile.db~
 - To get a summary of the results parse the output file with the ~mpisee-through.py~ script located in ~mpisee-through~ folder
   - Run ~/path/to/mpisee-through.py --help~
