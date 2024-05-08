@@ -39,7 +39,7 @@ python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
   #+end_src
 - Display all data by separating ranks:
   #+begin_src bash
-  python 3/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -a
+  python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db -a
   #+end_src
 - Display data for collective MPI operations only:
   #+begin_src bash
@@ -53,6 +53,7 @@ python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
   - Display data for specific MPI ranks, e.g., Ranks 0 and 12 (cannot be combined with the default query): ~-r 0,12~
   - Display data for a specific buffer range, e.g., 0-1024: ~-b 0:1024~
   - Display data for MPI operations within a specific time range, e.g, from 0.02 to 0.8 seconds: ~-t 0.02:0.8~
+- Use ~-h~ switch for a complete list of commands
 * Advanced Build
 =mpisee= uses buffer size ranges to categorize the MPI communication calls.
 These buffer size categories can be configured by the user for finer grain analysis. The default values are:
