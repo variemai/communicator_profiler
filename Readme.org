@@ -33,10 +33,22 @@ python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
 
 
 ** Results analysis with mpisee-through
-- The default query displays all data in each communicator by summarizing across ranks: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db~
-- Display all data by separating ranks: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -a~
-- Display data for collective MPI operations only: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -c~
-- Display data for point-to-point MPI operations only: ~/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -p~
+- The default query displays all data in each communicator by summarizing across ranks:
+  #+begin_src bash
+  python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
+  #+end_src
+- Display all data by separating ranks:
+  #+begin_src bash
+  python 3/path/to/mpisee-through.py -i /path/to/mpisee_profile.db -a
+  #+end_src
+- Display data for collective MPI operations only:
+  #+begin_src bash
+  python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db -c
+  #+end_src
+- Display data for point-to-point MPI operations only:
+  #+begin_src bash
+  python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db -p
+  #+end_src
 - The following switches can be combined with the above options:
   - Display data for specific MPI ranks, e.g., Ranks 0 and 12 (cannot be combined with the default query): ~-r 0,12~
   - Display data for a specific buffer range, e.g., 0-1024: ~-b 0:1024~
