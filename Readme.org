@@ -1,6 +1,6 @@
 #+title: Readme
 * Introduction
-=mpisee= is your friendly neighborhood MPI profiler. It can reveal communication bottlenecks and uncover hidden patterns within MPI communicators.
+=mpisee= is a lightweight MPI profiler focusing on communicators. It can reveal communication bottlenecks and uncover hidden patterns within MPI communicators. Its output is an SQL database which can be queried for information using a python tool, =mpisee-through=.
 #+attr_html: :width 100%
 [[./images/Updated.jpg]]
 * Build
