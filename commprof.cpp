@@ -1337,7 +1337,7 @@ _Finalize(void) {
           if (rc) {
               mcpt_abort("Can't open database: error: %s\n",env_var, sqlite3_errmsg(db));
           } else {
-              std::cout << "mpisee: Opened database" << env_var << " successfully " << std::endl;
+              std::cout << "mpisee: Opened database: " << env_var << " successfully " << std::endl;
           }
           outfile = strdup(env_var);
           if (outfile == NULL) {
@@ -1346,7 +1346,7 @@ _Finalize(void) {
         }
         else{
             int maxRetries = 3600;
-            sqlite3* db = openSQLiteDBExclusively("mpisee_", ".db", maxRetries);
+            db = openSQLiteDBExclusively("mpisee_", ".db", maxRetries);
             if (db == NULL) {
                 mcpt_abort("Error: Failed to open SQLite database exclusively after %d retries", maxRetries);
                 return 1;
