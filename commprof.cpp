@@ -1328,7 +1328,7 @@ _Finalize(void) {
     if ( rank == 0 ){
         int rc,commId,maxsize,minsize;
         sqlite3 *db = NULL;
-        char *outfile = NULL;
+        std::string outfile;
         int l, proc, startIdx, numElements;
         double t;
         const char *env_var = getenv("MPISEE_OUTFILE");
@@ -1339,14 +1339,11 @@ _Finalize(void) {
           } else {
               std::cout << "mpisee: Opened database: " << env_var << " successfully " << std::endl;
           }
-          outfile = strdup(env_var);
-          if (outfile == NULL) {
-              mcpt_abort("strdup returned NULL\n");
-          }
+          outfile = env_var;
         }
         else{
             int maxRetries = 3600;
-            db = openSQLiteDBExclusively("mpisee_", ".db", maxRetries);
+            db = openSQLiteDBExclusively("mpisee_", ".db", maxRetries, outfile);
             if (db == NULL) {
                 mcpt_abort("Error: Failed to open SQLite database exclusively after %d retries", maxRetries);
                 return 1;
@@ -1483,7 +1480,6 @@ _Finalize(void) {
         t = MPI_Wtime() - t;
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
         sqlite3_close(db);
-        free(outfile);
         free(recv_buffer);
 
     }
