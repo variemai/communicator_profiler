@@ -8,6 +8,7 @@
 #include <vector>
 #include "utils.h"
 #include "create_db.h"
+#include <fcntl.h>
 
 
 int countTable(sqlite3 *db, const std::string& tablename) {
@@ -588,4 +589,62 @@ void batchInsertToVolume(sqlite3 *db, const std::vector<VolEntry> &entries) {
     executeSQL(db, "END TRANSACTION", "End Transaction");
 
     sqlite3_finalize(stmt);
+}
+
+
+
+// Function to get the current time and date, create a stringstream to hold the output, create the condensed string and return the filename
+std::string createFilename(std::string prefix, std::string suffix) {
+    // Get the current time
+    std::time_t time = std::time(nullptr);
+    std::tm tm = *std::localtime(&time);
+
+    // Create a stringstream to hold the output
+    std::ostringstream oss;
+    oss << std::put_time(&tm, "%Y%m%d%H%M%S");
+
+    // Prepend _mpisee and append .db to the string
+    std::string filename = prefix + oss.str() + suffix;
+
+    // Get the condensed string and return it
+    return filename;
+}
+
+
+// Function to open SQLite database exclusively with retry mechanism
+sqlite3* openSQLiteDBExclusively( std::string prefix, std::string suffix, int maxRetries) {
+    int retryCount = 0;
+    std::string filename;
+    sqlite3* db = NULL;  // Initialize the database handle to nullptr
+    int fd;
+
+    do {
+        filename = createFilename(prefix,suffix);
+
+        fd = open(filename.c_str(), O_RDWR | O_CREAT | O_EXCL, 0664); // O_EXCL to avoid race conditions
+        if (fd != -1) {
+            int rc = sqlite3_open_v2(filename.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
+            if (rc == SQLITE_OK) {
+                std::cout << "mpisee: Opened database: " << filename <<  " exclusively after " << retryCount << " retries" << std::endl;
+                close(fd); // Close the file descriptor, the handle is now owned by SQLite
+                return db;
+            } else {
+                mcpt_abort("Error opening database: %s",sqlite3_errmsg(db));
+                if (db) {
+                    close(fd);
+                    sqlite3_close(db);
+                    db = NULL;
+                }
+            }
+            break;
+        } else if (errno != EEXIST) {
+            mcpt_abort("Error creating file: %s", filename.c_str());
+            return NULL;
+        }
+        // File exists, sleep for a second, and retry
+        sleep(1);
+        ++retryCount;
+    } while (retryCount < maxRetries);
+
+    return NULL;
 }
