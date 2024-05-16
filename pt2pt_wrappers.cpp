@@ -171,10 +171,12 @@ MPI_Sendrecv(const void *sendbuf, int sendcount, MPI_Datatype sendtype,
         ret = PMPI_Sendrecv(sendbuf, sendcount, sendtype, dest, sendtag, recvbuf,
                             recvcount, recvtype, source, recvtag, comm, status);
         t_elapsed = MPI_Wtime() - t_elapsed;
-
-        sum = sendcount;
-        sum = sum | 0x1;
-        sum = sum>>1;
+        if ( dest == MPI_PROC_NULL )
+            sum = 0;
+        else
+            sum = sendcount;
+        // sum = sum | 0x1;
+        // sum = sum>>1;
         profile_this(comm,sum,sendtype,Sendrecv,t_elapsed,0);
     }
     else{
