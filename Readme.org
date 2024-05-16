@@ -15,45 +15,47 @@ git clone https://github.com/variemai/communicator_profiler.git && cd communicat
 mkdir build && cd build
 cmake .. && make -j
 #+end_src
-You might need to define the compiler if it is not detected e.g.: ~-DMPI_CXX_COMPILER=mpicxx~
+You might need to define the compiler if it is not detected e.g., ~-DMPI_CXX_COMPILER=mpicxx~.
 * Usage
-- To profile your MPI application make sure it is compiled with the same MPI library as mpisee
-- Set ~LD_PRELOAD~ and ~MPISEE_OUTFILE~ variables before running your application
-- ~LD_PRELOAD~ to point to the ~libmpisee.so~ created in the build folder
+- To profile your MPI application make sure it is compiled with the same MPI library as mpisee.
+- Set ~LD_PRELOAD~ and ~MPISEE_OUTFILE~ variables before running your application.
+- ~LD_PRELOAD~ to point to the ~libmpisee.so~ created in the build folder.
 - ~MPISEE_OUTFILE~ defines output file name.
-- To get a summary of the results parse the output file with the ~mpisee-through.py~ script located in the ~mpisee-through~ folder
-    - For a complete list of options run ~/path/to/mpisee-through.py --help~
-** Important Note on Output Files
-*Always use a new file name for each profile, overwriting an existing file will distort the output*
+- The default output file name is "mpisee_" followed by date and time (e.g., mpisee_20240516143015.db).
+- To get a summary of the results parse the output file with the ~mpisee-through.py~ script located in the ~mpisee-through~ folder.
+  - For a complete list of options run ~/path/to/mpisee-through.py --help~.
 ** Example Usage
 #+begin_src bash
 LD_PRELOAD=/path/to/libmpisee.so MPISEE_OUTFILE=/path/to/output.db <mpi launcher> <args> /path/to/exec <args>
 python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
 #+end_src
 
-
 ** Results analysis with mpisee-through
 - The default query displays all data in each communicator by summarizing across ranks:
   #+begin_src bash
   python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
   #+end_src
+
 - Display all data by separating ranks:
   #+begin_src bash
   python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db -a
   #+end_src
+
 - Display data for collective MPI operations only:
   #+begin_src bash
   python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db -c
   #+end_src
+
 - Display data for point-to-point MPI operations only:
   #+begin_src bash
   python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db -p
   #+end_src
+
 - The following switches can be combined with the above options:
-  - Display data for specific MPI ranks, e.g., Ranks 0 and 12 (cannot be combined with the default query): ~-r 0,12~
-  - Display data for a specific buffer range, e.g., 0-1024: ~-b 0:1024~
-  - Display data for MPI operations within a specific time range, e.g, from 0.02 to 0.8 seconds: ~-t 0.02:0.8~
-- Use ~-h~ switch for a complete list of commands
+  - Display data for specific MPI ranks, e.g., Ranks 0 and 12: ~-r 0,12~.
+  - Display data for a specific buffer range, e.g., 0-1024: ~-b 0:1024~.
+  - Display data for MPI operations within a specific time range, e.g, from 0.02 to 0.8 seconds: ~-t 0.02:0.8~.
+- Use ~-h~ switch for a complete list of commands.
 * Advanced Build
 =mpisee= uses buffer size ranges to categorize the MPI communication calls.
 These buffer size categories can be configured by the user for finer grain analysis. The default values are:
