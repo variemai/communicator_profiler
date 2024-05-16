@@ -593,8 +593,10 @@ void batchInsertToVolume(sqlite3 *db, const std::vector<VolEntry> &entries) {
 
 
 
-// Function to get the current time and date, create a stringstream to hold the output, create the condensed string and return the filename
-std::string createFilename(std::string prefix, std::string suffix) {
+// Function to get the current time and date, create a stringstream to
+// hold the output, create the condensed string and return the filename
+std::string createFilename(std::string prefix, std::string suffix)
+{
     // Get the current time
     std::time_t time = std::time(nullptr);
     std::tm tm = *std::localtime(&time);
@@ -612,21 +614,27 @@ std::string createFilename(std::string prefix, std::string suffix) {
 
 
 // Function to open SQLite database exclusively with retry mechanism
-sqlite3* openSQLiteDBExclusively( std::string prefix, std::string suffix, int maxRetries) {
+sqlite3* openSQLiteDBExclusively(std::string prefix, std::string suffix,
+                                 int maxRetries, std::string &dbname)
+{
     int retryCount = 0;
     std::string filename;
-    sqlite3* db = NULL;  // Initialize the database handle to nullptr
+    sqlite3* db = NULL;
     int fd;
 
     do {
         filename = createFilename(prefix,suffix);
-
-        fd = open(filename.c_str(), O_RDWR | O_CREAT | O_EXCL, 0664); // O_EXCL to avoid race conditions
+        // Use this file lock to ensure that the file is not opened by another process
+        fd = open(filename.c_str(), O_RDWR | O_CREAT | O_EXCL, 0664);
         if (fd != -1) {
-            int rc = sqlite3_open_v2(filename.c_str(), &db, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_FULLMUTEX, NULL);
+            int rc = sqlite3_open_v2(filename.c_str(), &db,
+                                     SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE |
+                                     SQLITE_OPEN_FULLMUTEX, NULL);
             if (rc == SQLITE_OK) {
-                std::cout << "mpisee: Opened database: " << filename <<  " exclusively after " << retryCount << " retries" << std::endl;
-                close(fd); // Close the file descriptor, the handle is now owned by SQLite
+                std::cout << "mpisee: Opened database: " << filename <<
+                  " exclusively after " << retryCount << " retries" << std::endl;
+                dbname = filename;
+                close(fd); // The handle (db) is now owned by SQLite
                 return db;
             } else {
                 mcpt_abort("Error opening database: %s",sqlite3_errmsg(db));
