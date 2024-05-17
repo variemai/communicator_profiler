@@ -562,7 +562,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
 
         # Print header
         print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<12}{'MPI Operation':<15}"
+        print(f"{'Comm Name':<15}{'Processes':<20}{'Comm Size':<12}{'MPI Operation':<20}"
               f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Max Time(s)':<13}{'Avg Time(s)':<13}{'Total Volume(Bytes)':<15}")
         print_decoration(RESET)
 
@@ -601,7 +601,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
 
 
             procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
-            print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<12}{result['operation']:<15}"
+            print(f"{result['comm_name']:<15}{procs:<20}{result['comm_size']:<12}{result['operation']:<20}"
                   f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['avg_time']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
@@ -664,7 +664,7 @@ JOIN operations o ON d.operation_id = o.id
               csv_writer.writerow(['Comm Name', 'Processes', 'Comm Size', 'MPI Operation','Min Buffer', 'Max Buffer', 'Calls', 'Max Time(s)', 'Avg Time(s)','Volume(Bytes)'])
         else:
             print_decoration(BOLD)
-            print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<12}{'MPI Operation':<15}"
+            print(f"{'Comm Name':<12}{'Processes':<20}{'Comm Size':<12}{'MPI Operation':<20}"
                   f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Max Time(s)':<13}{'Avg Time(s)':<13}{'Total Volume(Bytes)':<15}")
             print_decoration(RESET)
 
@@ -716,7 +716,7 @@ JOIN operations o ON d.operation_id = o.id
                                      "{:.3f}".format(result['avg_time']),
                                      result['total_volume']])
             else:
-                print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<12}{result['operation']:<15}"
+                print(f"{result['comm_name']:<12}{procs:<20}{result['comm_size']:<12}{result['operation']:<20}"
                       f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['avg_time']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
@@ -776,7 +776,7 @@ JOIN operations o ON d.operation_id = o.id
                                    'Min Buffer', 'Max Buffer', 'Calls', 'Time(s)', 'Volume(Bytes)'])
         else:
             print_decoration(BOLD)
-            print(f"{'Comm Name':<15}{'Processes':<25}{'Comm Size':<12}{'Rank':<10}{'MPI Operation':<15}"
+            print(f"{'Comm Name':<12}{'Processes':<20}{'Comm Size':<12}{'Rank':<10}{'MPI Operation':<20}"
               f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Time(s)':<13}{'Volume(Bytes)':<15}")
             print_decoration(RESET)
 
@@ -786,7 +786,7 @@ JOIN operations o ON d.operation_id = o.id
 
         for row in data:
             cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, volume = row
-            if rank not in ranks:
+            if ranks != [] and rank not in ranks:
                 continue
             key = (cid, comm_name, comm_size, opid, operation, rank, buf_min, buf_max)
             if key not in results:
@@ -821,7 +821,7 @@ JOIN operations o ON d.operation_id = o.id
                  csv_writer.writerow([result['comm_name'], procs, result['comm_size'], result['rank'], result['operation'],
                                       result['buffer_size_min'], result['buffer_size_max'], result['calls'], "{:.3f}".format(result['time_s']), result['total_volume']])
             else:
-                print(f"{result['comm_name']:<15}{procs:<25}{result['comm_size']:<12}{result['rank']:<10}{result['operation']:<15}"
+                print(f"{result['comm_name']:<12}{procs:<20}{result['comm_size']:<12}{result['rank']:<10}{result['operation']:<20}"
                   f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
