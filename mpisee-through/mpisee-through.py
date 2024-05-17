@@ -717,7 +717,7 @@ JOIN operations o ON d.operation_id = o.id
                                      result['total_volume']])
             else:
                 print(f"{result['comm_name']:<12}{procs:<20}{result['comm_size']:<12}{result['operation']:<20}"
-                      f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['avg_time']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
+                      f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.6f}{result['avg_time']:<13.6f}{result['total_volume']}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
@@ -822,7 +822,7 @@ JOIN operations o ON d.operation_id = o.id
                                       result['buffer_size_min'], result['buffer_size_max'], result['calls'], "{:.3f}".format(result['time_s']), result['total_volume']])
             else:
                 print(f"{result['comm_name']:<12}{procs:<20}{result['comm_size']:<12}{result['rank']:<10}{result['operation']:<20}"
-                  f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
+                  f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.6f}{result['total_volume']}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
