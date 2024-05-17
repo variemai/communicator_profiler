@@ -415,7 +415,7 @@ def print_execution_time(dpath,ranks=[]):
         for i in range(len(exectimes)):
             id,time = exectimes[i]
             id_mpi,total_time = mpitimes[i]
-            print(f"{id:<10}{total_time:<15.3f}{time:<20.3f}{(total_time/time)*100:.2f}")
+            print(f"{id:<10}{total_time:<15.3f}{time:<20.6f}{(total_time/time)*100:.2f}")
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite exectime table:", e)
@@ -613,7 +613,7 @@ GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
 
 
 
-def query_colls_pt2pt(dbpath,enum_primitives,mpi_op,bufmin,bufmax,tmin,tmax,order=1,outfile=None):
+def query_colls_pt2pt(dbpath,mpi_op,bufmin,bufmax,tmin,tmax,order=1,outfile=None):
 
     main_query = """
 SELECT
@@ -646,16 +646,22 @@ JOIN operations o ON d.operation_id = o.id
 
     sql = main_query + " " + where_clause + group_query
 
-
     conn = sqlite3.connect(dbpath)
     cursor = conn.cursor()
     try:
+
+        cursor.execute("SELECT id FROM operations WHERE operation = 'Sendrecv'")
+        sendrecv_id = cursor.fetchone()[0]
+        cursor.execute("SELECT id FROM operations WHERE operation = 'Bcast'")
+        bcast_id = cursor.fetchone()[0]
         # Execute the query
         if ( mpi_op != None):
-            cursor.execute(sql,(enum_primitives[mpi_op],))
+            cursor.execute("""SELECT id FROM operations WHERE operation = ?""",(mpi_op,))
+            op_id = cursor.fetchone()[0]
+            cursor.execute(sql,(op_id,))
         else:
             cursor.execute(sql)
-        # Print header
+
 
         if outfile:
               csvfile=open(outfile, 'w', newline='')
@@ -696,9 +702,9 @@ JOIN operations o ON d.operation_id = o.id
 
         for result in results.values():
             calls = result['calls']
-            if result['opid'] == enum_primitives['Sendrecv']:
+            if result['opid'] == sendrecv_id:
                 calls = calls // 2
-            elif result['opid'] >= enum_primitives['Bcast']:
+            elif result['opid'] >= bcast_id:
                 calls = calls // result['comm_size']
 
             if (result['buffer_size_min'] < bufmin or result['buffer_size_max'] > bufmax):
@@ -729,7 +735,7 @@ JOIN operations o ON d.operation_id = o.id
             csvfile.close()
 
 
-def query_ranks(dbpath,enum_primitives,mpi_op,bufmin,bufmax,tmin,tmax,ranks,order=1,outfile=None):
+def query_ranks(dbpath,mpi_op,bufmin,bufmax,tmin,tmax,ranks,order=1,outfile=None):
 
     main_query = """
 SELECT
@@ -762,11 +768,17 @@ JOIN operations o ON d.operation_id = o.id
     conn = sqlite3.connect(dbpath)
     cursor = conn.cursor()
     try:
+        cursor.execute("SELECT id FROM operations WHERE operation = 'Sendrecv'")
+        sendrecv_id = cursor.fetchone()[0]
         # Execute the query
         if ( mpi_op != None):
-            cursor.execute(sql,(enum_primitives[mpi_op],))
+            cursor.execute("""SELECT id FROM operations WHERE operation = ?""" ,(mpi_op,))
+            data = cursor.fetchone()
+            cursor.execute(sql,(data[0],))
         else:
             cursor.execute(sql)
+
+
         # Print header
         if outfile:
               csvfile=open(outfile, 'w', newline='')
@@ -809,7 +821,7 @@ JOIN operations o ON d.operation_id = o.id
 
         for result in results.values():
             calls = result['calls']
-            if result['opid'] == enum_primitives['Sendrecv']:
+            if result['opid'] == sendrecv_id:
                 calls = calls // 2
 
             if (result['buffer_size_min'] < bufmin or result['buffer_size_max'] > bufmax):
@@ -1200,11 +1212,11 @@ def print_general_stats(db_path):
     if max_exec_time == None or rank == None:
          print("Error occured in max exec time")
     else:
-         print(f"Maximum Execution time: {max_exec_time:.3f} s, Rank: {rank}")
+         print(f"Maximum Execution time: {max_exec_time:.6f} s, Rank: {rank}")
 
     avg_exec = avg_value_in_dict(exec_times_dict)
     if avg_exec != None:
-        print(f"Average Execution time across {size} MPI Ranks: {avg_exec:.3f} s")
+        print(f"Average Execution time across {size} MPI Ranks: {avg_exec:.6f} s")
 
     sql = """
     SELECT rank, total_time
@@ -1215,11 +1227,11 @@ def print_general_stats(db_path):
     if max_mpi_time == None or rank == None:
          print("Error occured in max MPI time")
     else:
-         print(f"Maximum MPI time: {max_mpi_time:.3f} s, Rank: {rank}")
+         print(f"Maximum MPI time: {max_mpi_time:.6f} s, Rank: {rank}")
 
     avg_mpi = avg_value_in_dict(mpi_times_dict)
     if avg_exec != None and avg_mpi != None:
-        print(f"Average MPI time across {size} MPI Ranks: {avg_mpi:.3f} s")
+        print(f"Average MPI time across {size} MPI Ranks: {avg_mpi:.6f} s")
         print(f"Average Ratio of MPI time to Execution time across {size} MPI Ranks: {(avg_mpi/avg_exec)*100:.2f}%")
     ratios = dict_ratios(mpi_times_dict,exec_times_dict)
     rank,max_ratio = max_value_in_dict(ratios)
@@ -1494,31 +1506,6 @@ def main():
     parser.add_argument("--debug", required=False, action='store_true', help=argparse.SUPPRESS)
     args = parser.parse_args()
 
-    # Path to the script file (this script)
-    script_path = os.path.abspath(__file__)
-
-    # Directory where the script is located
-    script_dir = os.path.dirname(script_path)
-
-    # Path to the header file, relative to the script location
-    confpath = os.path.join(script_dir, 'config.ini')
-
-    #Normalize the path to resolve any ".." components
-    config_path = os.path.normpath(confpath)
-
-    config = configparser.ConfigParser()
-    filenames_read = config.read(config_path)
-
-    if not filenames_read:
-        print("Error: Failed to read configuration file 'config.ini'")
-        exit(1)
-
-    header_path = config.get('paths', 'utils_header') # Get the path to utils.h file
-    if not os.path.isfile(header_path):  # Always a good idea to validate
-        print("Error: utils.h not found at specified path in config.ini")
-        exit(1)
-
-    enum_primitives = parse_enum_from_header(header_path)
     db_path = args.inputdb
 
     if args.ranks:
@@ -1568,18 +1555,18 @@ def main():
 
     if args.pt2pt:
         if ( args.ranks ):
-            query_ranks(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.outputcsv)
+            query_ranks(db_path,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.outputcsv)
         else:
-            query_colls_pt2pt(db_path,enum_primitives,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,args.sort,args.outputcsv)
+            query_colls_pt2pt(db_path,'Ibsend',buffsizemin,buffsizemax,timemin,timemax,args.sort,args.outputcsv)
     elif args.collectives:
         if ( args.ranks ):
-            query_ranks(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.outputcsv)
+            query_ranks(db_path,'Bcast',buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.outputcsv)
         else:
-            query_colls_pt2pt(db_path,enum_primitives,'Bcast',buffsizemin,buffsizemax,timemin,timemax,args.sort,args.outputcsv)
+            query_colls_pt2pt(db_path,'Bcast',buffsizemin,buffsizemax,timemin,timemax,args.sort,args.outputcsv)
     elif args.exectime:
         print_execution_time(db_path,rank_list)
     elif args.all:
-        query_ranks(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.outputcsv)
+        query_ranks(db_path,None,buffsizemin,buffsizemax,timemin,timemax,rank_list,args.sort,args.outputcsv)
     elif args.debug:
         print_comms_table(db_path)
         print_operations_table(db_path)
@@ -1589,7 +1576,7 @@ def main():
     elif args.ctime:
         query_summarize_time(db_path,args.sort,args.outputcsv)
     else:
-        query_colls_pt2pt(db_path,enum_primitives,None,buffsizemin,buffsizemax,timemin,timemax,args.sort,args.outputcsv)
+        query_colls_pt2pt(db_path,None,buffsizemin,buffsizemax,timemin,timemax,args.sort,args.outputcsv)
 
 
 if __name__ == "__main__":
