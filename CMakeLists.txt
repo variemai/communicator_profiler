@@ -44,12 +44,6 @@ set(MPI_SEE_MINOR_VERSION ${CMAKE_MATCH_2})
 # Generate the header file (the configure_file part remains the same)
 configure_file(utils.h.in ${CMAKE_SOURCE_DIR}/utils.h)
 message(STATUS "Generated utils.h in ${CMAKE_SOURCE_DIR}")
-set(UTILS_HEADER_PATH ${CMAKE_SOURCE_DIR}/utils.h)
-configure_file(
-  "${CMAKE_SOURCE_DIR}/mpisee-through/config.ini.in"  # Template file
-  "${CMAKE_SOURCE_DIR}/mpisee-through/config.ini"     # Output file
-)
-message(STATUS "Generated config.ini in ${CMAKE_SOURCE_DIR}/mpisee-through")
 
 
 add_library(mpisee SHARED commprof.cpp pt2pt_wrappers.cpp collectives_wrappers.cpp neighbor_wrappers.cpp onesided_wrappers.cpp utils.cpp create_db.cpp)
@@ -84,3 +78,12 @@ else()
     message(STATUS "srun not found, using default MPIEXEC")
 endif()
 
+# Installation
+set(CMAKE_INSTALL_PREFIX "/usr/local" CACHE PATH "Installation prefix")
+install(TARGETS mpisee
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        RUNTIME DESTINATION bin)
+
+#install(FILES "${CMAKE_SOURCE_DIR}/utils.h" DESTINATION include)
+install(FILES "${CMAKE_SOURCE_DIR}/mpisee-through/mpisee-through.py" DESTINATION bin)
