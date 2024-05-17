@@ -32,34 +32,6 @@ def print_decoration(decoration):
 def is_almost_equal(a, b, epsilon=1e-6):
     return abs(a - b) <= epsilon
 
-def parse_enum_from_header(header_path):
-    with open(header_path, 'r') as file:
-        content = file.read()
-
-    # Regular expression to find enum definition
-    enum_pattern = re.compile(r'enum primitives\{([^}]+)\};', re.MULTILINE | re.DOTALL)
-    match = enum_pattern.search(content)
-
-    enum_dict = {}
-    if match:
-        enum_content = match.group(1)
-        # Extract individual enum items
-        enum_items = enum_content.split(',')
-        value = 0  # Assuming enum starts at 0
-        for item in enum_items:
-            item = item.strip()
-            if item:  # Non-empty string
-                if '=' in item:
-                    name, val = item.split('=')
-                    value = int(val.strip())
-                    enum_dict[name.strip()] = value
-                else:
-                    enum_dict[item] = value
-                value += 1
-    else:
-        print("Enum 'primitives' not found in the header file.")
-    return enum_dict
-
 def get_exec_time_by_rank(db_path, rank):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -115,60 +87,6 @@ def query_data_by_rank(db_path, rank):
         cursor.execute("SELECT * FROM data WHERE rank = ?", (rank,))
         return cursor.fetchall()
 
-def exec_query_and_print(db_path,sql,order,num_of_rows,ranks,comms,*args):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    params = args
-    if len(ranks) > 0:
-        placeholders = ','.join('?' * len(ranks))
-        sql += f" AND d.rank IN ({placeholders})"
-        params += tuple(ranks)
-    if len(comms) > 0:
-        placeholders = ','.join('?' *len(comms))
-        sql += f" AND c.name IN ({placeholders})"
-        params += tuple(comms)
-
-    sql = select_order(sql,order)
-
-    try:
-        # Execute the query
-        cursor.execute(sql,params)
-
-        # Print header
-        print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'MPI Operation':<20}"
-              f"{'Buffer Size (Bytes)':<30}{'Calls':<15}{'Time (s)':<15}{'% of MPI Time':<20}{'% of Total Time':<10}")
-        print_decoration(RESET)
-        # Print rows
-        r = 0
-        prev_rank = -1
-        percentage_mpi_time = 0.0
-        percentage_exec_time = 0.0
-        exec_time = -1.0
-        mpi_time = -1.0
-        for row in cursor.fetchall():
-            name, size, rank, operation, buf_min, buf_max, calls, time = row
-            buffer_size = f"{buf_min} - {buf_max}"
-            if rank != prev_rank:
-                exec_time = get_exec_time_by_rank(db_path,rank)
-                mpi_time = get_mpi_time_by_rank(db_path,rank)
-                prev_rank = rank
-
-            percentage_exec_time = (time/exec_time)*100
-            percentage_mpi_time = (time/mpi_time)*100
-            print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
-                  f"{buffer_size:<30}{calls:<15}{time:<15.3f}{percentage_mpi_time:<20.3f}{percentage_exec_time:<10.3f}")
-            r+=1
-            if num_of_rows > 0 and r >= num_of_rows:
-                break
-
-    except sqlite3.Error as e:
-        print("Failed to read data from SQLite table", e)
-    finally:
-        # Close the database connection
-        if conn:
-            conn.close()
 
 def select_order(sql,order):
     if order == 0:
@@ -197,43 +115,6 @@ def select_order(sql,order):
         ORDER BY d.calls ASC"""
     return sql
 
-
-def print_all_data(db_path):
-    # Connect to the SQLite database
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    # SQL query
-    sql = """
-    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
-           d.calls, d.time
-    FROM data d
-    JOIN comms c ON d.comm_id = c.id
-    JOIN operations o ON d.operation_id = o.id
-    ORDER BY c.name
-    """
-
-    try:
-        # Execute the query
-        cursor.execute(sql)
-
-        # Print header
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'Rank':<10}{'Operation':<20}"
-              f"{'Buffer Size Range (Bytes)':<25}{'Calls':<15}{'Time':<20}")
-
-        # Print rows
-        for row in cursor.fetchall():
-            name, size, rank, operation, buf_min, buf_max, calls, time = row
-            buffer_size = f"{buf_min} - {buf_max}"
-            print(f"{name:<15}{size:<15}{rank:<10}{operation:<20}"
-                  f"{buffer_size:<25}{calls:<15}{time:<20}")
-
-    except sqlite3.Error as e:
-        print("Failed to read data from SQLite table", e)
-    finally:
-        # Close the database connection
-        if conn:
-            conn.close()
 
 def print_data_by_rank(db_path, rank):
     # Connect to the SQLite database
@@ -459,58 +340,6 @@ def mpi_time(dbpath,order=1,ranks=[]):
     finally:
         conn.close()
 
-def print_data_by_time(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
-    # SQL query
-    sql = """
-    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
-           d.calls, d.time
-    FROM data d
-    JOIN comms c ON d.comm_id = c.id
-    JOIN operations o ON d.operation_id = o.id
-    WHERE d.time >= ? AND d.time <= ?
-    """
-    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
-
-def print_data_by_bufsize(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
-    # SQL query
-    sql = """
-    SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
-           d.calls, d.time
-    FROM data d
-    JOIN comms c ON d.comm_id = c.id
-    JOIN operations o ON d.operation_id = o.id
-    WHERE d.buffer_size_min >= ? AND d.buffer_size_max <= ?
-    """
-    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
-
-def  print_data_collectives(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
-    sql = """
-        SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
-           d.calls, d.time
-        FROM data d
-        JOIN comms c ON d.comm_id = c.id
-        JOIN operations o ON d.operation_id = o.id
-        WHERE d.buffer_size_min >= ? AND d.buffer_size_max <= ? AND d.operation_id >= ? """
-    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
-
-
-def print_data_pt2pt(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
-    sql = """
-        SELECT c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max,
-           d.calls, d.time
-        FROM data d
-        JOIN comms c ON d.comm_id = c.id
-        JOIN operations o ON d.operation_id = o.id
-        WHERE d.buffer_size_min >= ? AND d.buffer_size_max <= ? AND d.operation_id <= ?  """
-    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
-
-def query_all_data(dbpath,order=1,num_of_rows=0,rank_list=[],comms=[],*args):
-    sql = """SELECT c.name, c.size, d.rank, o.operation,
-                      d.buffer_size_min, d.buffer_size_max, d.calls, d.time
-                      FROM data d
-                      JOIN comms c ON d.comm_id = c.id
-                      JOIN operations o ON d.operation_id = o.id """
-    exec_query_and_print(dbpath,sql,order,num_of_rows,rank_list,comms,*args)
 
 
 def sort_by(results,order):
@@ -531,85 +360,6 @@ def sort_by(results,order):
     elif ( order == 7):
         results = dict(sorted(results.items(), key=lambda item: item[1]['calls']))
     return results
-
-
-def default_query(dbpath,enum_primitives,order=1):
-    sql = """
-    SELECT
-    d.comm_id AS cid,
-    c.name AS comm_name,
-    c.size AS comm_size,
-    d.rank,
-    d.operation_id AS opid,
-    o.operation,
-    d.buffer_size_min,
-    d.buffer_size_max,
-    SUM(d.calls) AS calls,
-    MAX(d.time) AS time_s,
-    AVG(d.time) AS avg_time,
-    SUM(volume) As total_volume
-FROM data d
-JOIN comms c ON d.comm_id = c.id
-JOIN operations o ON d.operation_id = o.id
-GROUP BY c.name, c.size, o.operation, d.buffer_size_min, d.buffer_size_max
-        """
-
-    conn = sqlite3.connect(dbpath)
-    cursor = conn.cursor()
-    try:
-        # Execute the query
-        cursor.execute(sql)
-
-        # Print header
-        print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Processes':<20}{'Comm Size':<12}{'MPI Operation':<20}"
-              f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Max Time(s)':<13}{'Avg Time(s)':<13}{'Total Volume(Bytes)':<15}")
-        print_decoration(RESET)
-
-        data = cursor.fetchall()  # Retrieve all data
-
-        results = {}
-
-        for row in data:
-            cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, avg_time, volume = row
-            key = (cid, comm_name, comm_size, opid, operation, buf_min, buf_max)
-            if key not in results:
-                results[key] = {
-                'cid': cid,
-                'comm_name': comm_name,
-                'comm_size': comm_size,
-                'rank': rank,
-                'opid': opid,
-                'operation': operation,
-                'buffer_size_min': buf_min,
-                'buffer_size_max': buf_max,
-                'calls': calls,
-                'time_s': time,
-                'avg_time': avg_time,
-                'total_volume': volume
-
-            }
-
-        results = sort_by(results,order)
-
-        for result in results.values():
-            calls = result['calls']
-            if result['opid'] == enum_primitives['Sendrecv']:
-                calls = calls // 2
-            elif result['opid'] >= enum_primitives['Bcast']:
-                calls = calls // result['comm_size']
-
-
-            procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
-            print(f"{result['comm_name']:<15}{procs:<20}{result['comm_size']:<12}{result['operation']:<20}"
-                  f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.3f}{result['avg_time']:<13.3f}{result['total_volume']}")  # Adjust formatting as needed
-
-    except sqlite3.Error as e:
-        print("Failed to read data from SQLite table", e)
-    finally:
-        # Close the database connection
-        if conn:
-            conn.close()
 
 
 
@@ -917,70 +667,6 @@ GROUP BY c.name, c.size
 
 
 
-def default_query_summary(dbpath,MPI_prim):
-    sql = """
-        SELECT
-        c.name AS comm_name,
-        c.size AS comm_size,
-        o.operation,
-        d.buffer_size_min,
-        d.buffer_size_max,
-        SUM(d.calls) AS calls,
-        MAX(d.time) AS time_s
-        FROM data d
-        JOIN comms c ON d.comm_id = c.id
-        JOIN operations o ON d.operation_id = o.id
-        WHERE o.operation = ?
-        GROUP BY c.name, c.size, d.rank, o.operation, d.buffer_size_min, d.buffer_size_max;
-        """
-
-    conn = sqlite3.connect(dbpath)
-    cursor = conn.cursor()
-    time = 0.0
-    try:
-        cursor.execute(sql,(MPI_prim,))
-
-        # Print header
-        print_decoration(BOLD)
-        print(f"{'Comm Name':<15}{'Comm Size':<15}{'MPI Operation':<20}"
-              f"{'Buffer Size (Bytes)':<25}{'Calls':<15}{'Time (s)':<15}")
-        print_decoration(RESET)
-
-        data = cursor.fetchall()  # Retrieve all data
-
-        results = {}
-
-        for row in data:
-            comm_name, comm_size, operation, buf_min, buf_max, calls, time = row
-            key = (comm_name, comm_size, operation, buf_min, buf_max)
-            if key not in results or results[key]['time_s'] < time:
-                results[key] = {
-                'comm_name': comm_name,
-                'comm_size': comm_size,
-                'operation': operation,
-                'buffer_size_min': buf_min,
-                'buffer_size_max': buf_max,
-                'calls': calls,
-                'time_s': time
-            }
-        results = dict(sorted(results.items(), key=lambda item: item[1]['time_s'], reverse=True))
-        for result in results.values():
-            time += result['time_s']
-            buffer_size = f"{result['buffer_size_min']} - {result['buffer_size_max']}"
-            print(f"{result['comm_name']:<15}{result['comm_size']:<15}{result['operation']:<20}"
-                  f"{buffer_size:<25}{result['calls']:<15}{result['time_s']:<15.3f}")
-
-
-    except sqlite3.Error as e:
-        print("Failed to read data from SQLite table", e)
-    finally:
-        # Close the database connection
-        print_decoration(BOLD)
-        print(f"\nTotal time for {MPI_prim}: {time:.3f} s")
-        print_decoration(RESET)
-        if conn:
-            conn.close()
-
 def clear_table_if_exists(db_path, table_name):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
@@ -1254,87 +940,6 @@ def output_to_csv(plot_data,csv_file):
 
 
 
-def get_average_time_per_operation_top(db_path, n):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    # SQL query to group by MPI operation, buffer size range, and calculate average time
-    sql = """
-    SELECT o.operation, d.buffer_size_min, d.buffer_size_max, c.name, c.size, AVG(d.time) as avg_time
-    FROM data d
-    JOIN comms c ON d.comm_id = c.id
-    JOIN operations o ON d.operation_id = o.id
-    GROUP BY o.operation, d.buffer_size_min, d.buffer_size_max, c.name
-    HAVING AVG(d.time) > 0.001
-    ORDER BY avg_time DESC
-    """
-    plot_data = {}
-    try:
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        # Aggregate data into a structure suitable for plotting
-        for row in rows:
-            operation, buf_min, buf_max, comm_name, comm_size, avg_time = row
-            op_with_buf = f"{operation} ({buf_min}-{buf_max})"
-            name_with_size = f"{comm_name} ({comm_size})"
-            if op_with_buf not in plot_data:
-                plot_data[op_with_buf] = {}
-            plot_data[op_with_buf][name_with_size] = avg_time
-
-        # Get the top N MPI operations by the total average time
-        sorted_ops = sorted(plot_data.items(), key=lambda item: sum(item[1].values()), reverse=True)
-        if ( n > 0 ):
-            top_ops_data = dict(sorted_ops[:n])
-        else:
-           top_ops_data = dict(sorted_ops)
-        return top_ops_data
-
-    except sqlite3.Error as e:
-        print("An error occurred:", e)
-    finally:
-        conn.close()
-
-def get_average_time_per_communicator_top(db_path,n):
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    # SQL query to group by communicator, MPI operation, and buffer size range
-    # and calculate average time
-    sql = """
-    SELECT c.name, AVG(d.time) as avg_time
-    FROM data d
-    JOIN comms c ON d.comm_id = c.id
-    JOIN operations o ON d.operation_id = o.id
-    GROUP BY c.name, o.operation, d.buffer_size_min, d.buffer_size_max
-    ORDER BY avg_time DESC
-    """
-
-    communicator_list = []
-    try:
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        communicator_totals = {}
-        for row in rows:
-            comm_name, avg_time = row
-
-            if comm_name in communicator_totals:
-                communicator_totals[comm_name] += avg_time
-            else:
-                communicator_totals[comm_name] = avg_time
-
-        communicator_list = sorted(communicator_totals.items(), key=lambda x: x[1], reverse=True)
-
-    except sqlite3.Error as e:
-        print("An error occurred:", e)
-        return []
-    finally:
-        conn.close()
-
-    return communicator_list[:n]
-        
-
-
-
 
 def get_all_comms(db):
     conn = sqlite3.connect(db)
@@ -1542,7 +1147,6 @@ def main():
     else:
         timemax = sys.float_info.max
         timemin = -1.0
-
 
 
     create_and_populate_summary_table(db_path)
