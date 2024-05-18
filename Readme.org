@@ -15,7 +15,8 @@ git clone https://github.com/variemai/communicator_profiler.git && cd communicat
 mkdir build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=/path/to/install .. && make -j && make install
 #+end_src
-You might need to define the compiler if it is not detected e.g., ~-DMPI_CXX_COMPILER=mpicxx~.
+- ~make install~ will place =libmpisee.so= in the ~lib~ folder of the installation path and ~mpisee-through.py~ to ~bin~.
+- You might need to define the compiler if it is not detected e.g., ~-DMPI_CXX_COMPILER=mpicxx~.
 * Usage
 - To profile your MPI application make sure it is compiled with the same MPI library as mpisee.
 - Set ~LD_PRELOAD~ and ~MPISEE_OUTFILE~ variables before running your application.
@@ -23,11 +24,10 @@ You might need to define the compiler if it is not detected e.g., ~-DMPI_CXX_COM
 - ~MPISEE_OUTFILE~ defines output file name.
 - The default output file name is "mpisee_" followed by date and time (e.g., mpisee_20240516143015.db).
 - To get a summary of the results parse the output file with the ~mpisee-through.py~.
-  - After ~make install~, ~mpisee-through.py~ will be located in the ~/path/to/install/bin~
   - For a complete list of options run ~/path/to/install/bin/mpisee-through.py --help~.
 ** Example Usage
 #+begin_src bash
-LD_PRELOAD=/path/to/libmpisee.so MPISEE_OUTFILE=/path/to/output.db <mpi launcher> <args> /path/to/exec <args>
+LD_PRELOAD=/path/to/install/lib/libmpisee.so MPISEE_OUTFILE=/path/to/output.db <mpi launcher> <args> /path/to/exec <args>
 /path/to/install/bin/mpisee-through.py -i /path/to/mpisee_profile.db
 #+end_src
 
