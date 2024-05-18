@@ -13,7 +13,7 @@
 #+begin_src bash
 git clone https://github.com/variemai/communicator_profiler.git && cd communicator_profiler
 mkdir build && cd build
-cmake .. && make -j
+cmake -DCMAKE_INSTALL_PREFIX=/path/to/install .. && make -j && make install
 #+end_src
 You might need to define the compiler if it is not detected e.g., ~-DMPI_CXX_COMPILER=mpicxx~.
 * Usage
@@ -22,33 +22,34 @@ You might need to define the compiler if it is not detected e.g., ~-DMPI_CXX_COM
 - ~LD_PRELOAD~ to point to the ~libmpisee.so~ created in the build folder.
 - ~MPISEE_OUTFILE~ defines output file name.
 - The default output file name is "mpisee_" followed by date and time (e.g., mpisee_20240516143015.db).
-- To get a summary of the results parse the output file with the ~mpisee-through.py~ script located in the ~mpisee-through~ folder.
-  - For a complete list of options run ~/path/to/mpisee-through.py --help~.
+- To get a summary of the results parse the output file with the ~mpisee-through.py~.
+  - After ~make install~, ~mpisee-through.py~ will be located in the ~/path/to/install/bin~
+  - For a complete list of options run ~/path/to/install/bin/mpisee-through.py --help~.
 ** Example Usage
 #+begin_src bash
 LD_PRELOAD=/path/to/libmpisee.so MPISEE_OUTFILE=/path/to/output.db <mpi launcher> <args> /path/to/exec <args>
-python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
+/path/to/install/bin/mpisee-through.py -i /path/to/mpisee_profile.db
 #+end_src
 
 ** Results analysis with mpisee-through
 - The default query displays all data in each communicator by summarizing across ranks:
   #+begin_src bash
-  python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db
+  mpisee-through.py -i /path/to/mpisee_profile.db
   #+end_src
 
 - Display all data by separating ranks:
   #+begin_src bash
-  python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db -a
+  mpisee-through.py -i /path/to/mpisee_profile.db -a
   #+end_src
 
 - Display data for collective MPI operations only:
   #+begin_src bash
-  python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db -c
+  mpisee-through.py -i /path/to/mpisee_profile.db -c
   #+end_src
 
 - Display data for point-to-point MPI operations only:
   #+begin_src bash
-  python3 /path/to/mpisee-through.py -i /path/to/mpisee_profile.db -p
+  mpisee-through.py -i /path/to/mpisee_profile.db -p
   #+end_src
 
 - The following switches can be combined with the above options:

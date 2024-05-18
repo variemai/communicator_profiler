@@ -86,4 +86,7 @@ install(TARGETS mpisee
         RUNTIME DESTINATION bin)
 
 #install(FILES "${CMAKE_SOURCE_DIR}/utils.h" DESTINATION include)
-install(FILES "${CMAKE_SOURCE_DIR}/mpisee-through/mpisee-through.py" DESTINATION bin)
+install(FILES "${CMAKE_SOURCE_DIR}/mpisee-through/mpisee-through.py" DESTINATION bin
+          PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE
+                  GROUP_READ GROUP_EXECUTE
+                  WORLD_READ WORLD_EXECUTE)
