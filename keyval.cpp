@@ -212,7 +212,9 @@ int main(int argc, char *argv[])
     insertOrUpdatePrimBucketInfo(split_comm->map, getPrimBucketKey(1, 2), 5.0, 100);
     data = split_comm->map[getPrimBucketKey(1, 2)];
     printf("Rank %d: Updated data in map: time = %f, num_messages = %d, volume = %lu\n", rank, data.time, data.num_messages, data.volume);
-
+    if ( rank !=0 ){
+        insertOrUpdatePrimBucketInfo(split_comm->map, getPrimBucketKey(3, 1), 2.0,  50);
+    }
     // Place the profiling data into a vector and gather it to rank 0
     std::vector<comm_all> array;
     std::vector<comm_data> data_array;
