@@ -33,6 +33,7 @@ class Mpisee(CMakePackage):
     version('3.1', branch='main')
     depends_on('mpi', type=('link'))
     depends_on('sqlite', type=('link'))
+    depends_on("cmake", type="build")
 
     # def cmake_args(self):
     #     args = [self.define_from_variant('NUM_BUCKETS', 'buckets')]
