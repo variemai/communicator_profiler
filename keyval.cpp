@@ -52,6 +52,10 @@ typedef struct comm_all{
     int size;
 } comm_all;
 
+std::vector<profiler_metadata> metadata_freelist;
+std::vector<comm_profiler> profiler_freelist;
+std::vector<MPI_Comm> comms;
+
 // Helper function to create unique key
 // int getPrimBucketKey(int prim, int bucketIndex) {
 //     std::hash<int> hash_int;
@@ -156,6 +160,7 @@ int main(int argc, char *argv[])
         printf("keyval[%d] = %d\n",i,keyval[i]);
     }
     init_comm_prof(MPI_COMM_WORLD, 'W');
+    comms.push_back(MPI_COMM_WORLD);
 
     prof_metadata *met;
     int flag;
@@ -191,6 +196,7 @@ int main(int argc, char *argv[])
     MPI_Comm newcomm;
     MPI_Comm_split(MPI_COMM_WORLD, rank, rank, &newcomm);
     init_comm_prof(newcomm, 'S');
+    comms.push_back(newcomm);
     prof_metadata *met2;
     PMPI_Comm_get_attr(newcomm,keyval[0],&met2,&flag);
     if (flag){
@@ -214,83 +220,157 @@ int main(int argc, char *argv[])
     printf("Rank %d: Updated data in map: time = %f, num_messages = %d, volume = %lu\n", rank, data.time, data.num_messages, data.volume);
     if ( rank !=0 ){
         insertOrUpdatePrimBucketInfo(split_comm->map, getPrimBucketKey(3, 1), 2.0,  50);
+        data = split_comm->map[getPrimBucketKey(3, 1)];
+        printf("Rank %d: Updated data in map: time = %f, num_messages = %d, volume = %lu\n", rank, data.time, data.num_messages, data.volume);
     }
+    metadata_freelist.push_back(*met2);
+    profiler_freelist.push_back(*split_comm);
+    // Find newcomm in comms and remove it
+    for (i=0; i<comms.size(); i++){
+        if (comms[i] == newcomm){
+            comms.erase(comms.begin() + i);
+            break;
+        }
+    }
+    comms.shrink_to_fit();
+    MPI_Comm_free(&newcomm);
+    std::cout << "comm size = " << comms.size() << std::endl;
     // Place the profiling data into a vector and gather it to rank 0
     std::vector<comm_all> array;
     std::vector<comm_data> data_array;
     comm_all comm_meta;
     comm_profiler *world_prof;
-    PMPI_Comm_get_attr(MPI_COMM_WORLD, keyval[1], &world_prof, &flag);
-    if ( !flag ){
-        printf("Map not found\n");
-    }
-    printf("WORLD\n");
-    for (i=0; i<NUM_OF_PRIMS; ++i) {
-        for ( j =0; j<NUM_BUCKETS; ++j ){
-            // Check if the key exists in the map
-            auto it = world_prof->map.find(getPrimBucketKey(i, j));
+    int commid;
 
-            if (it != world_prof->map.end()) {
-                // Allocate comm_data struct and copy the data from map
-                comm_data data;
-                data.comm_id = 0;
-                data.prim = i;
-                data.bucketIndex = j;
-                data.num_messages = it->second.num_messages;
-                data.time = it->second.time;
-                data.volume = it->second.volume;
-                data_array.push_back(data);
-                printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
+    for (commid =0; commid<comms.size(); commid++){
+        PMPI_Comm_get_attr(comms[commid], keyval[1], &world_prof, &flag);
+        if ( !flag ){
+            printf("Map not found\n");
+        }
+        for (i=0; i<NUM_OF_PRIMS; ++i) {
+            for ( j =0; j<NUM_BUCKETS; ++j ){
+                // Check if the key exists in the map
+                auto it = world_prof->map.find(getPrimBucketKey(i, j));
+
+                if (it != world_prof->map.end()) {
+                    // Allocate comm_data struct and copy the data from map
+                    comm_data data;
+                    data.comm_id = commid;
+                    data.prim = i;
+                    data.bucketIndex = j;
+                    data.num_messages = it->second.num_messages;
+                    data.time = it->second.time;
+                    data.volume = it->second.volume;
+                    data_array.push_back(data);
+                    // printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
+                }
             }
         }
+        PMPI_Comm_get_attr(comms[commid],keyval[0],&met,&flag);
+        if (flag) {
+            strcpy(comm_meta.name, met->name);
+            comm_meta.size = met->size;
+            array.push_back(comm_meta);
+        }
+        else{
+            printf("Rank %d: Metadata not found\n", rank);
+        }
     }
-    PMPI_Comm_get_attr(MPI_COMM_WORLD,keyval[0],&met,&flag);
-    if (flag) {
-        strcpy(comm_meta.name, met->name);
-        comm_meta.size = met->size;
+    int k;
+    for ( k=0; k<profiler_freelist.size(); k++){
+        for (i=0; i<NUM_OF_PRIMS; ++i) {
+            for ( j =0; j<NUM_BUCKETS; ++j ){
+                auto it = profiler_freelist[k].map.find(getPrimBucketKey(i, j));
+                if (it != profiler_freelist[k].map.end()) {
+                    comm_data data;
+                    data.comm_id = commid;
+                    data.prim = i;
+                    data.bucketIndex = j;
+                    data.num_messages = it->second.num_messages;
+                    data.time = it->second.time;
+                    data.volume = it->second.volume;
+                    data_array.push_back(data);
+                    // printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
+                }
+            }
+        }
+        strcpy(comm_meta.name, metadata_freelist[k].name);
+        comm_meta.size = metadata_freelist[k].size;
         array.push_back(comm_meta);
-    }
-    else{
-        printf("Rank %d: Metadata not found\n", rank);
+        commid++;
     }
 
 
-    comm_all comm_meta2;
-    comm_profiler *split_prof;
-    PMPI_Comm_get_attr(newcomm, keyval[1], &split_prof, &flag);
-    if ( !flag ){
-        printf("Map not found\n");
-    }
-    printf("SPLIT\n");
-    for (i=0; i<NUM_OF_PRIMS; ++i) {
-        for ( j =0; j<NUM_BUCKETS; ++j ){
-            // Check if the key exists in the map
-            auto it = split_prof->map.find(getPrimBucketKey(i, j));
+    // PMPI_Comm_get_attr(MPI_COMM_WORLD, keyval[1], &world_prof, &flag);
+    // if ( !flag ){
+    //     printf("Map not found\n");
+    // }
+    // for (i=0; i<NUM_OF_PRIMS; ++i) {
+    //     for ( j =0; j<NUM_BUCKETS; ++j ){
+    //         // Check if the key exists in the map
+    //         auto it = world_prof->map.find(getPrimBucketKey(i, j));
 
-            if (it != split_prof->map.end()) {
-                // Allocate comm_data struct and copy the data from map
-                comm_data data;
-                data.comm_id = 1;
-                data.prim = i;
-                data.bucketIndex = j;
-                data.num_messages = it->second.num_messages;
-                data.time = it->second.time;
-                data.volume = it->second.volume;
-                data_array.push_back(data);
-                printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
-            }
-        }
-    }
-    PMPI_Comm_get_attr(newcomm,keyval[0],&met2,&flag);
-    if (flag) {
-        strcpy(comm_meta2.name, met2->name);
-        comm_meta2.size = met2->size;
-        array.push_back(comm_meta2);
-        printf("Rank %d: Metadata: %s\n", rank, comm_meta2.name);
-    }
-    else{
-        printf("Rank %d: Metadata not found\n", rank);
-    }
+    //         if (it != world_prof->map.end()) {
+    //             // Allocate comm_data struct and copy the data from map
+    //             comm_data data;
+    //             data.comm_id = 0;
+    //             data.prim = i;
+    //             data.bucketIndex = j;
+    //             data.num_messages = it->second.num_messages;
+    //             data.time = it->second.time;
+    //             data.volume = it->second.volume;
+    //             data_array.push_back(data);
+    //             printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
+    //         }
+    //     }
+    // }
+    // PMPI_Comm_get_attr(MPI_COMM_WORLD,keyval[0],&met,&flag);
+    // if (flag) {
+    //     strcpy(comm_meta.name, met->name);
+    //     comm_meta.size = met->size;
+    //     array.push_back(comm_meta);
+    // }
+    // else{
+    //     printf("Rank %d: Metadata not found\n", rank);
+    // }
+
+
+    // comm_all comm_meta2;
+    // comm_profiler *split_prof;
+    // PMPI_Comm_get_attr(newcomm, keyval[1], &split_prof, &flag);
+    // if ( !flag ){
+    //     printf("Map not found\n");
+    // }
+    // printf("SPLIT\n");
+    // for (i=0; i<NUM_OF_PRIMS; ++i) {
+    //     for ( j =0; j<NUM_BUCKETS; ++j ){
+    //         // Check if the key exists in the map
+    //         auto it = split_prof->map.find(getPrimBucketKey(i, j));
+
+    //         if (it != split_prof->map.end()) {
+    //             // Allocate comm_data struct and copy the data from map
+    //             comm_data data;
+    //             data.comm_id = 1;
+    //             data.prim = i;
+    //             data.bucketIndex = j;
+    //             data.num_messages = it->second.num_messages;
+    //             data.time = it->second.time;
+    //             data.volume = it->second.volume;
+    //             data_array.push_back(data);
+    //             printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
+    //         }
+    //     }
+    // }
+    // PMPI_Comm_get_attr(newcomm,keyval[0],&met2,&flag);
+    // if (flag) {
+    //     strcpy(comm_meta2.name, met2->name);
+    //     comm_meta2.size = met2->size;
+    //     array.push_back(comm_meta2);
+    //     printf("Rank %d: Metadata: %s\n", rank, comm_meta2.name);
+    // }
+    // else{
+    //     printf("Rank %d: Metadata not found\n", rank);
+    // }
 
     //printProfilingData(array);
 
@@ -394,6 +474,11 @@ int main(int argc, char *argv[])
     // Gather the data
     MPI_Gatherv(data_array.data(), local_data_size, MPI_COMM_DATA,
                 recv_data_buffer.data(), recvcounts, displs, MPI_COMM_DATA, 0, MPI_COMM_WORLD);
+
+    // Clear the data_array vector
+    data_array.clear();
+    data_array.shrink_to_fit(); // recv_data_buffer has all data now
+
     int procs;
     int comms_per_proc;
     int data_per_procs;
