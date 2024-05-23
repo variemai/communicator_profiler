@@ -32,8 +32,8 @@ std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 std::vector<prof_attrs*> local_communicators;
 std::unordered_map<MPI_Win, MPI_Comm> comm_map;
 std::vector<MPI_Comm> comms_table;
-std::vector<MPI_Request> free_requests;
-
+MPI_Request free_requests[1000];
+int request_index = 0;
 
 // int global_rank; // For debugging purposes
 
@@ -1142,12 +1142,11 @@ MPI_Comm_free(MPI_Comm *comm)
     int ret,flag;
     prof_attrs *com_info, *prev_info;
     MPI_Comm newcomm;
-    MPI_Request request;
 
     // Duplicate the communicator before free
-    PMPI_Comm_idup(*comm, &newcomm, &request);
+    PMPI_Comm_idup(*comm, &newcomm, &free_requests[request_index]);
+    request_index++;
     // MPI_Wait(&request, MPI_STATUS_IGNORE);
-    free_requests.push_back(request);
     if (newcomm == MPI_COMM_NULL) {
         mcpt_abort("Comm_free: Comm_idup failed\n");
     }
@@ -1219,29 +1218,33 @@ _Finalize(void) {
     int *displs = NULL;
     int total_num_of_comms;
     total_time = MPI_Wtime() - total_time;
+    int rc = PMPI_Barrier(MPI_COMM_WORLD);
+    if (rc != MPI_SUCCESS) {
+        mcpt_abort("MPI_Barrier failed\n");
+    }
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     num_of_comms = local_communicators.size();
 
-    MPI_Request* request_array = free_requests.data();
-    int num_requests = free_requests.size();
-
+    int num_requests = request_index;
     // Wait for all duplications in MPI_Comm_free to complete
     std::cout << "mpisee: Waiting for all MPI_Comm_free requests to complete" << std::endl;
     std::cout << "mpisee: num_requests = " << num_requests << std::endl;
     for ( i =0; i<num_requests; i++ ){
-        if ( request_array[i] != NULL && request_array[i] != MPI_REQUEST_NULL) {
-            PMPI_Wait(&request_array[i], MPI_STATUS_IGNORE);
-        }
-        else {
-            std::cout << "mpisee: request_array[" << i << "] is MPI_REQUEST_NULL" << std::endl;
-        }
+        if ( free_requests[i] == MPI_REQUEST_NULL )
+            continue;
+        // if ( free_requests[i] != MPI_REQUEST_NULL ) {
+        PMPI_Wait(&free_requests[i], MPI_STATUS_IGNORE);
+        // }
+        // else {
+        //     std::cout << "mpisee: request_array[" << i << "] is MPI_REQUEST_NULL" << std::endl;
+        // }
     }
-    int ret = PMPI_Waitall(num_requests, request_array, MPI_STATUSES_IGNORE);
-    if (ret != MPI_SUCCESS) {
-        mcpt_abort("MPI_Waitall failed\n");
-    }
+    // int ret = PMPI_Waitall(num_requests, request_array, MPI_STATUSES_IGNORE);
+    // if (ret != MPI_SUCCESS) {
+    //     mcpt_abort("MPI_Waitall failed\n");
+    // }
 
     // std::cout << "mpisee: comms_table size = " << comms_table.size() << std::endl;
     // Iterate over the communicator and call an MPI_Allreduce
