@@ -32,6 +32,9 @@ std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 std::vector<prof_attrs*> local_communicators;
 std::unordered_map<MPI_Win, MPI_Comm> comm_map;
 std::vector<MPI_Comm> comms_table;
+std::vector<MPI_Request> free_requests;
+
+
 // int global_rank; // For debugging purposes
 
 /* Tool date */
@@ -1136,28 +1139,34 @@ F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
 int
 MPI_Comm_free(MPI_Comm *comm)
 {
-    int ret,flag, temp_rank, rank, buf[2] = {-1, -1};
-    prof_attrs *com_info, *tmp;
+    int ret,flag;
+    prof_attrs *com_info, *prev_info;
+    MPI_Comm newcomm;
+    MPI_Request request;
 
-    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    // Duplicate the communicator before free
+    PMPI_Comm_idup(*comm, &newcomm, &request);
+    // MPI_Wait(&request, MPI_STATUS_IGNORE);
+    free_requests.push_back(request);
+    if (newcomm == MPI_COMM_NULL) {
+        mcpt_abort("Comm_free: Comm_idup failed\n");
+    }
 
-    PMPI_Comm_rank(*comm, &temp_rank);
-    //PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, *comm);
-    PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
-    buf[0] = rank;
-    buf[1] = com_info->comms;
-    PMPI_Bcast(buf, 2, MPI_INT, 0, *comm);
-    overwrite_name(&com_info, buf[0], buf[1]);
+    // Attach the attributes of the old communicator to the new communicator
+    PMPI_Comm_get_attr(*comm, namekey(), &prev_info, &flag);
+    com_info = (prof_attrs *)malloc(sizeof(prof_attrs));
+    memcpy(com_info, prev_info, sizeof(prof_attrs));
+    PMPI_Comm_set_attr(newcomm, namekey(), com_info);
+    comms_table.push_back(newcomm);
 
-    PMPI_Comm_get_attr(*comm, namekey(), &tmp, &flag);
     if (flag) {
-        auto it = std::find(local_communicators.begin(), local_communicators.end(), tmp);
+        auto it = std::find(local_communicators.begin(), local_communicators.end(), prev_info);
         if (it != local_communicators.end()) {
             // Calculate the index of the found element
             size_t index = std::distance(local_communicators.begin(), it);
             // Now "index" holds the position of com_info in the vector
-            com_info = (prof_attrs *)malloc(sizeof(prof_attrs));
-            memcpy(com_info, tmp, sizeof(prof_attrs));
+            // com_info = (prof_attrs *)malloc(sizeof(prof_attrs));
+            // memcpy(com_info, tmp, sizeof(prof_attrs));
             local_communicators[index] = com_info;
         } else {
             // com_info is not present in the vector
@@ -1167,7 +1176,7 @@ MPI_Comm_free(MPI_Comm *comm)
     }else {
         mcpt_abort("Comm free: Comm_get_attr did not find communicator\n");
     }
-    // Find the communicator in the comms_table and remove it
+    // Find the old communicator in the comms_table and remove it
     auto it = std::find(comms_table.begin(), comms_table.end(), *comm);
     if (it != comms_table.end()) {
         comms_table.erase(it);
@@ -1214,6 +1223,25 @@ _Finalize(void) {
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     num_of_comms = local_communicators.size();
+
+    MPI_Request* request_array = free_requests.data();
+    int num_requests = free_requests.size();
+
+    // Wait for all duplications in MPI_Comm_free to complete
+    std::cout << "mpisee: Waiting for all MPI_Comm_free requests to complete" << std::endl;
+    std::cout << "mpisee: num_requests = " << num_requests << std::endl;
+    for ( i =0; i<num_requests; i++ ){
+        if ( request_array[i] != NULL && request_array[i] != MPI_REQUEST_NULL) {
+            PMPI_Wait(&request_array[i], MPI_STATUS_IGNORE);
+        }
+        else {
+            std::cout << "mpisee: request_array[" << i << "] is MPI_REQUEST_NULL" << std::endl;
+        }
+    }
+    int ret = PMPI_Waitall(num_requests, request_array, MPI_STATUSES_IGNORE);
+    if (ret != MPI_SUCCESS) {
+        mcpt_abort("MPI_Waitall failed\n");
+    }
 
     // std::cout << "mpisee: comms_table size = " << comms_table.size() << std::endl;
     // Iterate over the communicator and call an MPI_Allreduce
