@@ -413,67 +413,106 @@ JOIN operations o ON d.operation_id = o.id
             cursor.execute(sql)
 
 
-        if outfile:
-              csvfile=open(outfile, 'w', newline='')
-              csv_writer = csv.writer(csvfile)
-              # Write header row
-              csv_writer.writerow(['Comm Name', 'Processes', 'Comm Size', 'MPI Operation','Min Buffer', 'Max Buffer', 'Calls', 'Max Time(s)', 'Avg Time(s)','Volume(Bytes)'])
-        else:
-            print_decoration(BOLD)
-            print(f"{'Comm Name':<12}{'Processes':<20}{'Comm Size':<12}{'MPI Operation':<20}"
-                  f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Max Time(s)':<13}{'Avg Time(s)':<13}{'Total Volume(Bytes)':<15}")
-            print_decoration(RESET)
-
         data = cursor.fetchall()  # Retrieve all data
 
         results = {}
 
-        for row in data:
-            cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, avg_time, volume = row
-            key = (cid, comm_name, comm_size, opid, operation, buf_min, buf_max)
-            if key not in results:
-                results[key] = {
-                'cid': cid,
-                'comm_name': comm_name,
-                'comm_size': comm_size,
-                'rank': rank,
-                'opid': opid,
-                'operation': operation,
-                'buffer_size_min': buf_min,
-                'buffer_size_max': buf_max,
-                'calls': calls,
-                'time_s': time,
-                'avg_time': avg_time,
-                'total_volume': volume
+        grouped_data = {}
 
-            }
+        if not outfile:
+            for row in data:
+                cid, comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, avg_time, volume = row
+                if comm_name not in grouped_data:
+                    grouped_data[comm_name] = []
+                grouped_data[comm_name].append(row)
 
-        results = sort_by(results,order)
+            sorted_groups = sorted(grouped_data.items(), key=lambda item: sum(row[-1] for row in item[1]), reverse=True)
 
-        for result in results.values():
-            calls = result['calls']
-            if result['opid'] == sendrecv_id:
-                calls = calls // 2
-            elif result['opid'] >= bcast_id:
-                calls = calls // result['comm_size']
+            for comm_name, rows in sorted_groups:
+                # Calculate total volume for the communicator
+                total_volume = sum(row[-1] for row in rows)
+                comm_size = rows[0][2]
+                # Write the header row for the communicator (only for terminal output)
+                print_decoration(BOLD)
+                print(f"{'Comm Name':<12}{'Processes':<20}{'Comm Size':<12}{'Total Volume(Bytes)':<20}")
+                print_decoration(RESET)
+                print(f"{comm_name:<12}{list_truncate_tostr(get_ranks_by_comm(dbpath, rows[0][0])):<20}{rows[0][2]:<12}{total_volume:<20}")
+                print_decoration(BOLD)
+                print()
+                print(f"{'   ':<4}{'MPI Operation':<15}{'Min Buf':<10}{'Max Buf':<12}{'#Calls':<12}{'Max Time(s)':<13}{'Avg Time(s)':<13}{'Volume(Bytes)':<15}")
+                print_decoration(RESET)
 
-            if (result['buffer_size_min'] < bufmin or result['buffer_size_max'] > bufmax):
-                continue
-            if (result['time_s'] < tmin or result['time_s'] > tmax): # Fix this comparison
-                continue
-            procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
-            if outfile:
-                # Write output to csv file instead
-                csv_writer.writerow([result['comm_name'], procs,
-                                     result['comm_size'], result['operation'],
-                                     result['buffer_size_min'],
-                                     result['buffer_size_max'], calls,
-                                     "{:.3f}".format(result['time_s']),
-                                     "{:.3f}".format(result['avg_time']),
-                                     result['total_volume']])
-            else:
-                print(f"{result['comm_name']:<12}{procs:<20}{result['comm_size']:<12}{result['operation']:<20}"
-                      f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.6f}{result['avg_time']:<13.6f}{result['total_volume']}")  # Adjust formatting as needed
+                # Sort operations by time
+                sorted_rows = sorted(rows, key=lambda x: x[-2], reverse=True)
+
+                for row in sorted_rows:
+                    #print(row)
+                    # Exclude unnecessary columns and format output
+                    _, _, _, _, opid, operation, buf_min, buf_max, calls, time_s, avg_time, volume = row
+
+                    if opid == sendrecv_id:
+                        calls = calls // 2
+                    elif opid >= bcast_id:
+                        calls = calls // comm_size
+
+                    if (buf_min < bufmin or buf_max > bufmax):
+                        continue
+                    if (time_s < tmin or time_s > tmax): # Fix this comparison
+                        continue
+
+                    print(f"{'    ':<4}{operation:<15}{buf_min:<10}{buf_max:<12}{calls:<12}{time_s:<13.6f}{avg_time:<13.6f}{volume:<15}")
+
+                # Print a line separator after each communicator
+                print(f"{'------------------------------------------------------------------------------------------------':<96}")
+
+        else:
+            csvfile=open(outfile, 'w', newline='')
+            csv_writer = csv.writer(csvfile)
+            # Write header row
+            csv_writer.writerow(['Comm Name', 'Processes', 'Comm Size', 'MPI Operation','Min Buffer', 'Max Buffer', 'Calls', 'Max Time(s)', 'Avg Time(s)','Volume(Bytes)'])
+            for row in data:
+                cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, avg_time, volume = row
+                key = (cid, comm_name, comm_size, opid, operation, buf_min, buf_max)
+                if key not in results:
+                    results[key] = {
+                        'cid': cid,
+                        'comm_name': comm_name,
+                        'comm_size': comm_size,
+                        'rank': rank,
+                        'opid': opid,
+                        'operation': operation,
+                        'buffer_size_min': buf_min,
+                        'buffer_size_max': buf_max,
+                        'calls': calls,
+                        'time_s': time,
+                        'avg_time': avg_time,
+                        'total_volume': volume
+
+                    }
+
+                results = sort_by(results,order)
+
+                for result in results.values():
+                    calls = result['calls']
+                    if result['opid'] == sendrecv_id:
+                        calls = calls // 2
+                    elif result['opid'] >= bcast_id:
+                        calls = calls // result['comm_size']
+
+                        if (result['buffer_size_min'] < bufmin or result['buffer_size_max'] > bufmax):
+                            continue
+                        if (result['time_s'] < tmin or result['time_s'] > tmax): # Fix this comparison
+                            continue
+                        procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
+                        # Write output to csv file instead
+                        csv_writer.writerow([result['comm_name'], procs,
+                                             result['comm_size'], result['operation'],
+                                             result['buffer_size_min'],
+                                             result['buffer_size_max'], calls,
+                                             "{:.3f}".format(result['time_s']),
+                                             "{:.3f}".format(result['avg_time']),
+                                             result['total_volume']])
+
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
