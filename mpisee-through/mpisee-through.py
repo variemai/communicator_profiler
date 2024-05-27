@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 import argparse
-import configparser
 import sqlite3
-import re
-import os
 import sys
 import csv
 
