@@ -1142,28 +1142,16 @@ MPI_Comm_free(MPI_Comm *comm)
 {
     int ret,flag;
     prof_attrs *com_info, *prev_info;
-    // MPI_Comm newcomm;
     MPI_Group group;
-    // Duplicate the communicator before free
-    // PMPI_Comm_idup(*comm, &newcomm, &free_requests[request_index]);
-    // request_index++;
-    // MPI_Wait(&request, MPI_STATUS_IGNORE);
-    // if (newcomm == MPI_COMM_NULL) {
-    //     mcpt_abort("Comm_free: Comm_idup failed\n");
-    // }
-
 
     // Get the group of the communicator before freeing it
     PMPI_Comm_group(*comm, &group);
-
 
     // Attach the attributes of the old communicator to the new communicator
     PMPI_Comm_get_attr(*comm, namekey(), &prev_info, &flag);
     com_info = (prof_attrs *)malloc(sizeof(prof_attrs));
     memcpy(com_info, prev_info, sizeof(prof_attrs));
     group_table.push_back({group, com_info});
-    // PMPI_Comm_set_attr(newcomm, namekey(), com_info);
-    // comms_table.push_back(newcomm);
 
     if (flag) {
         auto it = std::find(local_communicators.begin(), local_communicators.end(), prev_info);
@@ -1171,8 +1159,6 @@ MPI_Comm_free(MPI_Comm *comm)
             // Calculate the index of the found element
             size_t index = std::distance(local_communicators.begin(), it);
             // Now "index" holds the position of com_info in the vector
-            // com_info = (prof_attrs *)malloc(sizeof(prof_attrs));
-            // memcpy(com_info, tmp, sizeof(prof_attrs));
             local_communicators[index] = com_info;
         } else {
             // com_info is not present in the vector
@@ -1234,25 +1220,6 @@ _Finalize(void) {
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     num_of_comms = local_communicators.size();
 
-    // int num_requests = request_index;
-    // Wait for all duplications in MPI_Comm_free to complete
-    // std::cout << "mpisee: Waiting for all MPI_Comm_free requests to complete" << std::endl;
-    // std::cout << "mpisee: num_requests = " << num_requests << std::endl;
-    // for ( i =0; i<num_requests; i++ ){
-    //     if ( free_requests[i] == MPI_REQUEST_NULL )
-    //         continue;
-        // if ( free_requests[i] != MPI_REQUEST_NULL ) {
-        // PMPI_Wait(&free_requests[i], MPI_STATUS_IGNORE);
-        // }
-        // else {
-        //     std::cout << "mpisee: request_array[" << i << "] is MPI_REQUEST_NULL" << std::endl;
-        // }
-    // }
-    // int ret = PMPI_Waitall(num_requests, request_array, MPI_STATUSES_IGNORE);
-    // if (ret != MPI_SUCCESS) {
-    //     mcpt_abort("MPI_Waitall failed\n");
-    // }
-    //
     // Re-create the communicators from the group_table
     std::cout << "mpisee: group_table size = " << group_table.size() << std::endl;
     for (i = 0; i < group_table.size(); ++i) {
@@ -1264,8 +1231,6 @@ _Finalize(void) {
         comms_table.push_back(newcomm);
     }
 
-    // std::cout << "mpisee: comms_table size = " << comms_table.size() << std::endl;
-    // Iterate over the communicator and call an MPI_Allreduce
     for(long unsigned i = 0; i < comms_table.size(); ++i) {
         PMPI_Comm_get_attr(comms_table[i], namekey(), &com_info, &flag);
         buf[0] = rank;
