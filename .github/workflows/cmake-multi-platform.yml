@@ -16,11 +16,15 @@ jobs:
         #build_type: [Release]
         include:
           - mpi_implementation: openmpi
-            c_compiler: mpicc
-            cpp_compiler: mpicxx
+            c_compiler: gcc
+            cpp_compiler: g++
+            mpi_c_compiler: mpicc
+            mpi_cxx_compiler: mpicxx
           - mpi_implementation: mpich
-            c_compiler: mpicc
-            cpp_compiler: mpicxx
+            c_compiler: gcc
+            cpp_compiler: g++
+            mpi_c_compiler: mpicc
+            mpi_cxx_compiler: mpicxx
 
     steps:
     - uses: actions/checkout@v4
@@ -43,7 +47,7 @@ jobs:
           make -j
           sudo make install
         else
-          get https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz
+          wget https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz
           tar -xf mpich-${MPICH_VERSION}.tar.gz
           cd mpich-${MPICH_VERSION}
           ./configure --prefix=/usr/local
@@ -65,6 +69,8 @@ jobs:
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DMPI_CXX_COMPILER=${{ matrix.mpi_cxx_compiler}}
+        -DMPI_C_COMPILER=${{ matrix.mpi_c_compiler }}
         -S ${{ github.workspace }}
 
     - name: Build
