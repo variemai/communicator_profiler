@@ -49,6 +49,7 @@ jobs:
           ./configure --prefix=/usr/local
           make -j
           sudo make install
+        fi
 
         
     - name: Set Reusable Strings
