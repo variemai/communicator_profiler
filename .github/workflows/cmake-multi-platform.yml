@@ -12,14 +12,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mpi_implementation: [mpich]
+        mpi_implementation: [mpich,openmpi]
         #build_type: [Release]
         include:
-          #- mpi_implementation: openmpi
-          #  c_compiler: gcc
-          #  cpp_compiler: g++
-          #  mpi_c_compiler: mpicc
-          #  mpi_cxx_compiler: mpicxx
+          - mpi_implementation: openmpi
+            c_compiler: gcc
+            cpp_compiler: g++
+            mpi_c_compiler: mpicc
+            mpi_cxx_compiler: mpicxx
           - mpi_implementation: mpich
             c_compiler: mpicc
             cpp_compiler: mpicxx
@@ -36,16 +36,11 @@ jobs:
 
     - name: Install MPI (Either OpenMPI or MPICH)
       env:
-        OPENMPI_VERSION: 5.0.3
-        MPICH_VERSION: 4.2.1
+        OPENMPI_VERSION: 4.1.2
+        MPICH_VERSION: 4.0.3
       run: |
         if [ "${{ matrix.mpi_implementation }}" == "openmpi" ]; then
-          wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-${OPENMPI_VERSION}.tar.gz
-          tar -xf openmpi-${OPENMPI_VERSION}.tar.gz
-          cd openmpi-${OPENMPI_VERSION}
-          ./configure
-          make -j
-          sudo make install
+          sudo apt install -y libopenmpi-dev
         else
           sudo apt install -y libmpich-dev mpich
         fi
@@ -56,7 +51,7 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build-${{ matrix.mpi_implementation }}" >> "$GITHUB_OUTPUT"
-        echo "mpi-bin-dir=/usr/local/bin" >> "$GITHUB_OUTPUT" # Add MPI bin directory
+        echo "mpi-bin-dir=/usr/local/bin" >> "$GITHUB_OUTPUT"
 
 
     - name: Configure CMake
