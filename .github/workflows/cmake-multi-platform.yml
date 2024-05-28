@@ -44,13 +44,14 @@ jobs:
           tar -xf openmpi-${OPENMPI_VERSION}.tar.gz
           cd openmpi-${OPENMPI_VERSION}
           ./configure
+          make -j
         else
           wget https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz
           tar -xf mpich-${MPICH_VERSION}.tar.gz
           cd mpich-${MPICH_VERSION}
           ./configure
+          make -j4
         fi
-        make -j
         sudo make install
         sudo ldconfig
         
