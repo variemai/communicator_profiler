@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <string>
 #define NAMELEN 32
-#define NUM_OF_PRIMS 74
+#define NUM_OF_PRIMS 76
 #define MAX_ARG_STRING_SIZE 4096
 #define MAX_ARGS 1024
 #define MAX_ARG_SIZE 64
@@ -92,7 +92,9 @@ Ineighbor_allgather,
 Ineighbor_allgatherv,
 Ineighbor_alltoall,
 Ineighbor_alltoallv,
-Ineighbor_alltoallw
+Ineighbor_alltoallw,
+Init,
+Init_thread
 };
 
 struct CommData {

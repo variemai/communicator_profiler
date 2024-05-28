@@ -22,6 +22,7 @@
 #include "create_db.h"
 #include "utils.h.in"
 #include <iostream>
+#include <chrono>
 
 int prof_enabled = 1;
 int local_cid= 0;
@@ -293,7 +294,11 @@ _MPI_Init(int *argc, char ***argv){
     int ret,rank,size;
     int i,j,rc;
     prof_attrs *communicator;
+    const auto start{std::chrono::steady_clock::now()};
     ret = PMPI_Init(argc, argv);
+    const auto end{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> duration{end - start};
+    double init_time = duration.count();
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -327,6 +332,8 @@ _MPI_Init(int *argc, char ***argv){
     communicator->comms = my_coms;
     communicator->id = 'W';
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    profile_this(MPI_COMM_WORLD, 0, MPI_DATATYPE_NULL, Init, init_time, 0);
+
     // global_rank = rank; // For debugging purposes
     local_communicators.push_back(communicator);
     comms_table.push_back(MPI_COMM_WORLD);
@@ -345,7 +352,11 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     int ret,rank,size;
     int i,j,rc;
     prof_attrs *communicator;
+    const auto start{std::chrono::steady_clock::now()};
     ret = PMPI_Init_thread(argc, argv, required, provided);
+    const auto end{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> duration{end - start};
+    double init_time = duration.count();
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -381,6 +392,8 @@ application %s\n",appname);
     communicator->comms = my_coms;
     communicator->id = 'W';
     rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    profile_this(MPI_COMM_WORLD, 0, MPI_DATATYPE_NULL, Init_thread, init_time, 0);
+
     // global_rank = rank; // For debugging purposes
     local_communicators.push_back(communicator);
     comms_table.push_back(MPI_COMM_WORLD);

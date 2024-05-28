@@ -564,63 +564,92 @@ JOIN operations o ON d.operation_id = o.id
         else:
             cursor.execute(sql)
 
-
-        # Print header
-        if outfile:
-              csvfile=open(outfile, 'w', newline='')
-              csv_writer = csv.writer(csvfile)
-              # Write header row
-              csv_writer.writerow(['Comm Name', 'Processes', 'Comm Size', 'Rank', 'MPI Operation',
-                                   'Min Buffer', 'Max Buffer', 'Calls', 'Time(s)', 'Volume(Bytes)'])
-        else:
-            print_decoration(BOLD)
-            print(f"{'Comm Name':<12}{'Processes':<20}{'Comm Size':<12}{'Rank':<10}{'MPI Operation':<20}"
-              f"{'Min Buffer':<12}{'Max Buffer':<12}{'Calls':<12}{'Time(s)':<13}{'Volume(Bytes)':<15}")
-            print_decoration(RESET)
-
         data = cursor.fetchall()  # Retrieve all data
 
         results = {}
 
-        for row in data:
-            cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, volume = row
-            if ranks != [] and rank not in ranks:
-                continue
-            key = (cid, comm_name, comm_size, opid, operation, rank, buf_min, buf_max)
-            if key not in results:
-                results[key] = {
-                'cid': cid,
-                'comm_name': comm_name,
-                'comm_size': comm_size,
-                'rank': rank,
-                'opid': opid,
-                'operation': operation,
-                'buffer_size_min': buf_min,
-                'buffer_size_max': buf_max,
-                'calls': calls,
-                'time_s': time,
-                'total_volume': volume
+        grouped_data = {}
+        if not outfile:
+            for row in data:
+                cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, volume = row
+                if ranks != [] and rank not in ranks:
+                    continue
+                if comm_name not in grouped_data:
+                    grouped_data[comm_name] = []
+                grouped_data[comm_name].append(row)
 
-            }
+            sorted_groups = sorted(grouped_data.items(), key=lambda item: sum(row[-1] for row in item[1]), reverse=True)
 
-        results = sort_by(results,order)
+            for comm_name, rows in sorted_groups:
+                # Calculate total volume for the communicator
+                total_volume = sum(row[-1] for row in rows)
+                comm_size = rows[0][2]
+                # Write the header row for the communicator (only for terminal output)
+                print_decoration(BOLD)
+                print(f"{'Comm Name':<12}{'Processes':<20}{'Comm Size':<12}{'Total Volume(Bytes)':<20}")
+                print_decoration(RESET)
+                print(f"{comm_name:<12}{list_truncate_tostr(get_ranks_by_comm(dbpath, rows[0][0])):<20}{rows[0][2]:<12}{total_volume:<20}")
+                print_decoration(BOLD)
+                print()
+                print(f"{'   ':<4}{'Rank':<10}{'MPI Operation':<15}{'Min Buf':<10}{'Max Buf':<12}{'#Calls':<12}{'Time(s)':<13}{'Volume(Bytes)':<15}")
+                print_decoration(RESET)
 
-        for result in results.values():
-            calls = result['calls']
-            if result['opid'] == sendrecv_id:
-                calls = calls // 2
+                # Sort operations by time
+                sorted_rows = sorted(rows, key=lambda x: x[-2], reverse=True)
 
-            if (result['buffer_size_min'] < bufmin or result['buffer_size_max'] > bufmax):
-                continue
-            if (result['time_s'] < tmin or result['time_s'] > tmax): # Fix this comparison
-                 continue
-            procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
-            if outfile:
-                 csv_writer.writerow([result['comm_name'], procs, result['comm_size'], result['rank'], result['operation'],
+                for row in sorted_rows:
+                    #print(row)
+                    # Exclude unnecessary columns and format output
+                    _, _, _, rank, opid, operation, buf_min, buf_max, calls, time_s, volume = row
+
+                    if (buf_min < bufmin or buf_max > bufmax):
+                        continue
+                    if (time_s < tmin or time_s > tmax): # Fix this comparison
+                        continue
+
+                    print(f"{'    ':<4}{rank:<10}{operation:<15}{buf_min:<10}{buf_max:<12}{calls:<12}{time_s:<13.6f}{volume:<15}")
+
+                # Print a line separator after each communicator
+                print(f"{'------------------------------------------------------------------------------------------------':<93}")
+
+
+        else:
+            csvfile=open(outfile, 'w', newline='')
+            csv_writer = csv.writer(csvfile)
+            # Write header row
+            csv_writer.writerow(['Comm Name', 'Processes', 'Comm Size', 'Rank', 'MPI Operation',
+                                 'Min Buffer', 'Max Buffer', 'Calls', 'Time(s)', 'Volume(Bytes)'])
+            for row in data:
+                cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, volume = row
+                if ranks != [] and rank not in ranks:
+                    continue
+                key = (cid, comm_name, comm_size, opid, operation, rank, buf_min, buf_max)
+                if key not in results:
+                    results[key] = {
+                        'cid': cid,
+                        'comm_name': comm_name,
+                        'comm_size': comm_size,
+                        'rank': rank,
+                        'opid': opid,
+                        'operation': operation,
+                        'buffer_size_min': buf_min,
+                        'buffer_size_max': buf_max,
+                        'calls': calls,
+                        'time_s': time,
+                        'total_volume': volume
+                }
+
+            results = sort_by(results,order)
+
+            for result in results.values():
+                calls = result['calls']
+                if (result['buffer_size_min'] < bufmin or result['buffer_size_max'] > bufmax):
+                    continue
+                if (result['time_s'] < tmin or result['time_s'] > tmax): # Fix this comparison
+                    continue
+                procs = list_truncate_tostr(get_ranks_by_comm(dbpath,result['cid']))
+                csv_writer.writerow([result['comm_name'], procs, result['comm_size'], result['rank'], result['operation'],
                                       result['buffer_size_min'], result['buffer_size_max'], result['calls'], "{:.3f}".format(result['time_s']), result['total_volume']])
-            else:
-                print(f"{result['comm_name']:<12}{procs:<20}{result['comm_size']:<12}{result['rank']:<10}{result['operation']:<20}"
-                  f"{result['buffer_size_min']:<12}{result['buffer_size_max']:<12}{calls:<12}{result['time_s']:<13.6f}{result['total_volume']}")  # Adjust formatting as needed
 
     except sqlite3.Error as e:
         print("Failed to read data from SQLite table", e)
@@ -939,6 +968,8 @@ def print_general_stats(db_path):
     avg_exec = avg_value_in_dict(exec_times_dict)
     if avg_exec != None:
         print(f"Average Execution time across {size} MPI Ranks: {avg_exec:.6f} s")
+    else:
+        avg_exec = 0
 
     sql = """
     SELECT rank, total_time
@@ -947,16 +978,23 @@ def print_general_stats(db_path):
     mpi_times_dict = get_all_times(db_path,sql)
     rank,max_mpi_time = max_value_in_dict(mpi_times_dict)
     if max_mpi_time == None or rank == None:
-         print("Error occured in max MPI time")
+         max_mpi_time = 0.0
     else:
          print(f"Maximum MPI time: {max_mpi_time:.6f} s, Rank: {rank}")
 
     avg_mpi = avg_value_in_dict(mpi_times_dict)
-    if avg_exec != None and avg_mpi != None:
-        print(f"Average MPI time across {size} MPI Ranks: {avg_mpi:.6f} s")
+    if avg_mpi == None:
+        avg_mpi = 0
+
+    print(f"Average MPI time across {size} MPI Ranks: {avg_mpi:.6f} s")
+    if avg_exec == 0:
+        print(f"Average Ratio of MPI time to Execution time across {size} MPI Ranks: 0%")
+    else:
         print(f"Average Ratio of MPI time to Execution time across {size} MPI Ranks: {(avg_mpi/avg_exec)*100:.2f}%")
     ratios = dict_ratios(mpi_times_dict,exec_times_dict)
     rank,max_ratio = max_value_in_dict(ratios)
+    if max_ratio == None:
+        max_ratio = 0
     print(f"Maximum Ratio of MPI time to Execution time: {max_ratio:.2f}%, Rank: {rank}\n")
     print_decoration(RESET)
 

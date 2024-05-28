@@ -83,7 +83,9 @@ const char prim_names[][NUM_OF_PRIMS]={
     ENUM_TO_STRING(Ineighbor_allgatherv),
     ENUM_TO_STRING(Ineighbor_alltoall),
     ENUM_TO_STRING(Ineighbor_alltoallv),
-    ENUM_TO_STRING(Ineighbor_alltoallw)
+    ENUM_TO_STRING(Ineighbor_alltoallw),
+    ENUM_TO_STRING(Init),
+    ENUM_TO_STRING(Init_thread)
 };
 
 char *appname = NULL;
