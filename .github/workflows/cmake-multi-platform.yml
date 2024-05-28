@@ -21,8 +21,8 @@ jobs:
           #  mpi_c_compiler: mpicc
           #  mpi_cxx_compiler: mpicxx
           - mpi_implementation: mpich
-            c_compiler: gcc
-            cpp_compiler: g++
+            c_compiler: mpicc
+            cpp_compiler: mpicxx
             mpi_c_compiler: mpicc
             mpi_cxx_compiler: mpicxx
 
