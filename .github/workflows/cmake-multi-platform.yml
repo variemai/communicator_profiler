@@ -43,12 +43,13 @@ jobs:
           wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-${OPENMPI_VERSION}.tar.gz
           tar -xf openmpi-${OPENMPI_VERSION}.tar.gz
           cd openmpi-${OPENMPI_VERSION}
+          ./configure OMPI_CXX=g++ 
         else
           wget https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz
           tar -xf mpich-${MPICH_VERSION}.tar.gz
           cd mpich-${MPICH_VERSION}
+          ./configure
         fi
-        ./configure --prefix=/usr/local
         make -j
         sudo make install
         sudo ldconfig
