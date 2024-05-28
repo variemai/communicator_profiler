@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mpi_implementation: [openmpi, mpich]
+        mpi_implementation: [openmpi]
         #build_type: [Release]
         include:
           - mpi_implementation: openmpi
@@ -32,7 +32,7 @@ jobs:
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y make build-essential wget tar
+        sudo apt-get install -y make build-essential wget tar g++ libpmix2
 
     - name: Install MPI (Either OpenMPI or MPICH)
       env:
