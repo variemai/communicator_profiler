@@ -52,8 +52,6 @@ jobs:
         make -j
         sudo make install
         sudo ldconfig
-        sudo find / -name libpmix.so* 2>/dev/null
-
         
     - name: Set Reusable Strings
       id: strings
