@@ -1,0 +1,76 @@
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        mpi_implementation: [openmpi, mpich]
+        #build_type: [Release]
+        include:
+          - mpi_implementation: openmpi
+            c_compiler: mpicc
+            cpp_compiler: mpicxx
+          - mpi_implementation: mpich
+            c_compiler: mpicc
+            cpp_compiler: mpicxx
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y make build-essential wget tar
+
+    - name: Install OpenMPI (Replace with your chosen version)
+      env:
+        OPENMPI_VERSION: 5.0.3
+        MPICH_VERSION: 4.2.1
+      run: |
+        if [ "${{ matrix.mpi_implementation }}" == "openmpi" ]; then
+          wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-${OPENMPI_VERSION}.tar.gz
+          tar -xf openmpi-${OPENMPI_VERSION}.tar.gz
+          cd openmpi-${OPENMPI_VERSION}
+          ./configure --prefix=/usr/local
+          make -j
+          sudo make install
+        else
+          get https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz
+          tar -xf mpich-${MPICH_VERSION}.tar.gz
+          cd mpich-${MPICH_VERSION}
+          ./configure --prefix=/usr/local
+          make -j
+          sudo make install
+
+        
+    - name: Set Reusable Strings
+      id: strings
+      shell: bash
+      run: |
+        echo "build-output-dir=${{ github.workspace }}/build-${{ matrix.mpi_implementation }}" >> "$GITHUB_OUTPUT"
+        echo "mpi-bin-dir=/usr/local/bin" >> "$GITHUB_OUTPUT" # Add MPI bin directory
+
+
+    - name: Configure CMake
+      run: >
+        cmake -B ${{ steps.strings.outputs.build-output-dir }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -S ${{ github.workspace }}
+
+    - name: Build
+      env: 
+        PATH: ${{ steps.strings.outputs.mpi-bin-dir }}:$PATH # Add MPI to PATH
+      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} #--config ${{ matrix.build_type }}
+        
+    #- name: Test (Optional, adjust if you have tests)
+    #  working-directory: ${{ steps.strings.outputs.build-output-dir }}
+    #  run: ctest --build-config ${{ matrix.build_type }}
