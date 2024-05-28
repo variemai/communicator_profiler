@@ -34,7 +34,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y make build-essential wget tar
 
-    - name: Install OpenMPI (Replace with your chosen version)
+    - name: Install MPI (Either OpenMPI or MPICH)
       env:
         OPENMPI_VERSION: 5.0.3
         MPICH_VERSION: 4.2.1
@@ -43,17 +43,16 @@ jobs:
           wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-${OPENMPI_VERSION}.tar.gz
           tar -xf openmpi-${OPENMPI_VERSION}.tar.gz
           cd openmpi-${OPENMPI_VERSION}
-          ./configure --prefix=/usr/local
-          make -j
-          sudo make install
         else
           wget https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz
           tar -xf mpich-${MPICH_VERSION}.tar.gz
           cd mpich-${MPICH_VERSION}
-          ./configure --prefix=/usr/local
-          make -j
-          sudo make install
         fi
+        ./configure --prefix=/usr/local
+        make -j
+        sudo make install
+        sudo ldconfig
+        sudo find / -name libpmix.so* 2>/dev/null
 
         
     - name: Set Reusable Strings
