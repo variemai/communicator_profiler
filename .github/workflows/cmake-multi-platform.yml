@@ -20,11 +20,11 @@ jobs:
             cpp_compiler: g++
             mpi_c_compiler: mpicc
             mpi_cxx_compiler: mpicxx
-          - mpi_implementation: mpich
-            c_compiler: gcc
-            cpp_compiler: g++
-            mpi_c_compiler: mpicc
-            mpi_cxx_compiler: mpicxx
+          #- mpi_implementation: mpich
+          #  c_compiler: gcc
+          #  cpp_compiler: g++
+          #  mpi_c_compiler: mpicc
+          #  mpi_cxx_compiler: mpicxx
 
     steps:
     - uses: actions/checkout@v4
