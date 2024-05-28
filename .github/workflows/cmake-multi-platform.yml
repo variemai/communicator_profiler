@@ -12,19 +12,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        mpi_implementation: [openmpi]
+        mpi_implementation: [mpich]
         #build_type: [Release]
         include:
-          - mpi_implementation: openmpi
-            c_compiler: gcc
-            cpp_compiler: g++
-            mpi_c_compiler: mpicc
-            mpi_cxx_compiler: mpicxx
-          #- mpi_implementation: mpich
+          #- mpi_implementation: openmpi
           #  c_compiler: gcc
           #  cpp_compiler: g++
           #  mpi_c_compiler: mpicc
           #  mpi_cxx_compiler: mpicxx
+          - mpi_implementation: mpich
+            c_compiler: gcc
+            cpp_compiler: g++
+            mpi_c_compiler: mpicc
+            mpi_cxx_compiler: mpicxx
 
     steps:
     - uses: actions/checkout@v4
@@ -43,7 +43,7 @@ jobs:
           wget https://download.open-mpi.org/release/open-mpi/v5.0/openmpi-${OPENMPI_VERSION}.tar.gz
           tar -xf openmpi-${OPENMPI_VERSION}.tar.gz
           cd openmpi-${OPENMPI_VERSION}
-          ./configure OMPI_CXX=g++ 
+          ./configure
         else
           wget https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz
           tar -xf mpich-${MPICH_VERSION}.tar.gz
