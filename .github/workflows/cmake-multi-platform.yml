@@ -45,14 +45,10 @@ jobs:
           cd openmpi-${OPENMPI_VERSION}
           ./configure
           make -j
+          sudo make install
         else
-          wget https://www.mpich.org/static/downloads/${MPICH_VERSION}/mpich-${MPICH_VERSION}.tar.gz
-          tar -xf mpich-${MPICH_VERSION}.tar.gz
-          cd mpich-${MPICH_VERSION}
-          ./configure
-          make -j4
+          sudo apt install -y libmpich-dev mpich
         fi
-        sudo make install
         sudo ldconfig
         
     - name: Set Reusable Strings
