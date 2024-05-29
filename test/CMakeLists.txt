@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 find_package(MPI REQUIRED)
+set(CMAKE_CXX_COMPILER mpicxx)
 
 add_executable(init init.cpp)
 #add_executable(ctest0 ctest0.cpp)
@@ -59,10 +60,10 @@ target_link_libraries(init PUBLIC mpisee)
 #   TARGET ctest1
 #   POST_BUILD
 #   COMMAND ${MPI_CXXOMMAND})
-target_include_directories(init PRIVATE ${MPI_CXX_INCLUDE_PATH})
-target_compile_options(init PRIVATE ${MPI_CXX_COMPILE_FLAGS})
-target_link_libraries(init PRIVATE ${MPI_CXX_LIBRARIES} ${MPI_CXX_LINK_FLAGS})
-target_include_directories(init PUBLIC "${PROJECT_SOURCE_DIR}/")
+#target_include_directories(init PRIVATE ${MPI_CXX_INCLUDE_PATH})
+#target_compile_options(init PRIVATE ${MPI_CXX_COMPILE_FLAGS})
+#target_link_libraries(init PRIVATE ${MPI_CXX_LIBRARIES} ${MPI_CXX_LINK_FLAGS})
+#target_include_directories(init PUBLIC "${PROJECT_SOURCE_DIR}/")
 
 #target_include_directories(ctest0 PRIVATE ${MPI_CXX_INCLUDE_PATH})
 #target_compile_options(ctest0 PRIVATE ${MPI_CXX_COMPILE_FLAGS})
