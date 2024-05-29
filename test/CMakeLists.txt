@@ -22,7 +22,7 @@ else()
 endif()
 
 
-add_test(NAME init COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${PROJECT_BINARY_DIR}/test/init)
+add_test(NAME init COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} 2 ${PROJECT_BINARY_DIR}/test/init)
 add_test(NAME see_through_init COMMAND sh -c
     "python3 ${PROJECT_SOURCE_DIR}/mpisee-through/mpisee-through.py -i ${PROJECT_BINARY_DIR}/test/init.db | grep 'Init' > /dev/null 2>&1 && echo 'Init found' || (echo 'Init not found'; exit 1)" )
 #add_test(NAME ctest0 COMMAND ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${PROJECT_BINARY_DIR}/test/ctest0)

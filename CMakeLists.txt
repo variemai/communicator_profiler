@@ -50,18 +50,18 @@ add_library(mpisee SHARED commprof.cpp pt2pt_wrappers.cpp collectives_wrappers.c
 #add_executable(create_db create_db.cpp utils.cpp)
 #target_include_directories(create_db PRIVATE ${MPI_CXX_INCLUDE_DIRS})
 #target_link_libraries(create_db PRIVATE ${MPI_CXX_LIBRARIES})
-target_include_directories(mpisee PRIVATE ${MPI_CXX_INCLUDE_DIRS})
-target_link_libraries(mpisee PRIVATE ${MPI_CXX_LIBRARIES})
+#target_include_directories(mpisee PRIVATE ${MPI_CXX_INCLUDE_DIRS})
+#target_link_libraries(mpisee PRIVATE ${MPI_CXX_LIBRARIES})
 target_link_libraries(mpisee PRIVATE ${SQLite3_LIBRARIES})
 target_include_directories(mpisee PRIVATE ${SQLite3_INCLUDE_DIRS})
 
-if(MPI_CXX_COMPILE_FLAGS)
-    target_compile_options(mpisee PRIVATE ${MPI_CXX_COMPILE_FLAGS})
-endif()
-
-if(MPI_CXX_LINK_FLAGS)
-    set_target_properties(mpisee PROPERTIES LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
-endif()
+#if(MPI_CXX_COMPILE_FLAGS)
+#    target_compile_options(mpisee PRIVATE ${MPI_CXX_COMPILE_FLAGS})
+#endif()
+#
+#if(MPI_CXX_LINK_FLAGS)
+#    set_target_properties(mpisee PROPERTIES LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
+#endif()
 
 set_target_properties(mpisee PROPERTIES SOVERSION 1)
 #message(STATUS "Run: ${MPIEXEC} ${MPIEXEC_NUMPROC_FLAG} ${MPIEXEC_MAX_NUMPROCS} ${MPI_CXX_INCLUDE_DIRS}")
