@@ -466,7 +466,7 @@ JOIN operations o ON d.operation_id = o.id
             csvfile=open(outfile, 'w', newline='')
             csv_writer = csv.writer(csvfile)
             # Write header row
-            csv_writer.writerow(['Comm Name', 'Processes', 'Comm Size', 'MPI Operation','Min Buffer', 'Max Buffer', 'Calls', 'Max Time(s)', 'Avg Time(s)','Volume(Bytes)'])
+            csv_writer.writerow(['Communicator', 'Processes', 'Comm Size', 'Call','Min Buffer', 'Max Buffer', 'Calls', 'Max Time(s)', 'Avg Time(s)','Volume(Bytes)'])
             for row in data:
                 cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, avg_time, volume = row
                 key = (cid, comm_name, comm_size, opid, operation, buf_min, buf_max)
@@ -617,8 +617,8 @@ JOIN operations o ON d.operation_id = o.id
             csvfile=open(outfile, 'w', newline='')
             csv_writer = csv.writer(csvfile)
             # Write header row
-            csv_writer.writerow(['Comm Name', 'Processes', 'Comm Size', 'Rank', 'MPI Operation',
-                                 'Min Buffer', 'Max Buffer', 'Calls', 'Time(s)', 'Volume(Bytes)'])
+            csv_writer.writerow(['Communicator', 'Processes', 'Comm Size', 'Rank', 'Call',
+                                 'Min Buffer', 'Max Buffer', 'Calls', 'Time', 'Volume'])
             for row in data:
                 cid,comm_name, comm_size, rank, opid, operation, buf_min, buf_max, calls, time, volume = row
                 if ranks != [] and rank not in ranks:
