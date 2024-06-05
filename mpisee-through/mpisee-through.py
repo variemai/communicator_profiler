@@ -959,6 +959,27 @@ def print_general_stats(db_path):
     FROM exectimes
     """
     exec_times_dict = get_all_times(db_path,sql)
+    # Append Init time to the execution time
+    sql = """
+    SELECT d.rank, SUM(d.time) as total_time
+    FROM data d
+    JOIN operations o ON d.operation_id = o.id
+    WHERE o.operation == 'Init'
+    GROUP BY d.rank;
+    """
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    try:
+        cursor.execute(sql)
+        for row in cursor.fetchall():
+            exec_times_dict[row[0]] += row[1]
+
+    except sqlite3.Error as e:
+        print("An error occurred:", e)
+    finally:
+        conn.close()
+
+
     rank,max_exec_time = max_value_in_dict(exec_times_dict)
     if max_exec_time == None or rank == None:
          print("Error occured in max exec time")
