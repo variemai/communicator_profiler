@@ -1235,7 +1235,7 @@ _Finalize(void) {
 
     // Re-create the communicators from the group_table
     std::cout << "mpisee: group_table size = " << group_table.size() << std::endl;
-    for (i = 0; i < group_table.size(); ++i) {
+    for (long unsigned i = 0; i < group_table.size(); ++i) {
         PMPI_Comm_create_group(MPI_COMM_WORLD, group_table[i].first, 0, &newcomm);
         if (newcomm == MPI_COMM_NULL) {
             mcpt_abort("Comm_create_group failed\n");
