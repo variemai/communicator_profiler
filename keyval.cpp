@@ -258,14 +258,8 @@ int main(int argc, char *argv[])
     comm_all comm_meta;
     comm_profiler *world_prof;
     int commid;
-    prof_metadata *metadata;
-    comm_profiler *prof;
     for (i=0; i<free_array.size(); i++){
         PMPI_Comm_create_group(MPI_COMM_WORLD, free_array[i].second, 0, &newcomm);
-        //metadata = new prof_metadata();
-        //metadata = &free_array[i].first->meta;
-        //prof = new comm_profiler();
-        //prof = &free_array[i].first->prof;
         PMPI_Comm_set_attr(newcomm, keyval[0], &free_array[i].first->meta);
         PMPI_Comm_set_attr(newcomm, keyval[1], &free_array[i].first->prof);
         comms.push_back(newcomm);
@@ -305,103 +299,6 @@ int main(int argc, char *argv[])
             printf("Rank %d: Metadata not found\n", rank);
         }
     }
-    // int k;
-    // for ( k=0; k<profiler_freelist.size(); k++){
-    //     for (i=0; i<NUM_OF_PRIMS; ++i) {
-    //         for ( j =0; j<NUM_BUCKETS; ++j ){
-    //             auto it = profiler_freelist[k].map.find(getPrimBucketKey(i, j));
-    //             if (it != profiler_freelist[k].map.end()) {
-    //                 comm_data data;
-    //                 data.comm_id = commid;
-    //                 data.prim = i;
-    //                 data.bucketIndex = j;
-    //                 data.num_messages = it->second.num_messages;
-    //                 data.time = it->second.time;
-    //                 data.volume = it->second.volume;
-    //                 data_array.push_back(data);
-    //                 // printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
-    //             }
-    //         }
-    //     }
-    //     strcpy(comm_meta.name, metadata_freelist[k].name);
-    //     comm_meta.size = metadata_freelist[k].size;
-    //     array.push_back(comm_meta);
-    //     commid++;
-    // }
-
-
-    // PMPI_Comm_get_attr(MPI_COMM_WORLD, keyval[1], &world_prof, &flag);
-    // if ( !flag ){
-    //     printf("Map not found\n");
-    // }
-    // for (i=0; i<NUM_OF_PRIMS; ++i) {
-    //     for ( j =0; j<NUM_BUCKETS; ++j ){
-    //         // Check if the key exists in the map
-    //         auto it = world_prof->map.find(getPrimBucketKey(i, j));
-
-    //         if (it != world_prof->map.end()) {
-    //             // Allocate comm_data struct and copy the data from map
-    //             comm_data data;
-    //             data.comm_id = 0;
-    //             data.prim = i;
-    //             data.bucketIndex = j;
-    //             data.num_messages = it->second.num_messages;
-    //             data.time = it->second.time;
-    //             data.volume = it->second.volume;
-    //             data_array.push_back(data);
-    //             printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
-    //         }
-    //     }
-    // }
-    // PMPI_Comm_get_attr(MPI_COMM_WORLD,keyval[0],&met,&flag);
-    // if (flag) {
-    //     strcpy(comm_meta.name, met->name);
-    //     comm_meta.size = met->size;
-    //     array.push_back(comm_meta);
-    // }
-    // else{
-    //     printf("Rank %d: Metadata not found\n", rank);
-    // }
-
-
-    // comm_all comm_meta2;
-    // comm_profiler *split_prof;
-    // PMPI_Comm_get_attr(newcomm, keyval[1], &split_prof, &flag);
-    // if ( !flag ){
-    //     printf("Map not found\n");
-    // }
-    // printf("SPLIT\n");
-    // for (i=0; i<NUM_OF_PRIMS; ++i) {
-    //     for ( j =0; j<NUM_BUCKETS; ++j ){
-    //         // Check if the key exists in the map
-    //         auto it = split_prof->map.find(getPrimBucketKey(i, j));
-
-    //         if (it != split_prof->map.end()) {
-    //             // Allocate comm_data struct and copy the data from map
-    //             comm_data data;
-    //             data.comm_id = 1;
-    //             data.prim = i;
-    //             data.bucketIndex = j;
-    //             data.num_messages = it->second.num_messages;
-    //             data.time = it->second.time;
-    //             data.volume = it->second.volume;
-    //             data_array.push_back(data);
-    //             printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
-    //         }
-    //     }
-    // }
-    // PMPI_Comm_get_attr(newcomm,keyval[0],&met2,&flag);
-    // if (flag) {
-    //     strcpy(comm_meta2.name, met2->name);
-    //     comm_meta2.size = met2->size;
-    //     array.push_back(comm_meta2);
-    //     printf("Rank %d: Metadata: %s\n", rank, comm_meta2.name);
-    // }
-    // else{
-    //     printf("Rank %d: Metadata not found\n", rank);
-    // }
-
-    //printProfilingData(array);
 
     // Gather the profiling metadata from all ranks to rank 0
     int local_size = array.size();
