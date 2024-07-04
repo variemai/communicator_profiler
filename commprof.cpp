@@ -34,6 +34,7 @@ std::vector<prof_attrs*> local_communicators;
 std::unordered_map<MPI_Win, MPI_Comm> comm_map;
 std::vector<MPI_Comm> comms_table;
 // int global_rank; // For debugging purposes
+std::vector<std::pair<MPI_Group, prof_attrs*>> group_table;
 
 /* Tool date */
 char mpisee_build_date[sizeof(__DATE__)] = __DATE__;
@@ -1146,31 +1147,29 @@ F77_MPI_TESTANY(int  * count, MPI_Fint  *array_of_requests, int  *index,
 }
 
 
+
 int
 MPI_Comm_free(MPI_Comm *comm)
 {
-    int ret,flag, temp_rank, rank, buf[2] = {-1, -1};
-    prof_attrs *com_info, *tmp;
+    int ret,flag;
+    prof_attrs *com_info, *prev_info;
+    MPI_Group group;
 
-    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    // Get the group of the communicator before freeing it
+    PMPI_Comm_group(*comm, &group);
 
-    PMPI_Comm_rank(*comm, &temp_rank);
-    //PMPI_Allreduce(&temp_rank, &temp_root, 1, MPI_INT, MPI_MIN, *comm);
-    PMPI_Comm_get_attr(*comm, namekey(), &com_info, &flag);
-    buf[0] = rank;
-    buf[1] = com_info->comms;
-    PMPI_Bcast(buf, 2, MPI_INT, 0, *comm);
-    overwrite_name(&com_info, buf[0], buf[1]);
+    // Attach the attributes of the old communicator to the new communicator
+    PMPI_Comm_get_attr(*comm, namekey(), &prev_info, &flag);
+    com_info = (prof_attrs *)malloc(sizeof(prof_attrs));
+    memcpy(com_info, prev_info, sizeof(prof_attrs));
+    group_table.push_back({group, com_info});
 
-    PMPI_Comm_get_attr(*comm, namekey(), &tmp, &flag);
     if (flag) {
-        auto it = std::find(local_communicators.begin(), local_communicators.end(), tmp);
+        auto it = std::find(local_communicators.begin(), local_communicators.end(), prev_info);
         if (it != local_communicators.end()) {
             // Calculate the index of the found element
             size_t index = std::distance(local_communicators.begin(), it);
             // Now "index" holds the position of com_info in the vector
-            com_info = (prof_attrs *)malloc(sizeof(prof_attrs));
-            memcpy(com_info, tmp, sizeof(prof_attrs));
             local_communicators[index] = com_info;
         } else {
             // com_info is not present in the vector
@@ -1180,7 +1179,7 @@ MPI_Comm_free(MPI_Comm *comm)
     }else {
         mcpt_abort("Comm free: Comm_get_attr did not find communicator\n");
     }
-    // Find the communicator in the comms_table and remove it
+    // Find the old communicator in the comms_table and remove it
     auto it = std::find(comms_table.begin(), comms_table.end(), *comm);
     if (it != comms_table.end()) {
         comms_table.erase(it);
@@ -1224,9 +1223,26 @@ _Finalize(void) {
     int total_num_of_comms;
     total_time = MPI_Wtime() - total_time;
 
+    int rc = PMPI_Barrier(MPI_COMM_WORLD);
+    if (rc != MPI_SUCCESS) {
+        mcpt_abort("MPI_Barrier failed\n");
+    }
+    MPI_Comm newcomm;
+
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
     num_of_comms = local_communicators.size();
+
+    // Re-create the communicators from the group_table
+    std::cout << "mpisee: group_table size = " << group_table.size() << std::endl;
+    for (i = 0; i < group_table.size(); ++i) {
+        PMPI_Comm_create_group(MPI_COMM_WORLD, group_table[i].first, 0, &newcomm);
+        if (newcomm == MPI_COMM_NULL) {
+            mcpt_abort("Comm_create_group failed\n");
+        }
+        PMPI_Comm_set_attr(newcomm, namekey(), group_table[i].second);
+        comms_table.push_back(newcomm);
+    }
 
     // std::cout << "mpisee: comms_table size = " << comms_table.size() << std::endl;
     // Iterate over the communicator and call an MPI_Allreduce

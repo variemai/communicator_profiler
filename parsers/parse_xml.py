@@ -55,7 +55,12 @@ prim_names={
     "Ialltoall",
     "Iscatter",
     "Ibarrier",
-    "Testany"
+    "Testany",
+    "Start",
+    "Send_init",
+    "Recv_init",
+    "Init",
+    "Finalize"
 }
 if len(sys.argv) < 2 :
     print( "Insert file to read" )
@@ -64,18 +69,13 @@ if len(sys.argv) < 2 :
 else:
     with open(sys.argv[1], 'rb') as f:
         Bs_data = BeautifulSoup(f.read(),"xml")
-    # mpi_rank = Bs_data.find_all('func')
-    # print (len(prim_names))
     for primitive in prim_names:
         prim = "MPI_" + primitive
         mpi_prim = Bs_data.find_all('func',{'name':prim})
         sendcount = 0
+        bytes = 0
         for item in mpi_prim:
-            if primitive in collectives:
-                tmp = int( item.get("count") )
-                if tmp > sendcount:
-                    sendcount = tmp
-            else:
-                sendcount += int( item.get("count") )
+            bytes += float( item.get("bytes") )
+            sendcount += int( item.get("count") )
         if ( sendcount > 0 ):
-            print(prim,"calls = %d"%sendcount)
+            print(prim,"calls = %d, bytes = %d"%(sendcount,bytes))
