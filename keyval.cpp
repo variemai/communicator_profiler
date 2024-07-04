@@ -294,6 +294,9 @@ int main(int argc, char *argv[])
             strcpy(comm_meta.name, met->name);
             comm_meta.size = met->size;
             array.push_back(comm_meta);
+            // We should broadcast the metadata to all ranks from rank 0
+            // We can use MPI_Bcast for this
+
         }
         else{
             printf("Rank %d: Metadata not found\n", rank);
