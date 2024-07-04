@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include <cstdint>
 #include <cstdio>
+#include <utility>
 #include <vector>
 #include <iostream>
 
@@ -52,9 +53,18 @@ typedef struct comm_all{
     int size;
 } comm_all;
 
+
 std::vector<profiler_metadata> metadata_freelist;
 std::vector<comm_profiler> profiler_freelist;
 std::vector<MPI_Comm> comms;
+
+typedef struct comm_profiler_meta_pair{
+    comm_profiler prof;
+    prof_metadata meta;
+} prof_meta_pair;
+
+std::vector<std::pair<prof_meta_pair*, MPI_Group>> free_array;
+
 
 // Helper function to create unique key
 // int getPrimBucketKey(int prim, int bucketIndex) {
@@ -223,8 +233,15 @@ int main(int argc, char *argv[])
         data = split_comm->map[getPrimBucketKey(3, 1)];
         printf("Rank %d: Updated data in map: time = %f, num_messages = %d, volume = %lu\n", rank, data.time, data.num_messages, data.volume);
     }
-    metadata_freelist.push_back(*met2);
-    profiler_freelist.push_back(*split_comm);
+    //metadata_freelist.push_back(*met2);
+    //profiler_freelist.push_back(*split_comm);
+    MPI_Group group;
+    MPI_Comm_group(newcomm, &group);
+    prof_meta_pair *free_pair = new prof_meta_pair();
+    free_pair->meta = *met2;
+    free_pair->prof = *split_comm;
+    free_array.push_back(std::make_pair(free_pair, group));
+
     // Find newcomm in comms and remove it
     for (i=0; i<comms.size(); i++){
         if (comms[i] == newcomm){
@@ -241,6 +258,18 @@ int main(int argc, char *argv[])
     comm_all comm_meta;
     comm_profiler *world_prof;
     int commid;
+    prof_metadata *metadata;
+    comm_profiler *prof;
+    for (i=0; i<free_array.size(); i++){
+        PMPI_Comm_create_group(MPI_COMM_WORLD, free_array[i].second, 0, &newcomm);
+        //metadata = new prof_metadata();
+        //metadata = &free_array[i].first->meta;
+        //prof = new comm_profiler();
+        //prof = &free_array[i].first->prof;
+        PMPI_Comm_set_attr(newcomm, keyval[0], &free_array[i].first->meta);
+        PMPI_Comm_set_attr(newcomm, keyval[1], &free_array[i].first->prof);
+        comms.push_back(newcomm);
+    }
 
     for (commid =0; commid<comms.size(); commid++){
         PMPI_Comm_get_attr(comms[commid], keyval[1], &world_prof, &flag);
@@ -276,29 +305,29 @@ int main(int argc, char *argv[])
             printf("Rank %d: Metadata not found\n", rank);
         }
     }
-    int k;
-    for ( k=0; k<profiler_freelist.size(); k++){
-        for (i=0; i<NUM_OF_PRIMS; ++i) {
-            for ( j =0; j<NUM_BUCKETS; ++j ){
-                auto it = profiler_freelist[k].map.find(getPrimBucketKey(i, j));
-                if (it != profiler_freelist[k].map.end()) {
-                    comm_data data;
-                    data.comm_id = commid;
-                    data.prim = i;
-                    data.bucketIndex = j;
-                    data.num_messages = it->second.num_messages;
-                    data.time = it->second.time;
-                    data.volume = it->second.volume;
-                    data_array.push_back(data);
-                    // printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
-                }
-            }
-        }
-        strcpy(comm_meta.name, metadata_freelist[k].name);
-        comm_meta.size = metadata_freelist[k].size;
-        array.push_back(comm_meta);
-        commid++;
-    }
+    // int k;
+    // for ( k=0; k<profiler_freelist.size(); k++){
+    //     for (i=0; i<NUM_OF_PRIMS; ++i) {
+    //         for ( j =0; j<NUM_BUCKETS; ++j ){
+    //             auto it = profiler_freelist[k].map.find(getPrimBucketKey(i, j));
+    //             if (it != profiler_freelist[k].map.end()) {
+    //                 comm_data data;
+    //                 data.comm_id = commid;
+    //                 data.prim = i;
+    //                 data.bucketIndex = j;
+    //                 data.num_messages = it->second.num_messages;
+    //                 data.time = it->second.time;
+    //                 data.volume = it->second.volume;
+    //                 data_array.push_back(data);
+    //                 // printf("Rank %d: Primitive = %d, Bucket = %d, Time = %f, Num Messages = %d, Volume = %lu\n", rank, i, j, it->second.time, it->second.num_messages, it->second.volume);
+    //             }
+    //         }
+    //     }
+    //     strcpy(comm_meta.name, metadata_freelist[k].name);
+    //     comm_meta.size = metadata_freelist[k].size;
+    //     array.push_back(comm_meta);
+    //     commid++;
+    // }
 
 
     // PMPI_Comm_get_attr(MPI_COMM_WORLD, keyval[1], &world_prof, &flag);

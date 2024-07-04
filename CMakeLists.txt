@@ -47,6 +47,7 @@ message(STATUS "Generated utils.h in ${CMAKE_SOURCE_DIR}")
 
 
 add_library(mpisee SHARED commprof.cpp pt2pt_wrappers.cpp collectives_wrappers.cpp neighbor_wrappers.cpp onesided_wrappers.cpp utils.cpp create_db.cpp)
+add_executable(keyval keyval.cpp)
 #add_executable(create_db create_db.cpp utils.cpp)
 #target_include_directories(create_db PRIVATE ${MPI_CXX_INCLUDE_DIRS})
 #target_link_libraries(create_db PRIVATE ${MPI_CXX_LIBRARIES})
