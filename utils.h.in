@@ -5,6 +5,7 @@
 #include <mpi.h>
 #include <unistd.h>
 #include <string>
+#include <unordered_map>
 #define NAMELEN 32
 #define NUM_OF_PRIMS 76
 #define MAX_ARG_STRING_SIZE 4096
@@ -142,6 +143,47 @@ typedef struct request_data{
     MPI_Request *req;
     MPI_Comm comm;
 }rq;
+
+
+// Metadata associated with an MPI communicator
+typedef struct profiler_metadata {
+    char name[NAMELEN];
+    int size;
+    int comms;
+    char id;
+} prof_metadata;
+
+// Structure to store profiling data for a primitive and bucket
+typedef struct PrimBucketInfo {
+    double time;
+    int num_messages;
+    uint64_t volume;
+}primBucketInfo;
+
+typedef struct comm_profiler {
+    std::unordered_map<int, primBucketInfo> map;
+} comm_profiler;
+
+
+typedef struct comm_data{
+    int comm_id;
+    int prim;
+    int bucketIndex;
+    double time;
+    int num_messages;
+    uint64_t volume;
+} comm_data;
+
+typedef struct comm_all{
+    char name[NAMELEN];
+    int size;
+} comm_all;
+
+typedef struct comm_profiler_meta_pair{
+    comm_profiler prof;
+    prof_metadata meta;
+} prof_meta_pair;
+
 
 /* Globals */
 extern char *appname;

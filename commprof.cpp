@@ -124,58 +124,6 @@ alloc_init_commprof(int comm_size, char c)
 }
 
 
-/*
- * Obsolete: Create a new communicator structure and add the parent
- * communicator's name prefix to it
- */
-extern "C" {
-prof_attrs*
-get_comm_name(MPI_Comm comm)
-{
-    prof_attrs *communicator = NULL;
-    communicator = (prof_attrs*) malloc(sizeof(prof_attrs));
-    if (communicator == NULL){
-        mcpt_abort("malloc get_comm_name failed\nAborting...\n");
-    }
-    //memset(communicator, 0, sizeof(prof_attrs));
-    // if ( comm != MPI_COMM_WORLD ){
-        // PMPI_Comm_get_attr(comm, namekey(), &com_info, &flag);
-        // if ( flag ){
-        //     strcpy(communicator->name, com_info->name);
-        // }
-        // else{
-        //     mcpt_abort("Flag in file:%s line:%d invalid\nAborting\n",
-        //                __FILE__,__LINE__);
-        // }
-    // }
-    // else{
-    //     strcpy(communicator->name, "W");
-    // }
-    return communicator;
-}
-}
-
-// Obsolete
-void
-init_comm(char *buf, prof_attrs** communicator, MPI_Comm comm, MPI_Comm* newcomm){
-    int comm_size,i,j;
-    PMPI_Comm_size(*newcomm, &comm_size);
-    (*communicator)->size = comm_size;
-    for (i = 0; i < NUM_OF_PRIMS; i++) {
-        for (j = 0; j < NUM_BUCKETS; j++) {
-            (*communicator)->buckets_time[i][j] = 0.0;
-            (*communicator)->buckets_msgs[i][j] = 0;
-            (*communicator)->volume[i][j] = 0;
-        }
-
-    }
-    my_coms++;
-    (*communicator)->comms = my_coms;
-    local_communicators.push_back(*communicator);
-    local_cid++;
-    return;
-}
-
 int
 choose_bucket(int64_t bytes) {
     int index;

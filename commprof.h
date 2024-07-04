@@ -13,6 +13,9 @@ extern std::vector<prof_attrs*> local_communicators;
 extern std::vector<MPI_Comm> comms_table;
 extern std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 extern std::unordered_map<MPI_Win, MPI_Comm> comm_map;
+
+extern std::vector<std::pair<prof_meta_pair*, MPI_Group>> free_array;
+
 extern int local_cid;
 extern int my_coms;
 
