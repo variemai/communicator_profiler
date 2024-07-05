@@ -24,16 +24,20 @@
 #include <iostream>
 #include <chrono>
 
+// int global_rank; // For debugging purposes
 int prof_enabled = 1;
 int local_cid= 0;
 int my_coms = 0;
 int ac;
 char *av[MAX_ARGS];
+int keyval[2]; // keyval[0]  contains metadata
+               // keyval[1]  contains profiling data
+               
+/* Necessary bookkeeping data structures */
 std::unordered_map<MPI_Request, MPI_Comm> requests_map;
-std::vector<prof_attrs*> local_communicators;
+std::vector<prof_attrs*> local_communicators; // Might remove this later
 std::unordered_map<MPI_Win, MPI_Comm> comm_map;
 std::vector<MPI_Comm> comms_table;
-// int global_rank; // For debugging purposes
 std::vector<std::pair<MPI_Group, prof_attrs*>> group_table;
 
 /* Tool date */
@@ -95,32 +99,29 @@ win_namekey(void){
 }
 }
 
+int getPrimBucketKey(int prim, int bucketIndex)
+{
+    //std::cout << "mpisee: prim = " << prim << ",
+    // bucketIndex = " << bucketIndex << " key = " << prim * NUM_BUCKETS + bucketIndex << std::endl;
+    return prim * NUM_BUCKETS + bucketIndex;
+}
+
 // Initialize the profiling structure for the communicator
 // Called by communicator creation functions
-prof_attrs*
-alloc_init_commprof(int comm_size, char c)
+void
+alloc_init_commprof(MPI_Comm comm, char c)
 {
-    prof_attrs *comm_prof = NULL;
-    int i,j;
-    comm_prof = (prof_attrs*) malloc(sizeof(prof_attrs));
-    if (comm_prof == NULL){
-        mcpt_abort("malloc alloc_init_commprof failed\nAborting...\n");
-    }
-    comm_prof->size = comm_size;
-    // Initialize the buckets
-    for (i = 0; i < NUM_OF_PRIMS; i++) {
-        for (j = 0; j < NUM_BUCKETS; j++) {
-            comm_prof->buckets_time[i][j] = 0.0;
-            comm_prof->buckets_msgs[i][j] = 0;
-            comm_prof->volume[i][j] = 0;
-        }
-    }
-    comm_prof->id = c;
-    my_coms++;
-    comm_prof->comms = my_coms;
-    local_communicators.push_back(comm_prof);
-    local_cid++;
-    return comm_prof;
+
+    prof_metadata *metadata;
+    comm_profiler *prof;
+    metadata = new prof_metadata();
+    prof = new comm_profiler();
+    PMPI_Comm_size(comm, &metadata->size);
+    metadata->comms = local_cid++;
+    metadata->id = c;
+    PMPI_Comm_set_attr(comm, keyval[0], metadata);
+    PMPI_Comm_set_attr(comm, keyval[1], prof);
+
 }
 
 
@@ -135,20 +136,56 @@ choose_bucket(int64_t bytes) {
     return NUM_BUCKETS-1;
 }
 
+
+void insertOrUpdatePrimBucketInfo(std::unordered_map<int, primBucketInfo>& map,
+                                  int key, double time, uint64_t volume) {
+
+    // Create a new primBucketInfo object
+    primBucketInfo newInfo;
+    newInfo.time = time;
+    newInfo.num_messages = 1;
+    newInfo.volume = volume;
+
+    // Check if the key exists in the map
+    auto it = map.find(key);
+
+    if (map.count(key) > 1) {
+        std::cerr << "Hash collision detected for key " << key << std::endl;
+    }
+
+    if (it == map.end()) {
+        // Key not found, insert the new pair
+        map[key] = newInfo;
+    } else {
+        // Key found, update the existing value
+        it->second.time += newInfo.time;
+        it->second.num_messages += newInfo.num_messages;
+        it->second.volume += newInfo.volume;
+    }
+}
+
 // Profile the communication
 extern "C" {
 prof_attrs*
 profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
              double t_elapsed,int v){
+
+
     int size,flag,bucket_index;
-    prof_attrs *communicator = NULL;
-    int64_t sum = 0;
-    if ( comm == MPI_COMM_NULL  ){
-        mcpt_abort("mpisee: NULL communicator in profile_this\n");
-        return communicator;
+    int64_t sum;
+    comm_profiler *comm_prof;
+    PMPI_Comm_get_attr(comm, keyval[1], &comm_prof, &flag);
+    /* Debugging code  */
+    int rank;
+    PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (flag) {
+        printf("Rank %d: Found the map\n", rank);
+    } else {
+        printf("Rank %d: Map not found\n", rank);
     }
-    flag = 0;
-    PMPI_Comm_get_attr(comm, namekey(), &communicator, &flag);
+    printf("Rank %d: Inserting data into map\n", rank);
+    /* End of debugging code */
+
     if ( datatype != MPI_DATATYPE_NULL ){
         PMPI_Type_size(datatype, &size);
         sum = count * size;
@@ -158,22 +195,21 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
     }
     if (flag) {
         if ( v == 0 ){
-        bucket_index = choose_bucket(sum);
-        communicator->buckets_msgs[prim][bucket_index] += 1;
-        communicator->buckets_time[prim][bucket_index] += t_elapsed;
-        communicator->volume[prim][bucket_index] += sum;
+            bucket_index = choose_bucket(sum);
+            insertOrUpdatePrimBucketInfo(comm_prof->map,
+                                         getPrimBucketKey(prim, bucket_index),
+                                         t_elapsed,  sum);
         }
         // Don't record the buffer range for [v,w] collectives
         else{
-            communicator->buckets_msgs[prim][0] += 1;
-            communicator->buckets_time[prim][0] += t_elapsed;
-            communicator->volume[prim][0] += sum;
+            insertOrUpdatePrimBucketInfo(comm_prof->map,
+                                         getPrimBucketKey(prim, 0),
+                                         t_elapsed, sum);
         }
     }
     else{
         mcpt_abort("empty flag when profiling %s - this might be a bug\n",prim_names[prim]);
     }
-    return communicator;
 }
 }
 
@@ -251,6 +287,13 @@ _MPI_Init(int *argc, char ***argv){
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
 
+
+    MPI_Comm_create_keyval(MPI_COMM_DUP_FN,MPI_COMM_NULL_DELETE_FN,
+                           &keyval[0],NULL);
+
+    MPI_Comm_create_keyval(MPI_COMM_DUP_FN,MPI_COMM_NULL_DELETE_FN,
+                           &keyval[1],NULL);
+
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
         appname = get_appname();
@@ -264,34 +307,18 @@ _MPI_Init(int *argc, char ***argv){
  #endif
         fflush(stdout);
     }
-    communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
-    if ( communicator == NULL ){
-        mcpt_abort("malloc failed at line %s\n",__LINE__);
-    }
 
-    strcpy(communicator->name, "W");
-    communicator->size = size;
-    for ( i = 0; i<NUM_OF_PRIMS; i++ ){
-        for (j = 0; j < NUM_BUCKETS; j++) {
-            communicator->buckets_time[i][j] = 0.0;
-            communicator->buckets_msgs[i][j] = 0;
-            communicator->volume[i][j] = 0;
-        }
-    }
-    communicator->comms = my_coms;
-    communicator->id = 'W';
-    rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    alloc_init_commprof(MPI_COMM_WORLD, 'W');
+    comms_table.push_back(MPI_COMM_WORLD);
     profile_this(MPI_COMM_WORLD, 0, MPI_DATATYPE_NULL, Init, init_time, 0);
 
     // global_rank = rank; // For debugging purposes
-    local_communicators.push_back(communicator);
-    comms_table.push_back(MPI_COMM_WORLD);
-    if ( rc != MPI_SUCCESS ){
-        mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
-    }
+
     if ( argc != NULL )
         ac = *argc;
+
     total_time = MPI_Wtime();
+
     return ret;
 }
 
@@ -299,7 +326,7 @@ _MPI_Init(int *argc, char ***argv){
 static int
 _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     int ret,rank,size;
-    int i,j,rc;
+    int i,j,rc,flag;
     prof_attrs *communicator;
     const auto start{std::chrono::steady_clock::now()};
     ret = PMPI_Init_thread(argc, argv, required, provided);
@@ -308,6 +335,13 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     double init_time = duration.count();
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
+
+
+    MPI_Comm_create_keyval(MPI_COMM_DUP_FN,MPI_COMM_NULL_DELETE_FN,
+                           &keyval[0],NULL);
+
+    MPI_Comm_create_keyval(MPI_COMM_DUP_FN,MPI_COMM_NULL_DELETE_FN,
+                           &keyval[1],NULL);
 
     if ( rank == 0 ){
         appname = (char*)malloc(sizeof(char)*1024);
@@ -324,33 +358,15 @@ application %s\n",appname);
         fflush(stdout);
     }
 
-    communicator = (prof_attrs*) malloc (sizeof(prof_attrs));
-    if ( communicator == NULL ){
-        mcpt_abort("malloc failed at line %s\n",__LINE__);
-    }
-
-    strcpy(communicator->name, "W");
-    communicator->size = size;
-    for ( i = 0; i<NUM_OF_PRIMS; i++ ){
-        for (j = 0; j < NUM_BUCKETS; j++) {
-            communicator->buckets_time[i][j] = 0.0;
-            communicator->buckets_msgs[i][j] = 0;
-            communicator->volume[i][j] = 0;
-        }
-    }
-    communicator->comms = my_coms;
-    communicator->id = 'W';
-    rc = PMPI_Comm_set_attr(MPI_COMM_WORLD, namekey(), communicator);
+    alloc_init_commprof(MPI_COMM_WORLD, 'W');
+    comms_table.push_back(MPI_COMM_WORLD);
     profile_this(MPI_COMM_WORLD, 0, MPI_DATATYPE_NULL, Init_thread, init_time, 0);
 
     // global_rank = rank; // For debugging purposes
-    local_communicators.push_back(communicator);
-    comms_table.push_back(MPI_COMM_WORLD);
-    if ( rc != MPI_SUCCESS ){
-        mcpt_abort("Comm_set_attr failed at line %s\n",__LINE__);
-    }
+
     if ( argc != NULL )
         ac = *argc;
+
     total_time = MPI_Wtime();
 
     return ret;

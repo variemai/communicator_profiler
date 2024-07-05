@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(mpisee VERSION 3.2 DESCRIPTION "mpisee: A communicator-centric profiler")
+project(mpisee VERSION 3.3 DESCRIPTION "mpisee: A communicator-centric profiler")
 
 find_package(MPI)
 if(NOT MPI_FOUND)

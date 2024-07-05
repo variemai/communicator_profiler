@@ -18,6 +18,8 @@ extern std::vector<std::pair<prof_meta_pair*, MPI_Group>> free_array;
 
 extern int local_cid;
 extern int my_coms;
+extern int keyval[2]; // keyval[0]  contains metadata
+                      // keyval[1]  contains profiling data
 
 extern "C" {
 int
