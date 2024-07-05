@@ -9,16 +9,14 @@
 extern int prof_enabled;
 extern prof_attrs **local_data;
 // extern prof_attrs **local_comms;
-extern std::vector<prof_attrs*> local_communicators;
 extern std::vector<MPI_Comm> comms_table;
 extern std::unordered_map<MPI_Request, MPI_Comm> requests_map;
 extern std::unordered_map<MPI_Win, MPI_Comm> comm_map;
-
 extern std::vector<std::pair<prof_meta_pair*, MPI_Group>> free_array;
 
 extern int local_cid;
 extern int my_coms;
-extern int keyval[2]; // keyval[0]  contains metadata
+extern int keys[2]; // keyval[0]  contains metadata
                       // keyval[1]  contains profiling data
 
 extern "C" {
@@ -31,7 +29,7 @@ namedel(MPI_Comm comm, int keyval, void *attr, void *s);
 }
 
 extern "C" {
-prof_attrs*
+void
 profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
              double t_elapsed,int v);
 }
