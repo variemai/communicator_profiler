@@ -1189,8 +1189,6 @@ _Finalize(void) {
         comms_table.push_back(newcomm);
     }
     num_of_comms = comms_table.size();
-    if (rank == 0)
-        std::cout << "mpisee: comms_table size = " << num_of_comms << std::endl;
 
     for(long unsigned i = 0; i < num_of_comms; ++i) {
         PMPI_Comm_get_attr(comms_table[i], keys[0], &metadata, &flag);
@@ -1498,9 +1496,11 @@ _Finalize(void) {
             for (int i = 0; i < comms_per_proc; ++i) {
                 commId = commIds[c_displs[proc]+i];
                 datalen = recv_comm_buffer[c_displs[proc]+i].datasize;
-                std::cout << "mpisee: Writing data for communicator: " << commId << ", datasize: " << datalen << std::endl;
                 for (int j = 0; j < datalen; ++j) {
                     index = displs[proc]+j;
+                    std::cout << "mpisee: Writing data for communicator: "
+                              << commId << ", datasize: " << datalen
+                              << "index: " << index << std::endl;
                     if (recv_data_buffer[index].bucketIndex == 0) {
                         minsize = 0;
                         maxsize = buckets[0];
