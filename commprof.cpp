@@ -39,6 +39,7 @@ std::vector<MPI_Comm> comms_table;
 char mpisee_build_date[sizeof(__DATE__)] = __DATE__;
 char mpisee_build_time[sizeof(__TIME__)] = __TIME__;
 double total_time = 0.0;
+double init_time;
 
 extern "C" {
 int
@@ -298,7 +299,7 @@ _MPI_Init(int *argc, char ***argv){
     ret = PMPI_Init(argc, argv);
     const auto end{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> duration{end - start};
-    double init_time = duration.count();
+    init_time = duration.count();
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -356,7 +357,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     ret = PMPI_Init_thread(argc, argv, required, provided);
     const auto end{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> duration{end - start};
-    double init_time = duration.count();
+    init_time = duration.count();
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -1222,7 +1223,7 @@ _Finalize(void) {
     int *recvcounts = NULL;
     int *displs = NULL;
     int total_num_of_comms;
-    total_time = MPI_Wtime() - total_time;
+    total_time = MPI_Wtime() - total_time + init_time;
 
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
