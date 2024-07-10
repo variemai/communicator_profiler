@@ -1497,9 +1497,9 @@ _Finalize(void) {
                 commId = commIds[c_displs[proc]+i];
                 datalen = recv_comm_buffer[c_displs[proc]+i].datasize;
                 for (int j = 0; j < datalen; ++j) {
-                    std::cout << "mpisee: Writing data for communicator: "
-                              << commId << ", datasize: " << datalen
-                              << ", index: " << index << std::endl;
+                    //std::cout << "mpisee: Writing data for communicator: "
+                    //          << commId << ", datasize: " << datalen
+                    //          << ", index: " << index << std::endl;
 
                     if (recv_data_buffer[index].bucketIndex == 0) {
                         minsize = 0;
@@ -1516,7 +1516,7 @@ _Finalize(void) {
                     insertIntoDataEntry(entries, proc, commId, recv_data_buffer[index].prim,
                                         minsize, maxsize, recv_data_buffer[index].num_messages,
                                         recv_data_buffer[index].time, recv_data_buffer[index].volume);
-                    index += j;
+                    index++;
                 }
             }
         }
