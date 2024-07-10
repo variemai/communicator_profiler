@@ -1091,19 +1091,23 @@ MPI_Comm_free(MPI_Comm *comm)
 
     PMPI_Comm_get_attr(*comm, keys[0], &metadata, &flag);
     // Debug prints with flag check
+    /*
     if (flag) {
         std::cout << "mpisee: Comm_free: Comm_get_attr metadata found in communicator\n";
     } else {
         mcpt_abort("Comm_free: Comm_get_attr did not find metadata in communicator\n");
     }
+     */
 
     PMPI_Comm_get_attr(*comm, keys[1], &data, &flag);
     // Debug prints with flag check
+    /*
     if (flag) {
         std::cout << "mpisee: Comm_free: Comm_get_attr data found in data\n";
     } else {
         mcpt_abort("Comm_free: Comm_get_attr d data in communicator\n");
     }
+     */
 
     prof_meta_pair *free_pair = new prof_meta_pair();
     free_pair->meta = *metadata;
@@ -1484,7 +1488,7 @@ _Finalize(void) {
                   << std::endl;
         commId = 0;
         int comms_per_proc;
-        int datalen;
+        int datalen,index;
         for (proc = 0; proc < size; ++proc) {
             comms_per_proc = c_recvcounts[proc];
             for (int i = 0; i < comms_per_proc; ++i) {
@@ -1492,21 +1496,22 @@ _Finalize(void) {
                 datalen = recv_comm_buffer[c_displs[proc]+i].datasize;
                 //std::cout << "mpisee: Writing data for communicator: " << commId << ", datasize: " << datalen << std::endl;
                 for (int j = 0; j < datalen; ++j) {
-                    if (recv_data_buffer[i].bucketIndex == 0) {
+                    index = displs[proc]+j;
+                    if (recv_data_buffer[index].bucketIndex == 0) {
                         minsize = 0;
                         maxsize = buckets[0];
-                    } else if (recv_data_buffer[i].bucketIndex == NUM_BUCKETS - 1) {
+                    } else if (recv_data_buffer[index].bucketIndex == NUM_BUCKETS - 1) {
                         minsize = buckets[NUM_BUCKETS - 2];
                         maxsize = INT_MAX;
                     } else {
-                        minsize = buckets[recv_data_buffer[i].bucketIndex - 1];
-                        maxsize = buckets[recv_data_buffer[i].bucketIndex];
+                        minsize = buckets[recv_data_buffer[index].bucketIndex - 1];
+                        maxsize = buckets[recv_data_buffer[index].bucketIndex];
                     }
                     // Write a debug print
                     //std::cout << "mpisee: Writing data for communicator: " << commId << ", prim: " << recv_data_buffer[i].prim << ", minsize: " << minsize << ", maxsize: " << maxsize << ", num_messages: " << recv_data_buffer[i].num_messages << ", time: " << recv_data_buffer[i].time << ", volume: " << recv_data_buffer[i].volume << std::endl;
-                    insertIntoDataEntry(entries, proc, commId, recv_data_buffer[i].prim,
-                                        minsize, maxsize, recv_data_buffer[i].num_messages,
-                                        recv_data_buffer[i].time, recv_data_buffer[i].volume);
+                    insertIntoDataEntry(entries, proc, commId, recv_data_buffer[index].prim,
+                                        minsize, maxsize, recv_data_buffer[index].num_messages,
+                                        recv_data_buffer[index].time, recv_data_buffer[index].volume);
                 }
             }
         }
