@@ -1494,12 +1494,12 @@ _Finalize(void) {
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
         sqlite3_close(db);
         // Free buffers allocated by rank 0 only
-        free(c_displs);
-        free(displs);
-        free(c_recvcounts);
-        free(recvcounts);
-        free(proc_names);
-        free(alltimes);
+//        free(c_displs);
+//        free(displs);
+//        free(c_recvcounts);
+//        free(recvcounts);
+//        free(proc_names);
+//        free(alltimes);
     }
 
     MPI_Barrier(MPI_COMM_WORLD);
