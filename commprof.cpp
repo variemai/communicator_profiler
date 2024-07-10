@@ -177,6 +177,7 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
     comm_profiler *comm_prof;
     PMPI_Comm_get_attr(comm, keys[1], &comm_prof, &flag);
     /* Debugging code  */
+    /*
     int rank;
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (flag) {
@@ -185,6 +186,7 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
         printf("Rank %d: Map not found\n", rank);
     }
     printf("Rank %d: Inserting data into map\n", rank);
+     */
     /* End of debugging code */
 
     if ( datatype != MPI_DATATYPE_NULL ){
@@ -1176,7 +1178,8 @@ _Finalize(void) {
     num_of_comms = comms_table.size();
 
     // Re-create the communicators from the group_table
-    std::cout << "mpisee: group_table size = " << group_table.size() << std::endl;
+    if ( rank == 0)
+        std::cout << "mpisee: group_table size = " << free_array.size() << std::endl;
     for (long unsigned i = 0; i < free_array.size(); ++i) {
         PMPI_Comm_create_group(MPI_COMM_WORLD, free_array[i].second, 0, &newcomm);
         if (newcomm == MPI_COMM_NULL) {
