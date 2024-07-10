@@ -1490,17 +1490,16 @@ _Finalize(void) {
                   << std::endl;
         commId = 0;
         int comms_per_proc;
-        int datalen,index;
+        int datalen,index = 0;
         for (proc = 0; proc < size; ++proc) {
             comms_per_proc = c_recvcounts[proc];
             for (int i = 0; i < comms_per_proc; ++i) {
                 commId = commIds[c_displs[proc]+i];
                 datalen = recv_comm_buffer[c_displs[proc]+i].datasize;
                 for (int j = 0; j < datalen; ++j) {
-                    index = displs[proc]+j;
                     std::cout << "mpisee: Writing data for communicator: "
                               << commId << ", datasize: " << datalen
-                              << "index: " << index << std::endl;
+                              << ", index: " << index << std::endl;
 
                     if (recv_data_buffer[index].bucketIndex == 0) {
                         minsize = 0;
@@ -1517,6 +1516,7 @@ _Finalize(void) {
                     insertIntoDataEntry(entries, proc, commId, recv_data_buffer[index].prim,
                                         minsize, maxsize, recv_data_buffer[index].num_messages,
                                         recv_data_buffer[index].time, recv_data_buffer[index].volume);
+                    index += j;
                 }
             }
         }
