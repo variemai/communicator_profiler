@@ -1483,9 +1483,12 @@ _Finalize(void) {
                         minsize = buckets[recv_data_buffer[i].bucketIndex - 1];
                         maxsize = buckets[recv_data_buffer[i].bucketIndex];
                     }
+                    // Write a debug print
+                    std::cout << "mpisee: Writing data for communicator: " << commId << ", prim: " << recv_data_buffer[i].prim << ", minsize: " << minsize << ", maxsize: " << maxsize << ", num_messages: " << recv_data_buffer[i].num_messages << ", time: " << recv_data_buffer[i].time << ", volume: " << recv_data_buffer[i].volume << std::endl;
                     insertIntoDataEntry(entries, proc, commId, recv_data_buffer[i].prim,
                                         minsize, maxsize, recv_data_buffer[i].num_messages,
                                         recv_data_buffer[i].time, recv_data_buffer[i].volume);
+
                 }
             }
         }
