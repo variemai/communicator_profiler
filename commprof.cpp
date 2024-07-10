@@ -1142,18 +1142,17 @@ F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
 
 static int
 _Finalize(void) {
-    prof_data *array = NULL;
-    prof_attrs *com_info = NULL;
     int rank, size, buf[2] = {-1, -1};
-    int i, k, j, len,flag;
-    prof_data *recv_buffer = NULL;
+    int len,flag;
+    std::vector<comm_all> recv_comm_buffer;
     int  num_of_comms, resultlen;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names = NULL;
     double *alltimes = NULL;
     std::vector<double> mpi_times;
-    int *recvcounts = NULL;
+    //int *recvcounts = NULL;
+    int *c_recvcounts = NULL;
     int *displs = NULL;
     int total_num_of_comms;
     std::vector<prof_attrs*> local_communicators;
@@ -1166,8 +1165,8 @@ _Finalize(void) {
 
     total_time = MPI_Wtime() - total_time;
 
-    int rc = PMPI_Barrier(MPI_COMM_WORLD);
-    if (rc != MPI_SUCCESS) {
+
+    if (PMPI_Barrier(MPI_COMM_WORLD) != MPI_SUCCESS) {
         mcpt_abort("MPI_Barrier failed\n");
     }
     MPI_Comm newcomm;
@@ -1198,18 +1197,19 @@ _Finalize(void) {
         overwrite_name(&metadata, buf[0], buf[1]);
         strcpy(comm_meta.name, metadata->name);
         comm_meta.size = metadata->size;
-        metadata_array.push_back(comm_meta);
+        metadata_array.push_back(comm_meta); // metadata array send seperately
+
         PMPI_Comm_get_attr(comms_table[i], keys[1], &comm_prof_data, &flag);
-        for (i=0; i<NUM_OF_PRIMS; ++i) {
-            for (j = 0; j < NUM_BUCKETS; ++j) {
+        for (int k=0; i<NUM_OF_PRIMS; ++i) {
+            for (int j = 0; j < NUM_BUCKETS; ++j) {
                 // Check if the key exists in the map
-                auto it = comm_prof_data->map.find(getPrimBucketKey(i, j));
+                auto it = comm_prof_data->map.find(getPrimBucketKey(k, j));
 
                 if (it != comm_prof_data->map.end()) {
                     // Allocate comm_data struct and copy the data from map
                     comm_data data;
                     data.comm_id = i;
-                    data.prim = i;
+                    data.prim = k;
                     data.bucketIndex = j;
                     data.num_messages = it->second.num_messages;
                     data.time = it->second.time;
@@ -1221,8 +1221,8 @@ _Finalize(void) {
     }
 
 
-    recvcounts = (int *)malloc(sizeof(int) * size);
-    if (recvcounts == NULL) {
+    c_recvcounts = (int *)malloc(sizeof(int) * size);
+    if (c_recvcounts == NULL) {
         mcpt_abort("malloc error for recvcounts Rank: %d\n", rank);
     }
     if ( rank == 0 ){
@@ -1231,27 +1231,51 @@ _Finalize(void) {
             mcpt_abort("malloc error for displs");
         }
     }
-    PMPI_Gather(&num_of_comms, 1, MPI_INT, recvcounts, 1, MPI_INT, 0,
-                MPI_COMM_WORLD);
+    PMPI_Gather(&num_of_comms, 1, MPI_INT, c_recvcounts,
+                1, MPI_INT, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
         // Compute displacements
         displs[0] = 0;
-        total_num_of_comms = recvcounts[0];
-        for (i = 1; i < size; ++i) {
-          displs[i] = displs[i - 1] + recvcounts[i - 1];
-          total_num_of_comms += recvcounts[i];
+        total_num_of_comms = c_recvcounts[0];
+        for (int i = 1; i < size; ++i) {
+          displs[i] = displs[i - 1] + c_recvcounts[i - 1];
+          total_num_of_comms += c_recvcounts[i];
         }
         std::cout << "mpisee: total number of communicators = " << total_num_of_comms << std::endl;
-        recv_buffer =
-            (prof_data *)malloc(sizeof(prof_data) * total_num_of_comms );
+        recv_comm_buffer.resize(total_num_of_comms);
 
-        if (recv_buffer == NULL) {
-          mcpt_abort("malloc error for receive buffer Rank: %d\n", rank);
+    }
 
+    // Gather the data
+    comm_all dummy;
+    MPI_Datatype MPI_COMM_ALL;
+    MPI_Datatype types[2] = {MPI_CHAR, MPI_INT};
+    int blocklengths[2] = {NAMELEN, 1};
+    MPI_Aint displacements[2];
+    MPI_Aint base;
+    MPI_Get_address(&dummy, &base);
+    MPI_Get_address(&dummy.name, &displacements[0]);
+    MPI_Get_address(&dummy.size, &displacements[1]);
+    // Convert addresses to displacements
+    for (int i = 0; i < 2; i++) {
+        displacements[i] = MPI_Aint_diff(displacements[i], base);
+    }
+
+    MPI_Type_create_struct(2, blocklengths, displacements, types, &MPI_COMM_ALL);
+    MPI_Type_commit(&MPI_COMM_ALL);
+
+    MPI_Gatherv(metadata_array.data(), num_of_comms, MPI_COMM_ALL,
+                recv_comm_buffer.data(), c_recvcounts, displs, MPI_COMM_ALL, 0, MPI_COMM_WORLD);
+
+    if (rank == 0) {
+        for (int i = 0; i < total_num_of_comms; ++i) {
+            std::cout << "Communicator Name: " << recv_comm_buffer[i].name << "\n";
+            std::cout << "  Size: " << recv_comm_buffer[i].size << "\n";
         }
     }
 
+    /*
     array = (prof_data *)malloc(sizeof(prof_data) * num_of_comms);
     if (array == NULL) {
         mcpt_abort("malloc error for send buffer Rank: %d\n", rank);
@@ -1485,6 +1509,7 @@ _Finalize(void) {
     free(array);
     free(displs);
     free(recvcounts);
+     */
 
     return PMPI_Finalize();
 }
