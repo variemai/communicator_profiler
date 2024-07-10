@@ -1501,6 +1501,7 @@ _Finalize(void) {
                     std::cout << "mpisee: Writing data for communicator: "
                               << commId << ", datasize: " << datalen
                               << "index: " << index << std::endl;
+
                     if (recv_data_buffer[index].bucketIndex == 0) {
                         minsize = 0;
                         maxsize = buckets[0];
