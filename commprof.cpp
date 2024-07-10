@@ -1481,6 +1481,9 @@ _Finalize(void) {
         }
 
         commIds=CommsInsert(db, comms);
+        if (commIds.size() != total_num_of_comms) {
+            mcpt_abort("mpisee: Error: CommIds size does not match total_num_of_comms\n");
+        }
         comms.clear();
         comms.shrink_to_fit();
 
