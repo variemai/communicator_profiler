@@ -158,11 +158,13 @@ void insertOrUpdatePrimBucketInfo(std::unordered_map<int, primBucketInfo>& map,
     if (it == map.end()) {
         // Key not found, insert the new pair
         map[key] = newInfo;
+        //std::cout << "mpisee: Inserted new key " << key << std::endl;
     } else {
         // Key found, update the existing value
         it->second.time += newInfo.time;
         it->second.num_messages += newInfo.num_messages;
         it->second.volume += newInfo.volume;
+        //std::cout << "mpisee: Updated key " << key << std::endl;
     }
 }
 
@@ -177,8 +179,7 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
     int64_t sum;
     comm_profiler *comm_prof;
     PMPI_Comm_get_attr(comm, keys[1], &comm_prof, &flag);
-    /* Debugging code  */
-    /*
+    /* Debugging code
     int rank;
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (flag) {
@@ -187,8 +188,8 @@ profile_this(MPI_Comm comm, int64_t count,MPI_Datatype datatype,int prim,
         printf("Rank %d: Map not found\n", rank);
     }
     printf("Rank %d: Inserting data into map\n", rank);
-     */
-    /* End of debugging code */
+
+    End of debugging code */
 
     if ( datatype != MPI_DATATYPE_NULL ){
         PMPI_Type_size(datatype, &size);
@@ -313,8 +314,6 @@ _MPI_Init(int *argc, char ***argv){
     alloc_init_commprof(MPI_COMM_WORLD, 'W');
     comms_table.push_back(MPI_COMM_WORLD);
     profile_this(MPI_COMM_WORLD, 0, MPI_DATATYPE_NULL, Init, init_time, 0);
-
-    // global_rank = rank; // For debugging purposes
 
     if ( argc != NULL )
         ac = *argc;
@@ -1187,7 +1186,7 @@ _Finalize(void) {
     }
 
     // std::cout << "mpisee: comms_table size = " << comms_table.size() << std::endl;
-    // Iterate over the communicator and call an MPI_Allreduce
+
     for(long unsigned i = 0; i < comms_table.size(); ++i) {
         PMPI_Comm_get_attr(comms_table[i], keys[0], &metadata, &flag);
         buf[0] = rank;
@@ -1198,9 +1197,15 @@ _Finalize(void) {
         comm_meta.size = metadata->size;
         datasize = 0;
         PMPI_Comm_get_attr(comms_table[i], keys[1], &comm_prof_data, &flag);
-        for (int k=0; i<NUM_OF_PRIMS; ++i) {
+        if (!flag) {
+            mcpt_abort("Finalize: Comm_get_attr failed\n");
+        }
+        for (int k=0; k<NUM_OF_PRIMS; ++k) {
             for (int j = 0; j < NUM_BUCKETS; ++j) {
                 // Check if the key exists in the map
+
+                //if (rank == 0)
+                //    std::cout << "mpisee: key = " << key << std::endl;
                 auto it = comm_prof_data->map.find(getPrimBucketKey(k, j));
 
                 if (it != comm_prof_data->map.end()) {
@@ -1214,12 +1219,22 @@ _Finalize(void) {
                     data.volume = it->second.volume;
                     data_array.push_back(data);
                     datasize++;
+                    /*
+                    std::cout << "mpisee: data_array[" << i << "].comm_id = " << data_array[i].comm_id << std::endl;
+                    std::cout << "mpisee: data_array[" << i << "].prim = " << data_array[i].prim << std::endl;
+                    std::cout << "mpisee: data_array[" << i << "].bucketIndex = " << data_array[i].bucketIndex << std::endl;
+                    std::cout << "mpisee: data_array[" << i << "].time = " << data_array[i].time << std::endl;
+                    std::cout << "mpisee: data_array[" << i << "].num_messages = " << data_array[i].num_messages << std::endl;
+                    std::cout << "mpisee: data_array[" << i << "].volume = " << data_array[i].volume << std::endl;
+                     */
                 }
             }
         }
-        comm_meta.size = datasize;
+        comm_meta.datasize = datasize;
+        //std::cout << "mpisee: comm_meta.datasize = " << comm_meta.datasize << std::endl;
         metadata_array.push_back(comm_meta); // metadata array send seperately
     }
+
 
     int *c_recvcounts = NULL;
     int *c_displs = NULL;
@@ -1313,6 +1328,7 @@ _Finalize(void) {
 
     // 2. Gather the profiling data from all ranks to rank 0
     int local_data_size = data_array.size();
+    //std::cout << "mpisee: local_data_size = " << local_data_size << std::endl;
     int total_num_of_data = 0;
     int *recvcounts = NULL;
     int *displs = NULL;
@@ -1454,6 +1470,8 @@ _Finalize(void) {
         std::vector<int> commIds;
 
         for (int i = 0; i < total_num_of_comms; i++) {
+            // Write a debug print
+            //std::cout << "mpisee: Writing metadata for communicator: " << recv_comm_buffer[i].name << ", size: " << recv_comm_buffer[i].size << ", datasize: " << recv_comm_buffer[i].datasize << std::endl;
             comms.push_back({recv_comm_buffer[i].name, recv_comm_buffer[i].size});
         }
 
@@ -1471,7 +1489,8 @@ _Finalize(void) {
             comms_per_proc = c_recvcounts[proc];
             for (int i = 0; i < comms_per_proc; ++i) {
                 commId = commIds[c_displs[proc]+i];
-                datalen = recv_comm_buffer[c_displs[proc]+i].size;
+                datalen = recv_comm_buffer[c_displs[proc]+i].datasize;
+                //std::cout << "mpisee: Writing data for communicator: " << commId << ", datasize: " << datalen << std::endl;
                 for (int j = 0; j < datalen; ++j) {
                     if (recv_data_buffer[i].bucketIndex == 0) {
                         minsize = 0;
@@ -1484,7 +1503,7 @@ _Finalize(void) {
                         maxsize = buckets[recv_data_buffer[i].bucketIndex];
                     }
                     // Write a debug print
-                    std::cout << "mpisee: Writing data for communicator: " << commId << ", prim: " << recv_data_buffer[i].prim << ", minsize: " << minsize << ", maxsize: " << maxsize << ", num_messages: " << recv_data_buffer[i].num_messages << ", time: " << recv_data_buffer[i].time << ", volume: " << recv_data_buffer[i].volume << std::endl;
+                    //std::cout << "mpisee: Writing data for communicator: " << commId << ", prim: " << recv_data_buffer[i].prim << ", minsize: " << minsize << ", maxsize: " << maxsize << ", num_messages: " << recv_data_buffer[i].num_messages << ", time: " << recv_data_buffer[i].time << ", volume: " << recv_data_buffer[i].volume << std::endl;
                     insertIntoDataEntry(entries, proc, commId, recv_data_buffer[i].prim,
                                         minsize, maxsize, recv_data_buffer[i].num_messages,
                                         recv_data_buffer[i].time, recv_data_buffer[i].volume);
