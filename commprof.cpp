@@ -1261,7 +1261,7 @@ _Finalize(void) {
     MPI_Get_address(&dummy, &base);
     MPI_Get_address(&dummy.name, &displacements[0]);
     MPI_Get_address(&dummy.size, &displacements[1]);
-    MPI_Get_address(&dummy.size, &displacements[2]);
+    MPI_Get_address(&dummy.datasize, &displacements[2]);
     // Convert addresses to displacements
     for (int i = 0; i < 3; i++) {
         displacements[i] = MPI_Aint_diff(displacements[i], base);
@@ -1488,7 +1488,6 @@ _Finalize(void) {
                     insertIntoDataEntry(entries, proc, commId, recv_data_buffer[i].prim,
                                         minsize, maxsize, recv_data_buffer[i].num_messages,
                                         recv_data_buffer[i].time, recv_data_buffer[i].volume);
-
                 }
             }
         }
