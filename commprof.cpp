@@ -45,6 +45,7 @@ std::vector<std::pair<prof_meta_pair*, MPI_Group>> free_array;
 char mpisee_build_date[sizeof(__DATE__)] = __DATE__;
 char mpisee_build_time[sizeof(__TIME__)] = __TIME__;
 double total_time = 0.0;
+double init_time;
 
 extern "C" {
 int
@@ -284,7 +285,7 @@ _MPI_Init(int *argc, char ***argv){
     ret = PMPI_Init(argc, argv);
     const auto end{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> duration{end - start};
-    double init_time = duration.count();
+    init_time = duration.count();
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -331,7 +332,7 @@ _MPI_Init_thread(int *argc, char ***argv, int required, int *provided){
     ret = PMPI_Init_thread(argc, argv, required, provided);
     const auto end{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> duration{end - start};
-    double init_time = duration.count();
+    init_time = duration.count();
     PMPI_Comm_rank(MPI_COMM_WORLD, &rank);
     PMPI_Comm_size(MPI_COMM_WORLD, &size);
 
@@ -538,7 +539,7 @@ int
 MPI_Comm_idup(MPI_Comm comm, MPI_Comm *newcomm, MPI_Request *request)
 {
 
-    int ret,comm_size;
+    int ret;
     ret = PMPI_Comm_idup(comm, newcomm, request);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL )
         return ret;
@@ -571,7 +572,7 @@ int
 MPI_Cart_create(MPI_Comm old_comm, int ndims, const int *dims,
                 const int *periods, int reorder, MPI_Comm *newcomm)
 {
-    int ret,comm_size;
+    int ret;
     ret = PMPI_Cart_create(old_comm, ndims, dims, periods, reorder, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
@@ -604,7 +605,7 @@ F77_MPI_CART_CREATE(MPI_Fint  * comm_old, int  * ndims, const int  *dims,
 int
 MPI_Cart_sub(MPI_Comm comm, const int *remain_dims, MPI_Comm *newcomm)
 {
-    int ret,comm_size;
+    int ret;
 
     ret = PMPI_Cart_sub(comm, remain_dims, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
@@ -636,7 +637,7 @@ int
 MPI_Graph_create(MPI_Comm comm_old, int nnodes, const int *index,
                  const int *edges, int reorder, MPI_Comm *newcomm)
 {
-    int ret,comm_size;
+    int ret;
 
     ret = PMPI_Graph_create(comm_old, nnodes, index, edges, reorder, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
@@ -745,8 +746,7 @@ F77_MPI_COMM_SPLIT_TYPE(MPI_Fint  * comm, int  * split_type, int  * key,
 int
 MPI_Comm_create_group(MPI_Comm comm, MPI_Group group, int tag, MPI_Comm *newcomm)
 {
-    int ret, comm_size;
-    prof_attrs *com_prof;
+    int ret;
     ret = PMPI_Comm_create_group(comm, group, tag, newcomm);
     if ( newcomm == NULL || *newcomm == MPI_COMM_NULL ){
         return ret;
@@ -781,8 +781,7 @@ MPI_Dist_graph_create_adjacent(MPI_Comm comm_old, int indegree,
                                const int *destweights, MPI_Info info,
                                int reorder, MPI_Comm *comm_dist_graph)
 {
-    int ret, comm_size;
-    prof_attrs *com_prof;
+    int ret;
     ret = PMPI_Dist_graph_create_adjacent(comm_old, indegree, sources,
                                           sourceweights, outdegree,
                                           destinations, destweights, info,
@@ -1145,27 +1144,24 @@ F77_MPI_COMM_FREE(MPI_Fint *comm, MPI_Fint *ierr)
 static int
 _Finalize(void) {
     int rank, size, buf[2] = {-1, -1};
-    int len,flag;
+    int flag, len, resultlen, datasize;
     std::vector<comm_all> recv_comm_buffer;
-    int  num_of_comms, resultlen;
+    int  num_of_comms;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names = NULL;
     double *alltimes = NULL;
     std::vector<double> mpi_times;
-    //int *recvcounts = NULL;
-    int *c_recvcounts = NULL;
-    int *displs = NULL;
     int total_num_of_comms;
     std::vector<prof_attrs*> local_communicators;
     // Place the profiling data into a vector and gather it to rank 0
     std::vector<comm_all> metadata_array;
     std::vector<comm_data> data_array;
     comm_all comm_meta;
-    prof_metadata *metadata, **new_metadata;
+    prof_metadata *metadata;
     comm_profiler *comm_prof_data;
 
-    total_time = MPI_Wtime() - total_time;
+    total_time = MPI_Wtime() - total_time + init_time;
 
 
     if (PMPI_Barrier(MPI_COMM_WORLD) != MPI_SUCCESS) {
@@ -1200,8 +1196,7 @@ _Finalize(void) {
         overwrite_name(&metadata, buf[0], buf[1]);
         strcpy(comm_meta.name, metadata->name);
         comm_meta.size = metadata->size;
-        metadata_array.push_back(comm_meta); // metadata array send seperately
-
+        datasize = 0;
         PMPI_Comm_get_attr(comms_table[i], keys[1], &comm_prof_data, &flag);
         for (int k=0; i<NUM_OF_PRIMS; ++i) {
             for (int j = 0; j < NUM_BUCKETS; ++j) {
@@ -1218,109 +1213,141 @@ _Finalize(void) {
                     data.time = it->second.time;
                     data.volume = it->second.volume;
                     data_array.push_back(data);
+                    datasize++;
                 }
             }
         }
+        comm_meta.size = datasize;
+        metadata_array.push_back(comm_meta); // metadata array send seperately
     }
 
+    int *c_recvcounts = NULL;
+    int *c_displs = NULL;
 
-    c_recvcounts = (int *)malloc(sizeof(int) * size);
-    if (c_recvcounts == NULL) {
-        mcpt_abort("malloc error for recvcounts Rank: %d\n", rank);
-    }
     if ( rank == 0 ){
-        displs = (int *)malloc(sizeof(int) * size);
-        if (displs == NULL) {
+        c_recvcounts = (int *)malloc(sizeof(int) * size);
+        if (c_recvcounts == NULL) {
+            mcpt_abort("malloc error for recvcounts");
+        }
+        c_displs = (int *)malloc(sizeof(int) * size);
+        if (c_displs == NULL) {
             mcpt_abort("malloc error for displs");
         }
+
     }
     PMPI_Gather(&num_of_comms, 1, MPI_INT, c_recvcounts,
                 1, MPI_INT, 0, MPI_COMM_WORLD);
 
     if (rank == 0) {
         // Compute displacements
-        displs[0] = 0;
+        c_displs[0] = 0;
         total_num_of_comms = c_recvcounts[0];
         for (int i = 1; i < size; ++i) {
-          displs[i] = displs[i - 1] + c_recvcounts[i - 1];
+          c_displs[i] = c_displs[i - 1] + c_recvcounts[i - 1];
           total_num_of_comms += c_recvcounts[i];
         }
-        std::cout << "mpisee: total number of communicators = " << total_num_of_comms << std::endl;
+        //std::cout << "mpisee: total number of communicators = " << total_num_of_comms << std::endl;
         recv_comm_buffer.resize(total_num_of_comms);
 
     }
 
-    // Gather the data
+    // Gather the metadata
     comm_all dummy;
     MPI_Datatype MPI_COMM_ALL;
-    MPI_Datatype types[2] = {MPI_CHAR, MPI_INT};
-    int blocklengths[2] = {NAMELEN, 1};
-    MPI_Aint displacements[2];
+    MPI_Datatype types[3] = {MPI_CHAR, MPI_INT, MPI_INT};
+    int blocklengths[3] = {NAMELEN, 1, 1};
+    MPI_Aint displacements[3];
     MPI_Aint base;
     MPI_Get_address(&dummy, &base);
     MPI_Get_address(&dummy.name, &displacements[0]);
     MPI_Get_address(&dummy.size, &displacements[1]);
+    MPI_Get_address(&dummy.size, &displacements[2]);
     // Convert addresses to displacements
-    for (int i = 0; i < 2; i++) {
+    for (int i = 0; i < 3; i++) {
         displacements[i] = MPI_Aint_diff(displacements[i], base);
     }
 
-    MPI_Type_create_struct(2, blocklengths, displacements, types, &MPI_COMM_ALL);
+    MPI_Type_create_struct(3, blocklengths, displacements, types, &MPI_COMM_ALL);
     MPI_Type_commit(&MPI_COMM_ALL);
 
-    MPI_Gatherv(metadata_array.data(), num_of_comms, MPI_COMM_ALL,
-                recv_comm_buffer.data(), c_recvcounts, displs, MPI_COMM_ALL, 0, MPI_COMM_WORLD);
+    PMPI_Gatherv(metadata_array.data(), num_of_comms, MPI_COMM_ALL,
+                recv_comm_buffer.data(), c_recvcounts, c_displs, MPI_COMM_ALL, 0, MPI_COMM_WORLD);
 
+//    if (rank == 0) {
+//        for (int i = 0; i < total_num_of_comms; ++i) {
+//            std::cout << "Communicator Name: " << recv_comm_buffer[i].name << "\n";
+//            std::cout << "  Size: " << recv_comm_buffer[i].size << "\n";
+//        }
+//    }
+
+    MPI_Type_free(&MPI_COMM_ALL);
+    metadata_array.clear();
+    metadata_array.shrink_to_fit(); //recv_comm_buffer has all communicator metadata now
+
+    // Need to Gather the actual data now
+
+    // 1. Create MPI datatype for comm_data
+    comm_data dummy_data;
+    MPI_Datatype MPI_COMM_DATA;
+    MPI_Datatype datatypes[6] = {MPI_INT, MPI_INT, MPI_INT, MPI_DOUBLE, MPI_INT, MPI_UINT64_T};
+    int blocklengths2[6] = {1, 1, 1, 1, 1, 1};
+    MPI_Aint displacements2[6]; // Use more descriptive names for clarity
+    MPI_Aint comm_data_base;    // More descriptive name
+
+    MPI_Get_address(&dummy_data, &comm_data_base);
+
+    MPI_Get_address(&dummy_data.comm_id, &displacements2[0]);
+    MPI_Get_address(&dummy_data.prim, &displacements2[1]);
+    MPI_Get_address(&dummy_data.bucketIndex, &displacements2[2]);
+    MPI_Get_address(&dummy_data.time, &displacements2[3]);
+    MPI_Get_address(&dummy_data.num_messages, &displacements2[4]);
+    MPI_Get_address(&dummy_data.volume, &displacements2[5]);
+
+    for (int i = 0; i < 6; ++i) {
+        displacements2[i] = MPI_Aint_diff(displacements2[i], comm_data_base);
+    }
+
+    MPI_Type_create_struct(6, blocklengths2, displacements2, datatypes, &MPI_COMM_DATA);
+
+    MPI_Type_commit(&MPI_COMM_DATA);
+
+    // 2. Gather the profiling data from all ranks to rank 0
+    int local_data_size = data_array.size();
+    int total_num_of_data = 0;
+    int *recvcounts = NULL;
+    int *displs = NULL;
+    // allocate recvcounts and displs only for rank 0
     if (rank == 0) {
-        for (int i = 0; i < total_num_of_comms; ++i) {
-            std::cout << "Communicator Name: " << recv_comm_buffer[i].name << "\n";
-            std::cout << "  Size: " << recv_comm_buffer[i].size << "\n";
+        recvcounts = (int *)malloc(sizeof(int) * size);
+        if (recvcounts == NULL) {
+            mcpt_abort("malloc error for recvcounts buffer Rank: %d\n", rank);
+        }
+        displs = (int *)malloc(sizeof(int) * size);
+        if (displs == NULL) {
+            mcpt_abort("malloc error for displs buffer Rank: %d\n", rank);
         }
     }
-
-    /*
-    array = (prof_data *)malloc(sizeof(prof_data) * num_of_comms);
-    if (array == NULL) {
-        mcpt_abort("malloc error for send buffer Rank: %d\n", rank);
+    PMPI_Gather(&local_data_size, 1, MPI_INT, recvcounts, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    // Root process: Allocate receiving buffer and calculate displacements
+    std::vector<comm_data> recv_data_buffer;
+    if (rank == 0) {
+        displs[0] = 0;
+        total_num_of_data = recvcounts[0];
+        for (int i = 1; i < size; ++i) {
+            displs[i] = displs[i - 1] + recvcounts[i - 1];
+            total_num_of_data += recvcounts[i];
+        }
+        //std::cout << "mpisee: total number of data = " << total_num_of_data << std::endl;
+        recv_data_buffer.resize(total_num_of_data);
     }
+    // Gather the data
+    PMPI_Gatherv(data_array.data(), local_data_size, MPI_COMM_DATA,
+                recv_data_buffer.data(), recvcounts, displs, MPI_COMM_DATA, 0, MPI_COMM_WORLD);
 
-    MPI_Datatype profiler_data;
-    MPI_Aint base, displacements[5];
-    int blocklengths[5] = {NAMELEN, 1, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS, NUM_OF_PRIMS * NUM_BUCKETS };
-    MPI_Datatype types[5] = {MPI_CHAR, MPI_INT, MPI_DOUBLE, MPI_INT, MPI_UINT64_T,};
-    prof_data dummy;
+    // Clear the data_array vector
+    data_array.clear();
+    data_array.shrink_to_fit(); // recv_data_buffer has all data now
 
-    // Create a dummy instance to calculate displacements
-    MPI_Get_address(&dummy, &base);
-    MPI_Get_address(&dummy.name, &displacements[0]);
-    MPI_Get_address(&dummy.size, &displacements[1]);
-    // MPI_Get_address(&dummy.comms, &displacements[2]);
-    // MPI_Get_address(&dummy.id, &displacements[3]);
-    MPI_Get_address(&dummy.buckets_time, &displacements[2]);
-    MPI_Get_address(&dummy.buckets_msgs, &displacements[3]);
-    MPI_Get_address(&dummy.volume, &displacements[4]);
-
-    // Convert addresses to displacements
-    for (i = 0; i < 5; i++) {
-        displacements[i] = MPI_Aint_diff(displacements[i], base);
-    }
-
-    MPI_Type_create_struct(5, blocklengths, displacements, types, &profiler_data);
-    PMPI_Type_commit(&profiler_data);
-    k = 0;
-
-    // Transfer only the necessary data ignore id and comms
-    for (i = 0; i < num_of_comms; i++) {
-         //memcpy(&array[i], local_communicators[i], sizeof(prof_attrs));
-         strncpy(array[i].name, local_communicators[i]->name, NAMELEN);
-         array[i].size = local_communicators[i]->size;
-         memcpy(array[i].buckets_time,local_communicators[i]->buckets_time,
-                sizeof(array[i].buckets_time));
-         memcpy(array[i].buckets_msgs, local_communicators[i]->buckets_msgs,
-                sizeof(array[i].buckets_msgs));
-         memcpy(array[i].volume, local_communicators[i]->volume,
-                sizeof(array[i].volume));
-    }
 
     MPI_Get_processor_name(proc_name, &len);
 
@@ -1342,16 +1369,16 @@ _Finalize(void) {
     PMPI_Gather(&total_time, 1, MPI_DOUBLE, alltimes, 1, MPI_DOUBLE, 0,
                 MPI_COMM_WORLD);
 
-
+    /*
     PMPI_Gatherv(array, num_of_comms, profiler_data, recv_buffer, recvcounts,
                  displs, profiler_data, 0, MPI_COMM_WORLD);
-
+    */
 
     if ( rank == 0 ){
         int rc,commId,maxsize,minsize;
         sqlite3 *db = NULL;
         std::string outfile;
-        int l, proc, startIdx, numElements;
+        int proc;
         double t;
         const char *env_var = getenv("MPISEE_OUTFILE");
         if (env_var != NULL) {
@@ -1402,7 +1429,7 @@ _Finalize(void) {
         if (alltimes != NULL){
           std::cout << "mpisee: Writing the exectimes table" << std::endl;
           insertIntoTimes(db, alltimes[0]);
-          for (i = 1; i < size; i++) {
+          for (int i = 1; i < size; i++) {
             times.push_back(alltimes[i]);
           }
           BatchInsertIntoTimes(db, times);
@@ -1426,18 +1453,8 @@ _Finalize(void) {
         std::vector<CommData> comms;
         std::vector<int> commIds;
 
-        for (proc = 0; proc < size; ++proc) {
-            startIdx = displs[proc];
-            numElements = recvcounts[proc];
-
-          for (j = 0; j < numElements; ++j) {
-              // Debugging print: communicator names
-              // std::cout << "mpisee: Name = " << recv_buffer[startIdx + j].name
-              //           << ", size = " << recv_buffer[startIdx + j].size
-              //           << std::endl;
-              comms.push_back({recv_buffer[startIdx + j].name,
-                      recv_buffer[startIdx + j].size});
-          }
+        for (int i = 0; i < total_num_of_comms; i++) {
+            comms.push_back({recv_comm_buffer[i].name, recv_comm_buffer[i].size});
         }
 
         commIds=CommsInsert(db, comms);
@@ -1447,72 +1464,45 @@ _Finalize(void) {
         std::vector<DataEntry> entries;
         std::cout << "mpisee: Writing the main data table"
                   << std::endl;
-        i = 0;
         commId = 0;
+        int comms_per_proc;
+        int datalen;
         for (proc = 0; proc < size; ++proc) {
-            startIdx = displs[proc];
-            numElements = recvcounts[proc];
-            for (j = 0; j < numElements; ++j) {
-                if (i < (int)commIds.size()) {
-                    commId = commIds[i];
-                } else {
-                    std::cout << "mpisee: index in commids (" << i
-                            << ") out of bounds" << std::endl;
-                    mcpt_abort("commId out of bounds\n");
+            comms_per_proc = c_recvcounts[proc];
+            for (int i = 0; i < comms_per_proc; ++i) {
+                commId = commIds[c_displs[proc]+i];
+                datalen = recv_comm_buffer[c_displs[proc]+i].size;
+                for (int j = 0; j < datalen; ++j) {
+                    if (recv_data_buffer[i].bucketIndex == 0) {
+                        minsize = 0;
+                        maxsize = buckets[0];
+                    } else if (recv_data_buffer[i].bucketIndex == NUM_BUCKETS - 1) {
+                        minsize = buckets[NUM_BUCKETS - 2];
+                        maxsize = INT_MAX;
+                    } else {
+                        minsize = buckets[recv_data_buffer[i].bucketIndex - 1];
+                        maxsize = buckets[recv_data_buffer[i].bucketIndex];
+                    }
+                    insertIntoDataEntry(entries, proc, commId, recv_data_buffer[i].prim,
+                                        minsize, maxsize, recv_data_buffer[i].num_messages,
+                                        recv_data_buffer[i].time, recv_data_buffer[i].volume);
                 }
-                prof_data &item = recv_buffer[startIdx + j];
-
-                for (k = 0; k < NUM_OF_PRIMS; k++) {
-                    // Insert the data of the first bucket
-                    minsize = 0;
-                    maxsize = buckets[0];
-                    // Insert only if the number of messages is greater than 0
-                    if (item.buckets_msgs[k][0] > 0) {
-                        insertIntoDataEntry(entries, proc, commId, k, minsize, maxsize,
-                                            item.buckets_msgs[k][0],
-                                            item.buckets_time[k][0],
-                                            item.volume[k][0]);
-                    }
-                    // Insert the data of the middle buckets
-                    for (l = 1; l < NUM_BUCKETS-1; l++) {
-                        minsize = buckets[l-1]; //runs from 0 to NUM_BUCKETS-3
-                        maxsize = buckets[l]; //runs from 1 to NUM_BUCKETS-2
-                        if (item.buckets_msgs[k][l] > 0) {
-                            insertIntoDataEntry(entries, proc, commId, k, minsize,
-                                                maxsize, item.buckets_msgs[k][l],
-                                                item.buckets_time[k][l],
-                                                item.volume[k][l]);
-                        }
-                    }
-                    // Insert the data of the last bucket
-                    minsize = buckets[NUM_BUCKETS-2];
-                    maxsize = INT_MAX;
-                    if (item.buckets_msgs[k][NUM_BUCKETS-1] > 0) {
-                        insertIntoDataEntry(entries, proc, commId, k, minsize,
-                                            maxsize, item.buckets_msgs[k][NUM_BUCKETS-1],
-                                            item.buckets_time[k][NUM_BUCKETS-1],
-                                            item.volume[k][NUM_BUCKETS-1]);
-                    }
-
-                }
-                i++;
             }
         }
         executeBatchInsert(db, entries);
         t = MPI_Wtime() - t;
         std::cout << "mpisee: Output database file: " << outfile << ", time to write: " << t << " seconds" << std::endl;
         sqlite3_close(db);
-        free(recv_buffer);
-
+        // Free buffers allocated by rank 0 only
+        free(c_displs);
+        free(displs);
+        free(c_recvcounts);
+        free(recvcounts);
+        free(proc_names);
+        free(alltimes);
     }
 
-
     MPI_Barrier(MPI_COMM_WORLD);
-    PMPI_Type_free(&profiler_data);
-    free(array);
-    free(displs);
-    free(recvcounts);
-     */
 
     return PMPI_Finalize();
 }

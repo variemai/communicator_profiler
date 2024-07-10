@@ -177,6 +177,7 @@ typedef struct comm_data{
 typedef struct comm_all{
     char name[NAMELEN];
     int size;
+    int datasize;
 } comm_all;
 
 typedef struct comm_profiler_meta_pair{
