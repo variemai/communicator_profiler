@@ -1148,7 +1148,7 @@ _Finalize(void) {
     int rank, size, buf[2] = {-1, -1};
     int flag, len, resultlen, datasize;
     std::vector<comm_all> recv_comm_buffer;
-    int  num_of_comms;
+    long unsigned num_of_comms;
     char version[MPI_MAX_LIBRARY_VERSION_STRING];
     char proc_name[MPI_MAX_PROCESSOR_NAME];
     char *proc_names = NULL;
@@ -1452,7 +1452,7 @@ _Finalize(void) {
         std::vector<CommData> comms;
         std::vector<int> commIds;
 
-        for (int i = 0; i < total_num_of_comms; i++) {
+        for (long unsigned i = 0; i < total_num_of_comms; i++) {
             // debug print
             //std::cout << "mpisee: Writing metadata for communicator: "
             // << recv_comm_buffer[i].name << ", size: " << recv_comm_buffer[i].size
