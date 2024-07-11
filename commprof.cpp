@@ -1154,7 +1154,7 @@ _Finalize(void) {
     char *proc_names = NULL;
     double *alltimes = NULL;
     std::vector<double> mpi_times;
-    int total_num_of_comms;
+    long unsigned total_num_of_comms = 0;
     std::vector<prof_attrs*> local_communicators;
     // Place the profiling data into a vector and gather it to rank 0
     std::vector<comm_all> metadata_array;
