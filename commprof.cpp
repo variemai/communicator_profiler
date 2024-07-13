@@ -1164,7 +1164,7 @@ _Finalize(void) {
     comm_profiler *comm_prof_data;
     MPI_Comm newcomm;
 
-    total_time = MPI_Wtime() - total_time + init_time;
+    total_time = MPI_Wtime() - total_time;
 
 
     if (PMPI_Barrier(MPI_COMM_WORLD) != MPI_SUCCESS) {
