@@ -804,7 +804,7 @@ MPI_Wait(MPI_Request *request, MPI_Status *status)
             comm = requests_map[*request];
         }
         else {
-            comm = MPI_COMM_NULL;
+            comm = MPI_COMM_WORLD;
         }
 
         t_elapsed = MPI_Wtime();
@@ -853,7 +853,7 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
                 break;
             }
             else {
-                comm = MPI_COMM_NULL;
+                comm = MPI_COMM_WORLD;
             }
         }
         t_elapsed = MPI_Wtime();
@@ -865,10 +865,10 @@ MPI_Waitall(int count, MPI_Request array_of_requests[],
                 requests_map.erase(array_of_requests[i]);
             }
         }
-        // else{
-        //     mcpt_abort("NULL COMMUNICATOR in MPI_Waitall\n");
-        //     return ret;
-        // }
+        else{
+             mcpt_abort("NULL COMMUNICATOR in MPI_Waitall\n");
+             return ret;
+        }
     }
     else{
         ret = PMPI_Waitall(count, array_of_requests, array_of_statuses);
